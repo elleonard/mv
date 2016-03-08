@@ -3602,15 +3602,7 @@ Window_NameInput.JAPAN2 =
           'ヤ','ユ','ヨ','ワ','ン',  'ー','～','・','＝','☆',
           'ラ','リ','ル','レ','ロ',  'ヴ','ヲ','　','英数','決定' ];
 Window_NameInput.JAPAN3 =
-        [ 'Ａ','Ｂ','Ｃ','Ｄ','Ｅ',  'ａ','ｂ','ｃ','ｄ','ｅ',
-          'Ｆ','Ｇ','Ｈ','Ｉ','Ｊ',  'ｆ','ｇ','ｈ','ｉ','ｊ',
-          'Ｋ','Ｌ','Ｍ','Ｎ','Ｏ',  'ｋ','ｌ','ｍ','ｎ','ｏ',
-          'Ｐ','Ｑ','Ｒ','Ｓ','Ｔ',  'ｐ','ｑ','ｒ','ｓ','ｔ',
-          'Ｕ','Ｖ','Ｗ','Ｘ','Ｙ',  'ｕ','ｖ','ｗ','ｘ','ｙ',
-          'Ｚ','［','］','＾','＿',  'ｚ','｛','｝','｜','～',
-          '０','１','２','３','４',  '！','＃','＄','％','＆',
-          '５','６','７','８','９',  '（','）','＊','＋','－',
-          '／','＝','＠','＜','＞',  '：','；','　','かな','決定' ];
+        [ ];
 
 Window_NameInput.prototype.initialize = function(editWindow) {
     var x = editWindow.x;
@@ -4292,6 +4284,9 @@ Window_Message.prototype.numVisibleRows = function() {
 };
 
 Window_Message.prototype.update = function() {
+    if (! this.visible) {
+        return;
+    }
     this.checkToNotClose();
     Window_Base.prototype.update.call(this);
     while (!this.isOpening() && !this.isClosing()) {

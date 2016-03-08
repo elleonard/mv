@@ -3,5 +3,5 @@
 var $plugins =
 [
 {"name":"KisekiWindow","status":true,"description":"画面下にアクターの情報を表示します","parameters":{"HideSwitchId":"2","ShowTp?":"false","AreaWidth":"130"}},
-{"name":"gal","status":true,"description":"","parameters":{}}
+{"name":"Tachie","status":true,"description":"","parameters":{"useTextureAtlas":"false","actor1offset":"-50, 0"}}
 ];

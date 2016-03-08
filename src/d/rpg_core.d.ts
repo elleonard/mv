@@ -207,7 +207,7 @@ declare class Bitmap {
      * @param {Number} [dh=sh] The height to draw the image in the destination
      */
     blt(source: Bitmap, sx: number, sy: number, sw: number, sh: number,
-                        dx: number, dy: number, dw: number, dh: number): void;
+                        dx: number, dy: number, dw?: number, dh?: number): void;
 
     /**
      * Returns pixel color at the specified point.

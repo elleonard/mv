@@ -52,13 +52,15 @@ class Window_KisekiStatus extends Window_Selectable {
     /** 顔グラのサイズ */
     private static SMALL_FACE_IMAGE_SIZE = 48;
     private lastActorInfo: {[actorId: number]: string} = {};
+    private _messageWindow: Window_Message;
 
-    constructor() {
+    constructor(messageWindow: Window_Message) {
         super(0, Graphics.height - Window_KisekiStatus.WINDOW_HEIGHT, Graphics.width, Window_KisekiStatus.WINDOW_HEIGHT);
         this.refresh();
         this.backOpacity = 0;
         this.opacity = 0;
         this.padding = 0;
+        this._messageWindow = messageWindow;
     }
     /**
      * @override
@@ -175,6 +177,9 @@ class Window_KisekiStatus extends Window_Selectable {
             this.visible = false;
             return;
         }
+        if (this._messageWindow && this._messageWindow.isOpen()) {
+            return;
+        }
         if ($gameSwitches.value(hideSwitchId)) {
             this.visible = false;
             return;
@@ -278,7 +283,7 @@ class _Scene_Map extends Scene_Map {
      */
     createAllWindows(): void {
         Scene_Map_createAllWindows.call(this);
-        this._kisekiStatusWindow = new Window_KisekiStatus();
+        this._kisekiStatusWindow = new Window_KisekiStatus(this._messageWindow);
         this.addWindow(this._kisekiStatusWindow);
     }
     refreshKisekiStatus(): void {

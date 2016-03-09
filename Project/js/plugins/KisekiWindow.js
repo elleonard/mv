@@ -48,13 +48,14 @@ var KisekiWindow;
     var hideSwitchId = parseInt(String(parameters['HideSwitchId'] || 2));
     var Window_KisekiStatus = (function (_super) {
         __extends(Window_KisekiStatus, _super);
-        function Window_KisekiStatus() {
+        function Window_KisekiStatus(messageWindow) {
             _super.call(this, 0, Graphics.height - Window_KisekiStatus.WINDOW_HEIGHT, Graphics.width, Window_KisekiStatus.WINDOW_HEIGHT);
             this.lastActorInfo = {};
             this.refresh();
             this.backOpacity = 0;
             this.opacity = 0;
             this.padding = 0;
+            this._messageWindow = messageWindow;
         }
         /**
          * @override
@@ -173,6 +174,9 @@ var KisekiWindow;
                 this.visible = false;
                 return;
             }
+            if (this._messageWindow && this._messageWindow.isOpen()) {
+                return;
+            }
             if ($gameSwitches.value(hideSwitchId)) {
                 this.visible = false;
                 return;
@@ -283,7 +287,7 @@ var KisekiWindow;
          */
         _Scene_Map.prototype.createAllWindows = function () {
             Scene_Map_createAllWindows.call(this);
-            this._kisekiStatusWindow = new Window_KisekiStatus();
+            this._kisekiStatusWindow = new Window_KisekiStatus(this._messageWindow);
             this.addWindow(this._kisekiStatusWindow);
         };
         _Scene_Map.prototype.refreshKisekiStatus = function () {

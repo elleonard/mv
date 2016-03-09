@@ -25,15 +25,23 @@ var Tachie;
     var parameters = PluginManager.parameters('Tachie');
     var offsetX = {};
     var offsetY = {};
-    var offset1 = String(parameters['actor1offset']).split(',');
-    console.log(offset1);
-    offsetX[1] = parseInt(offset1[0] || '0');
-    offsetY[1] = parseInt(offset1[1] || '0');
+    for (var i = 1; i < 10; i++) {
+        var offset1 = String(parameters['actor' + i + 'offset']).split(',');
+        offsetX[i] = parseInt(offset1[0] || '0');
+        offsetY[i] = parseInt(offset1[1] || '0');
+        if (isNaN(offsetX[i])) {
+            offsetX[i] = 0;
+        }
+        if (isNaN(offsetY[i])) {
+            offsetY[i] = 0;
+        }
+    }
     var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-    console.log(offsetX[1]);
     var DEFAULT_PICTURE_ID1 = 12;
     var DEFAULT_PICTURE_ID2 = 11;
     var ACTOR_PREFIX = '___actor';
+    var LEFT_POS = 1;
+    var RIGHT_POS = 2;
     var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
     var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
     var _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
@@ -50,15 +58,15 @@ var Tachie;
                 return;
             }
             switch (args[0]) {
-                case 'show_name':
-                    SceneManager._scene.openNameMessage(args[1]);
+                case 'showName':
+                    $gameTemp.tachieName = args[1];
                     break;
-                case 'show_hide':
-                    SceneManager._scene.closeNameMessage();
+                case 'showHide':
+                    $gameTemp.tachieName = null;
                     break;
-                case 'show_left':
-                case 'show_right':
-                    var pictureId = args[1];
+                case 'showLeft':
+                case 'showRight':
+                    var pictureId = parseInt(args[1]);
                     var x = parseInt(args[2] || '0');
                     var y = parseInt(args[3] || '0');
                     var opacity = parseInt(args[4] || '255');
@@ -75,62 +83,85 @@ var Tachie;
                     if (args[2] == null) {
                         throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
                     }
-                    var arg2 = parseInt(args[2]);
-                    this.tachieActorCommnad(actor, args[0], arg2);
+                    this.tachieActorCommnad(actor, args[0], args[2]);
                     break;
                 case 'start':
                     break;
+                default:
+                    console.error(args[0]);
             }
         };
         _Game_Interpreter.prototype.tachiePictureCommnad = function (command, pictureId, x, y, opacity) {
             switch (command) {
-                case 'show_left':
+                case 'showLeft':
+                    $gameTemp.tachieActorId = pictureId;
+                    $gameTemp.tachieActorPos = LEFT_POS;
                     $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + pictureId, 0, x, y, 100, 100, opacity, 0);
                     break;
-                case 'show_right':
-                    $gameScreen.showPicture(DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x, y, 100, 100, opacity, 0);
+                case 'showRight':
+                    $gameTemp.tachieActorId = pictureId;
+                    $gameTemp.tachieActorPos = RIGHT_POS;
+                    $gameScreen.showPicture(DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + 400, y, 100, 100, opacity, 0);
                     break;
             }
         };
         _Game_Interpreter.prototype.tachieActorCommnad = function (actor, command, arg2) {
             switch (command) {
                 case 'face':
-                    actor.setFaceId(arg2);
+                    actor.setFaceId(parseInt(arg2));
                     break;
                 case 'pose':
-                    actor.setPoseId(arg2);
+                    actor.setPoseId(parseInt(arg2));
                     break;
                 case 'hoppe':
-                    actor.setHoppeId(arg2);
+                    actor.setHoppeId(parseInt(arg2));
                     break;
                 case 'outer':
-                    var outerId = arg2;
+                    this.validateCosId(arg2);
+                    actor.setOuterId(arg2);
+                    break;
+                case 'innerTop':
+                    this.validateCosId(arg2);
+                    actor.setInnerTopId(arg2);
+                    break;
+                case 'innerBottom':
+                    this.validateCosId(arg2);
+                    actor.setInnerBottomId(arg2);
+                    break;
+                case 'outerItem':
+                    var outerId = parseInt(arg2);
                     if (outerId === 0) {
-                        actor.setOuterId(0);
+                        actor.setOuterItemId(0);
                         break;
                     }
                     var outer = new Game_Item($dataArmors[outerId]);
                     if (!outer.isOuter()) {
                         throw new Error('Armor ID ' + outerId + 'はアウターではありません' + JSON.stringify($dataArmors[outerId].meta));
                     }
-                    actor.setOuterId(outerId);
+                    actor.setOuterItemId(outerId);
                     break;
-                case 'innerTop':
+                case 'innerTopItem':
                     var innerTopId = arg2;
                     var innerTop = new Game_Item($dataArmors[innerTopId]);
                     if (!innerTop.isInnerTop()) {
                         throw new Error('Armor ID ' + innerTopId + 'はインナートップではありません' + JSON.stringify($dataArmors[innerTopId].meta));
                     }
-                    actor.setInnerTopId(innerTopId);
+                    actor.setInnerTopItemId(innerTopId);
                     break;
-                case 'innerBottom':
+                case 'innerBottomItem':
                     var innerBottomId = arg2;
                     var innerBottom = new Game_Item($dataArmors[innerBottomId]);
                     if (!innerBottom.isInnerBottom()) {
                         throw new Error('Armor ID ' + innerBottomId + 'はインナーボトムではありません' + JSON.stringify($dataArmors[innerBottomId].meta));
                     }
-                    actor.setInnerBottomId(innerBottomId);
+                    actor.setInnerBottomItemId(innerBottomId);
                     break;
+            }
+        };
+        _Game_Interpreter.prototype.validateCosId = function (id) {
+            var re = /[a-z]/;
+            if (!re.exec(id)) {
+                throw new Error('コスチュームIDが不正です:' + id);
             }
         };
         return _Game_Interpreter;
@@ -205,6 +236,9 @@ var Tachie;
         });
         Object.defineProperty(_Game_Actor.prototype, "outerId", {
             get: function () {
+                if (this._outerId != null) {
+                    return this._outerId;
+                }
                 if (this._outerItemId === 0) {
                     return 'a';
                 }
@@ -218,6 +252,9 @@ var Tachie;
         });
         Object.defineProperty(_Game_Actor.prototype, "innerBottomId", {
             get: function () {
+                if (this._innerBottomId != null) {
+                    return this._innerBottomId;
+                }
                 if (this._innerBottomItemId === 0) {
                     return 'a';
                 }
@@ -231,6 +268,9 @@ var Tachie;
         });
         Object.defineProperty(_Game_Actor.prototype, "innerTopId", {
             get: function () {
+                if (this._innerTopId != null) {
+                    return this._innerTopId;
+                }
                 if (this._innerTopItemId === 0) {
                     return 'a';
                 }
@@ -275,6 +315,13 @@ var Tachie;
         Object.defineProperty(_Game_Actor.prototype, "tachieOffsetX", {
             get: function () {
                 return offsetX[this.actorId()] || 0;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(_Game_Actor.prototype, "tachieOffsetY", {
+            get: function () {
+                return offsetY[this.actorId()] || 0;
             },
             enumerable: true,
             configurable: true
@@ -365,6 +412,13 @@ var Tachie;
             this.setDirty();
         };
         _Game_Actor.prototype.setOuterId = function (newId) {
+            if (this._outerId === newId) {
+                return;
+            }
+            this._outerId = newId;
+            this.setDirty();
+        };
+        _Game_Actor.prototype.setOuterItemId = function (newId) {
             if (this._outerItemId === newId) {
                 return;
             }
@@ -372,6 +426,13 @@ var Tachie;
             this.setDirty();
         };
         _Game_Actor.prototype.setInnerBottomId = function (newId) {
+            if (this._innerBottomId === newId) {
+                return;
+            }
+            this._innerBottomId = newId;
+            this.setDirty();
+        };
+        _Game_Actor.prototype.setInnerBottomItemId = function (newId) {
             if (this._innerBottomItemId === newId) {
                 return;
             }
@@ -379,6 +440,13 @@ var Tachie;
             this.setDirty();
         };
         _Game_Actor.prototype.setInnerTopId = function (newId) {
+            if (this._innerTopId === newId) {
+                return;
+            }
+            this._innerTopId = newId;
+            this.setDirty();
+        };
+        _Game_Actor.prototype.setInnerTopItemId = function (newId) {
             if (this._innerTopItemId === newId) {
                 return;
             }
@@ -658,9 +726,31 @@ var Tachie;
         Sprite_WindowBalloon.prototype.update = function () {
             _super.prototype.update.call(this);
             this.updateBitmap();
+            this.updatePosition();
         };
         Sprite_WindowBalloon.prototype.updateBitmap = function () {
-            this.bitmap = ImageManager.loadSystem('WindowBaloon1');
+            if (this._balloonColorId == $gameTemp.tachieActorId) {
+                return;
+            }
+            if ($gameTemp.tachieActorId > 0) {
+                this._windowSkilId = $gameTemp.tachieActorId;
+                this.bitmap = ImageManager.loadSystem('WindowBaloon' + $gameTemp.tachieActorId);
+                this.visible = true;
+            }
+            else {
+                this.visible = false;
+                this._windowSkilId = 0;
+            }
+        };
+        Sprite_WindowBalloon.prototype.updatePosition = function () {
+            if ($gameTemp.tachieActorPos === LEFT_POS) {
+                this.scale.x = 1;
+                this.x = 300;
+            }
+            else if ($gameTemp.tachieActorPos === RIGHT_POS) {
+                this.scale.x = -1;
+                this.x = 500;
+            }
         };
         return Sprite_WindowBalloon;
     }(Sprite_Base));
@@ -688,20 +778,38 @@ var Tachie;
             _super.prototype.createSubWindows.call(this);
             this._messageNameWindow = new Window_MessageName();
             this._balloonSprite = new Sprite_WindowBalloon();
-            this._balloonSprite.x = 300;
             this._balloonSprite.y = -39;
             this.addChild(this._balloonSprite);
         };
         Window_TachieMessage.prototype.update = function () {
             _super.prototype.update.call(this);
-            if (this._windowSkilId !== 1) {
-                this._windowSkilId = 1;
-                this.windowskin = ImageManager.loadSystem('Window1');
+            if (this._windowSkilId !== $gameTemp.tachieActorId) {
+                if ($gameTemp.tachieActorId > 0) {
+                    this._windowSkilId = $gameTemp.tachieActorId;
+                    this.windowskin = ImageManager.loadSystem('Window' + $gameTemp.tachieActorId);
+                }
+                else {
+                    this._windowSkilId = 0;
+                    this.windowskin = ImageManager.loadSystem('Window');
+                    $gameTemp.tachieActorId = 0;
+                }
             }
+            if (this.isClosing() && this.openness < 240) {
+                this._balloonSprite.visible = false;
+                this._messageNameWindow.close();
+            }
+            else if (this.openness >= 255) {
+                this._balloonSprite.visible = true;
+            }
+        };
+        Window_TachieMessage.prototype.open = function () {
+            _super.prototype.open.call(this);
+            this._messageNameWindow.close();
         };
         Window_TachieMessage.prototype.startMessage = function () {
             _super.prototype.startMessage.call(this);
-            this._messageNameWindow.draw('トモコ');
+            this._balloonSprite.visible = true;
+            this._messageNameWindow.draw($gameTemp.tachieName);
         };
         Window_TachieMessage.prototype.updatePlacement = function () {
             this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;

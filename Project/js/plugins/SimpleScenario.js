@@ -18,7 +18,6 @@ var __extends = (this && this.__extends) || function (d, b) {
  */
 var SimpleScenario;
 (function (SimpleScenario) {
-    var _this = this;
     var parameters = PluginManager.parameters('SimpleScenario');
     var AUTO_WARD_WRAP = parameters['autoWordWrap'] === 'true';
     if (Utils.isNwjs()) {
@@ -29,8 +28,15 @@ var SimpleScenario;
     var SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/../scenario/');
     var DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
     DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
-    // F7
+    // 変換ボタン。F7
     Input.keyMapper[118] = 'debug2';
+    /**
+     * それぞれのコマンドに必須なパラメータの定義
+     */
+    var REQUIED_PARAMS = {
+        'not_close': ['flag'],
+        'default_pos': ['actor', 'pos'],
+    };
     var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
     var _Scene_Map_update = Scene_Map.prototype.update;
     var _Game_Interpreter = (function (_super) {
@@ -75,7 +81,7 @@ var SimpleScenario;
             console.error('Failed to load: ' + DataManager._errorUrl);
             DataManager._errorUrl = null;
         }
-        _DataManager_checkError.call(_this);
+        _DataManager_checkError.call(this);
     };
     /**
      * シナリオテキストをMVで使えるJSON形式に変換するクラスです
@@ -177,12 +183,16 @@ var SimpleScenario;
         Scenario_Converter.prototype.removeWS = function (line) {
             return line.replace(/^\s+/g, '');
         };
+        /**
+         * コマンドを変換します。
+         * @param {Array<RPG.EventCommand>} list  [description]
+         * @param {Block}                   block [description]
+         */
         Scenario_Converter.prototype.convertCommand = function (list, block) {
             var headerList = block.header.split(' ');
             var command = headerList[0].substr(1);
-            var header = this.convertHeader(headerList);
-            var context = new Context(list, header, block.data);
-            this.lastCommand = command;
+            var header = this.parseHeader(headerList);
+            var context = new Context(command, list, header, block.data);
             try {
                 this['convertCommand_' + command](context);
             }
@@ -191,7 +201,26 @@ var SimpleScenario;
                 throw e;
             }
         };
-        Scenario_Converter.prototype.convertHeader = function (headerList) {
+        /**
+         * コマンドのパラメータが正しいかどうかを検証します。
+         * @param {Context} context [description]
+         */
+        Scenario_Converter.prototype.validate = function (context) {
+            var requiredParams = REQUIED_PARAMS[context.command];
+            if (!requiredParams) {
+                return;
+            }
+            for (var _i = 0, requiredParams_1 = requiredParams; _i < requiredParams_1.length; _i++) {
+                var param = requiredParams_1[_i];
+                if (!context.header[param]) {
+                    console.error(context.command + "\u306B\u5FC5\u9808\u30D1\u30E9\u30E1\u30FC\u30BF " + param + " \u304C\u5B58\u5728\u3057\u307E\u305B\u3093");
+                }
+            }
+        };
+        /**
+         * ヘッダをパースします。
+         */
+        Scenario_Converter.prototype.parseHeader = function (headerList) {
             var result = {};
             for (var i = 1; i < headerList.length; i++) {
                 var text = headerList[i];
@@ -201,20 +230,20 @@ var SimpleScenario;
             return result;
         };
         Scenario_Converter.prototype.convertCommand_start = function (context) {
-            this.appearLeft = false;
-            this.appearRight = false;
+            this.defaultPosMap = {};
         };
         Scenario_Converter.prototype.convertCommand_end = function (context) {
-            var id1 = Tachie.DEFAULT_PICTURE_ID1;
-            var id2 = Tachie.DEFAULT_PICTURE_ID2;
-            var x = 0;
-            var y = 0;
-            var scale = 100;
-            var ox = Tachie.RIGHT_POS_OFFSET_X;
-            context.push({ 'code': 232, 'indent': this.indent, 'parameters': [id1, 0, 0, 0, x, y, scale, scale, 0, 0, 15, false] });
-            context.push({ 'code': 232, 'indent': this.indent, 'parameters': [id2, 0, 0, 0, x + ox, y, scale, scale, 0, 0, 15, true] });
-            this.appearLeft = false;
-            this.appearRight = false;
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie notClose off"] });
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hide"] });
+        };
+        Scenario_Converter.prototype.convertCommand_default_pos = function (context) {
+            var actorId = parseInt(context.header['actor']);
+            var pos = context.header['pos'] === 'right' ? 2 : 1;
+            this.defaultPosMap[actorId] = pos;
+        };
+        Scenario_Converter.prototype.convertCommand_not_close = function (context) {
+            var flag = context.header['flag'];
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie notClose " + flag)] });
         };
         Scenario_Converter.prototype.convertCommand_n1 = function (context) {
             this.convertCommand_nx(context, 1);
@@ -236,7 +265,7 @@ var SimpleScenario;
         };
         ;
         Scenario_Converter.prototype.convertCommand_nx = function (context, actorId) {
-            var pos = 1;
+            var pos = this.defaultPosMap[actorId] || 1;
             if (context.header['pos']) {
                 pos = parseInt(context.header['pos']);
             }
@@ -262,29 +291,11 @@ var SimpleScenario;
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
             var x = 0;
             var y = 0;
-            var scale = 100;
             if (pos === Tachie.LEFT_POS) {
-                var id1 = Tachie.DEFAULT_PICTURE_ID1;
-                if (!this.appearLeft) {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
-                    this.appearLeft = true;
-                    context.push({ 'code': 232, 'indent': this.indent, 'parameters': [id1, 0, 0, 0, x, y, scale, scale, 255, 0, 15, true] });
-                }
-                else {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 255")] });
-                }
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
             }
             else {
-                var id2 = Tachie.DEFAULT_PICTURE_ID2;
-                if (!this.appearRight) {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
-                    this.appearRight = true;
-                    var ox = Tachie.RIGHT_POS_OFFSET_X;
-                    context.push({ 'code': 232, 'indent': this.indent, 'parameters': [id2, 0, 0, 0, x + ox, y, scale, scale, 255, 0, 15, true] });
-                }
-                else {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 255")] });
-                }
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
             }
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': ['MessageName open ' + $gameActors.actor(actorId).name()] });
             this.convertCommand_message(context);
@@ -343,7 +354,8 @@ var SimpleScenario;
         return Block;
     }());
     var Context = (function () {
-        function Context(list, header, data) {
+        function Context(command, list, header, data) {
+            this.command = command;
             this.list = list;
             this.header = header;
             this.data = data;

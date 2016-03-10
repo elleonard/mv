@@ -59,25 +59,60 @@ var Tachie;
                 return;
             }
             switch (args[0]) {
-                case 'start':
-                    $gameTemp.tachieAvairable = true;
-                    break;
-                case 'end':
-                    $gameTemp.tachieAvairable = false;
+                case 'notClose':
+                    $gameTemp.tachieAvairable = args[1] === 'on';
                     break;
                 case 'showName':
                     $gameTemp.tachieName = args[1];
                     break;
-                case 'showHide':
+                case 'hideName':
                     $gameTemp.tachieName = null;
+                    break;
+                case 'hide':
+                    {
+                        var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                        var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                        var commands = [];
+                        if (picture1 && picture1.opacity() > 0) {
+                            var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
+                                    0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, false] };
+                            commands.push(c);
+                        }
+                        if (picture2 && picture2.opacity() > 0) {
+                            var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2,
+                                    0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 20, false] };
+                            commands.push(c);
+                        }
+                        if (commands.length > 0) {
+                            commands[0]['parameters'][11] = true;
+                        }
+                        for (var _i = 0, commands_1 = commands; _i < commands_1.length; _i++) {
+                            var c = commands_1[_i];
+                            this._list.splice(this._index + 1, 0, c);
+                        }
+                        var c2 = { 'code': 356, 'indent': this._indent, 'parameters': ["Tachie clear"] };
+                        this._list.splice(this._index + 1 + commands.length, 0, c2);
+                    }
+                    break;
+                case 'clear':
+                    {
+                        var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                        var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                        if (picture1) {
+                            picture1.erase();
+                        }
+                        if (picture2) {
+                            picture2.erase();
+                        }
+                    }
                     break;
                 case 'showLeft':
                 case 'showRight':
-                    var pictureId = parseInt(args[1]);
+                    var actorId = parseInt(args[1]);
                     var x = parseInt(args[2] || '0');
                     var y = parseInt(args[3] || '0');
                     var opacity = parseInt(args[4] || '255');
-                    this.tachiePictureCommnad(args[0], pictureId, x, y, opacity);
+                    this.tachiePictureCommnad(args[0], actorId, x, y, opacity);
                     break;
                 case 'face':
                 case 'pose':
@@ -87,8 +122,7 @@ var Tachie;
                 case 'innerBottom':
                     var actor = $gameActors.actor(parseInt(args[1]));
                     if (!actor) {
-                        throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1]) + 'のアクターが存在しません';
-                        ;
+                        throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');
                     }
                     if (args[2] == null) {
                         throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
@@ -101,17 +135,37 @@ var Tachie;
                     console.error(args[0]);
             }
         };
-        _Game_Interpreter.prototype.tachiePictureCommnad = function (command, pictureId, x, y, opacity) {
+        _Game_Interpreter.prototype.tachiePictureCommnad = function (command, actorId, x, y, opacity) {
             switch (command) {
                 case 'showLeft':
-                    $gameTemp.tachieActorId = pictureId;
+                    $gameTemp.tachieActorId = actorId;
                     $gameTemp.tachieActorPos = Tachie.LEFT_POS;
-                    $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + pictureId, 0, x, y, 100, 100, opacity, 0);
+                    if (opacity < 255) {
+                        var picture_1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                        if (picture_1 && picture_1.tachieActorId === actorId) {
+                            opacity = 255;
+                        }
+                    }
+                    $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
+                    if (opacity < 255) {
+                        var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true] };
+                        this._list.splice(this._index + 1, 0, c);
+                    }
                     break;
                 case 'showRight':
-                    $gameTemp.tachieActorId = pictureId;
+                    $gameTemp.tachieActorId = actorId;
                     $gameTemp.tachieActorPos = Tachie.RIGHT_POS;
-                    $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + Tachie.RIGHT_POS_OFFSET_X, y, 100, 100, opacity, 0);
+                    var picId = Tachie.DEFAULT_PICTURE_ID2;
+                    var picture = $gameScreen.picture(picId);
+                    if (picture && picture.tachieActorId === actorId) {
+                        opacity = 255;
+                    }
+                    var xx = x + Tachie.RIGHT_POS_OFFSET_X;
+                    $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
+                    if (opacity < 255) {
+                        var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true] };
+                        this._list.splice(this._index + 1, 0, c);
+                    }
                     break;
             }
         };
@@ -151,7 +205,7 @@ var Tachie;
                     actor.setOuterItemId(outerId);
                     break;
                 case 'innerTopItem':
-                    var innerTopId = arg2;
+                    var innerTopId = parseInt(arg2);
                     var innerTop = new Game_Item($dataArmors[innerTopId]);
                     if (!innerTop.isInnerTop()) {
                         throw new Error('Armor ID ' + innerTopId + 'はインナートップではありません' + JSON.stringify($dataArmors[innerTopId].meta));
@@ -159,7 +213,7 @@ var Tachie;
                     actor.setInnerTopItemId(innerTopId);
                     break;
                 case 'innerBottomItem':
-                    var innerBottomId = arg2;
+                    var innerBottomId = parseInt(arg2);
                     var innerBottom = new Game_Item($dataArmors[innerBottomId]);
                     if (!innerBottom.isInnerBottom()) {
                         throw new Error('Armor ID ' + innerBottomId + 'はインナーボトムではありません' + JSON.stringify($dataArmors[innerBottomId].meta));
@@ -176,10 +230,17 @@ var Tachie;
         };
         return _Game_Interpreter;
     }(Game_Interpreter));
-    ImageManager.loadTachie = function (filename, hue) {
-        if (filename == null || filename == 'undefined') {
-            throw new Error();
+    Game_Interpreter.prototype.setup = function (list, eventId) {
+        this.clear();
+        this._mapId = $gameMap.mapId();
+        this._eventId = eventId || 0;
+        this._list = [];
+        for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {
+            var c = list_1[_i];
+            this._list.push(c);
         }
+    };
+    ImageManager.loadTachie = function (filename, hue) {
         return this.loadBitmap('img/tachie/', filename, hue, true);
     };
     var _Game_Item = (function (_super) {
@@ -516,9 +577,9 @@ var Tachie;
             if (!this.actorBitmapBodyCache[actorId]) {
                 this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 100, Graphics.height);
             }
-            return this.actorBitmapCache[actorId];
+            return this.actorBitmapBodyCache[actorId];
         };
-        _Game_Temp.prototype.getActorBitmapCache = function (actorId) {
+        _Game_Temp.prototype.getPictureBitmapCache = function (actorId) {
             this.actorBitmapCache = this.actorBitmapCache || {};
             if (!this.actorBitmapCache[actorId]) {
                 this.actorBitmapCache[actorId] = new Bitmap(Graphics.width / 2 + 100, Graphics.height);
@@ -538,6 +599,14 @@ var Tachie;
         };
         return _Game_Screen;
     }(Game_Screen));
+    Game_Screen.prototype.getPictureId = function (picture) {
+        for (var i = 0; i < this._pictures.length; i++) {
+            if (this._pictures[i] === picture) {
+                return i;
+            }
+        }
+        console.error('picture not found.' + picture);
+    };
     var _Sprite_Picture = (function (_super) {
         __extends(_Sprite_Picture, _super);
         function _Sprite_Picture() {
@@ -557,7 +626,7 @@ var Tachie;
         _Sprite_Picture.prototype.loadBitmap = function () {
             var picture = this.picture();
             if (picture && picture.tachieActorId !== 0) {
-                this.bitmap = $gameTemp.getActorBitmapCache(picture.tachieActorId);
+                this.bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
                 this.redrawActorImage();
             }
             else {
@@ -575,7 +644,7 @@ var Tachie;
             }
             this.bitmap.clear();
             var actor = $gameActors.actor(actorId);
-            var bitmap = $gameTemp.getActorBitmapCache(actorId);
+            var bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
             this.drawActorImage(actor, bitmap);
         };
         _Sprite_Picture.prototype.drawActorImage = function (actor, bitmap) {
@@ -590,7 +659,7 @@ var Tachie;
                 this.drawOuterMain(actor, cache);
                 this.drawBodyFront(actor, cache);
                 //this.drawOuterFront(actor, cache);
-                console.log('createCache');
+                console.log('createCache:' + actor.actorId());
             }
             this.drawCache(cache);
             //this.drawHoppe(actor, this.bitmap);
@@ -619,7 +688,7 @@ var Tachie;
             var crop = texture.crop;
             var dx = trim.x + actor.tachieOffsetX;
             var dy = trim.y + actor.tachieOffsetY;
-            bitmap._context.drawImage(img, rect.x, rect.y, crop.width, crop.height, dx, dy, crop.width, crop.height);
+            bitmap.context.drawImage(img, rect.x, rect.y, crop.width, crop.height, dx, dy, crop.width, crop.height);
         };
         _Sprite_Picture.prototype.drawTachieImage = function (file, bitmap, actor) {
             var img = ImageManager.loadTachie(file);
@@ -636,7 +705,7 @@ var Tachie;
             if (isNaN(dy)) {
                 dy = 0;
             }
-            this.bitmap.blt(img, 0, 0, img.width, img.height, dx, dy);
+            bitmap.blt(img, 0, 0, img.width, img.height, dx, dy);
         };
         _Sprite_Picture.prototype.drawOuterBack = function (actor, bitmap) {
             if (!actor.hasOuter()) {
@@ -708,8 +777,6 @@ var Tachie;
             var height = this.windowHeight();
             var x = 30;
             var y = 430;
-            console.log(width);
-            console.log(height);
             _super.call(this, x, y, width, height);
             this.padding = 8;
             this.openness = 0;
@@ -727,15 +794,16 @@ var Tachie;
             }
             this.width = name.length * 26 + 28;
             this.contents.clear();
-            this.drawTextEx(name, 8, 0, 160);
+            this.drawTextEx(name, 8, 0);
             this.open();
         };
         return Window_MessageName;
     }(Window_Base));
     var Sprite_WindowBalloon = (function (_super) {
         __extends(Sprite_WindowBalloon, _super);
-        function Sprite_WindowBalloon() {
-            _super.apply(this, arguments);
+        function Sprite_WindowBalloon(messageWindow) {
+            _super.call(this);
+            this._messageWindow = messageWindow;
         }
         Sprite_WindowBalloon.prototype.update = function () {
             _super.prototype.update.call(this);
@@ -743,17 +811,21 @@ var Tachie;
             this.updatePosition();
         };
         Sprite_WindowBalloon.prototype.updateBitmap = function () {
-            if (this._balloonColorId == $gameTemp.tachieActorId) {
+            if (this._balloonColorId === $gameTemp.tachieActorId) {
                 return;
             }
             if ($gameTemp.tachieActorId > 0) {
-                this._windowSkilId = $gameTemp.tachieActorId;
+                if (!this._messageWindow.isOpen()) {
+                    this.visible = false;
+                    return;
+                }
+                this._windowSkinId = $gameTemp.tachieActorId;
                 this.bitmap = ImageManager.loadSystem('WindowBaloon' + $gameTemp.tachieActorId);
                 this.visible = true;
             }
             else {
                 this.visible = false;
-                this._windowSkilId = 0;
+                this._windowSkinId = 0;
             }
         };
         Sprite_WindowBalloon.prototype.updatePosition = function () {
@@ -791,7 +863,7 @@ var Tachie;
         Window_TachieMessage.prototype.createSubWindows = function () {
             _super.prototype.createSubWindows.call(this);
             this._messageNameWindow = new Window_MessageName();
-            this._balloonSprite = new Sprite_WindowBalloon();
+            this._balloonSprite = new Sprite_WindowBalloon(this);
             this._balloonSprite.y = -39;
             this.addChild(this._balloonSprite);
         };
@@ -814,6 +886,9 @@ var Tachie;
             }
             else if (this.openness >= 255) {
                 this._balloonSprite.visible = true;
+            }
+            if (!$gameTemp.tachieAvairable && !$gameMessage.isBusy() && this.isOpen()) {
+                this.close();
             }
         };
         Window_TachieMessage.prototype.open = function () {

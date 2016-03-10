@@ -1,9 +1,19 @@
 @start
 
+@not_close flag=on
+
+@default_pos actor=2 pos=left
+
 @n1
 なんと、テキストファイルで会話イベントが作成できるのですよ！　すごいですね！
 
 @n2 pos=right
 へぇ、そんなことができるんだね。
+
+@n2
+でも、あああ
+
+
+@not_close flag=off
 
 @end

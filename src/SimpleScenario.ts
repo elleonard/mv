@@ -27,10 +27,18 @@ const DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/'
 
 DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
 
+declare var $dataScenraio: {[id: string]: Array<RPG.EventCommand>};
 
-// F7
+// 変換ボタン。F7
 Input.keyMapper[118] = 'debug2';
 
+/**
+ * それぞれのコマンドに必須なパラメータの定義
+ */
+const REQUIED_PARAMS: {[command: string]: Array<string>} = {
+    'not_close': ['flag'],
+    'default_pos': ['actor', 'pos'],
+};
 
 const _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 const _Scene_Map_update = Scene_Map.prototype.update;
@@ -64,7 +72,7 @@ class _Scene_Map extends Scene_Map {
 }
 
 const _DataManager_checkError = DataManager.checkError;
-DataManager.checkError = () => {
+DataManager.checkError = function() {
     if (DataManager._errorUrl && DataManager._errorUrl.indexOf(SCENARIO_FILE_NAME) >= 0) {
         console.error('Failed to load: ' + DataManager._errorUrl);
         DataManager._errorUrl = null;
@@ -77,9 +85,7 @@ DataManager.checkError = () => {
  */
 class Scenario_Converter {
     indent: number;         // 現在のインデント
-    lastCommand: string;    // 最後に変換したコマンド名
-    appearLeft: boolean;    // 左側のキャラが表示中か？
-    appearRight: boolean;   // 右側のキャラが表示中か？
+    defaultPosMap: {[actorId: number]: number};   // アクターごとのデフォルト立ち位置
     /**
      * 全てのシナリオを変換します。
      */
@@ -129,7 +135,6 @@ class Scenario_Converter {
     protected convert(text): Array<RPG.EventCommand> {
         this.indent = 0;
 
-
         const list = [];
 
         const lines = text.split('\n');
@@ -176,12 +181,16 @@ class Scenario_Converter {
     protected removeWS(line: string): string {
         return line.replace(/^\s+/g, '');
     }
+    /**
+     * コマンドを変換します。
+     * @param {Array<RPG.EventCommand>} list  [description]
+     * @param {Block}                   block [description]
+     */
     protected convertCommand(list: Array<RPG.EventCommand>, block: Block): void {
         const headerList = block.header.split(' ');
         const command = headerList[0].substr(1);
-        const header = this.convertHeader(headerList);
-        var context = new Context(list, header, block.data);
-        this.lastCommand = command;
+        const header = this.parseHeader(headerList);
+        var context = new Context(command, list, header, block.data);
         try {
             this['convertCommand_' + command](context);
         } catch (e) {
@@ -189,7 +198,25 @@ class Scenario_Converter {
             throw e;
         }
     }
-    protected convertHeader(headerList): {[key: string]: string} {
+    /**
+     * コマンドのパラメータが正しいかどうかを検証します。
+     * @param {Context} context [description]
+     */
+    protected validate(context: Context): void {
+        const requiredParams = REQUIED_PARAMS[context.command];
+        if (! requiredParams) {
+            return;
+        }
+        for (const param of requiredParams) {
+            if (! context.header[param]) {
+                console.error(`${context.command}に必須パラメータ ${param} が存在しません`);
+            }
+        }
+    }
+    /**
+     * ヘッダをパースします。
+     */
+    protected parseHeader(headerList): {[key: string]: string} {
         var result = {};
         for (var i = 1; i < headerList.length; i++) {
             var text = headerList[i];
@@ -199,21 +226,20 @@ class Scenario_Converter {
         return result;
     }
     protected convertCommand_start(context: Context): void {
-        this.appearLeft = false;
-        this.appearRight = false;
+        this.defaultPosMap = {};
     }
     protected convertCommand_end(context: Context): void {
-        let id1 = Tachie.DEFAULT_PICTURE_ID1;
-        let id2 = Tachie.DEFAULT_PICTURE_ID2;
-        var x = 0;
-        var y = 0;
-        var scale = 100;
-        const ox = Tachie.RIGHT_POS_OFFSET_X;
-        context.push({'code': 232, 'indent': this.indent, 'parameters': [id1, 0, 0, 0, x, y, scale, scale, 0, 0, 15, false]});
-        context.push({'code': 232, 'indent': this.indent, 'parameters': [id2, 0, 0, 0, x + ox, y, scale, scale, 0, 0, 15, true]});
-
-        this.appearLeft = false;
-        this.appearRight = false;
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose off`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hide`]});
+    }
+    protected convertCommand_default_pos(context: Context): void {
+        var actorId = parseInt(context.header['actor']);
+        var pos = context.header['pos'] === 'right' ? 2 : 1;
+        this.defaultPosMap[actorId] = pos;
+    }
+    protected convertCommand_not_close(context: Context): void {
+        var flag = context.header['flag'];
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose ${flag}`]});
     }
     protected convertCommand_n1(context: Context): void {
         this.convertCommand_nx(context, 1);
@@ -232,7 +258,7 @@ class Scenario_Converter {
     };
     protected convertCommand_nx(context: Context, actorId: number): void {
 
-        let pos = 1;
+        let pos = this.defaultPosMap[actorId] || 1;
         if (context.header['pos']) {
             pos = parseInt(context.header['pos']);
         }
@@ -264,26 +290,10 @@ class Scenario_Converter {
 
         const x = 0;
         const y = 0;
-        const scale = 100;
         if (pos === Tachie.LEFT_POS) {
-            const id1 = Tachie.DEFAULT_PICTURE_ID1;
-            if (! this.appearLeft) {
-                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
-                this.appearLeft = true;
-                context.push({'code': 232, 'indent': this.indent, 'parameters': [id1, 0, 0, 0, x, y, scale, scale, 255, 0, 15, true]});
-            } else {
-                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 255`]});
-            }
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
         } else {
-            const id2 = Tachie.DEFAULT_PICTURE_ID2;
-            if (! this.appearRight) {
-                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
-                this.appearRight = true;
-                const ox = Tachie.RIGHT_POS_OFFSET_X;
-                context.push({'code': 232, 'indent': this.indent, 'parameters': [id2, 0, 0, 0, x + ox, y, scale, scale, 255, 0, 15, true]});
-            } else {
-                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 255`]});
-            }
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
         }
         context.push({'code': 356, 'indent': this.indent, 'parameters': ['MessageName open ' + $gameActors.actor(actorId).name()]});
         this.convertCommand_message(context);
@@ -337,10 +347,12 @@ class Block {
     }
 }
 class Context {
+    command: string;
     list: Array<RPG.EventCommand>;
     header: {[key: string]: string};
     data: Array<string>;
-    constructor(list: Array<RPG.EventCommand>, header: {[key: string]: string}, data: Array<string>) {
+    constructor(command: string, list: Array<RPG.EventCommand>, header: {[key: string]: string}, data: Array<string>) {
+        this.command = command;
         this.list = list;
         this.header = header;
         this.data = data;

@@ -108,6 +108,7 @@ var Tachie;
                     break;
                 case 'showLeft':
                 case 'showRight':
+                    ImageManager.isReady();
                     var actorId = parseInt(args[1]);
                     var x = parseInt(args[2] || '0');
                     var y = parseInt(args[3] || '0');
@@ -120,16 +121,22 @@ var Tachie;
                 case 'outer':
                 case 'innerTop':
                 case 'innerBottom':
-                    var actor = $gameActors.actor(parseInt(args[1]));
-                    if (!actor) {
-                        throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');
+                    {
+                        var actor = $gameActors.actor(parseInt(args[1]));
+                        if (!actor) {
+                            throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');
+                        }
+                        if (args[2] == null) {
+                            throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
+                        }
+                        this.tachieActorCommnad(actor, args[0], args[2]);
                     }
-                    if (args[2] == null) {
-                        throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
-                    }
-                    this.tachieActorCommnad(actor, args[0], args[2]);
                     break;
-                case 'start':
+                case 'preload':
+                    {
+                        var actor = $gameActors.actor(parseInt(args[1]));
+                        actor.preloadTachie();
+                    }
                     break;
                 default:
                     console.error(args[0]);
@@ -524,6 +531,72 @@ var Tachie;
             this._innerTopItemId = newId;
             this.setDirty();
         };
+        _Game_Actor.prototype.preloadTachie = function () {
+            this.doPreloadTachie(this.outerBackFile());
+            this.doPreloadTachie(this.outerShadowFile());
+            this.doPreloadTachie(this.outerMainFile());
+            this.doPreloadTachie(this.outerFrontFile());
+            this.doPreloadTachie(this.bodyBackFile());
+            this.doPreloadTachie(this.bodyFrontFile());
+            this.doPreloadTachie(this.innerBottomFile());
+            this.doPreloadTachie(this.innerTopFile());
+            this.doPreloadTachie(this.hoppeFile());
+            this.doPreloadTachie(this.faceFile());
+        };
+        _Game_Actor.prototype.doPreloadTachie = function (file) {
+            if (!file) {
+                return;
+            }
+            ImageManager.loadTachie(file);
+        };
+        _Game_Actor.prototype.outerBackFile = function () {
+            return this.baseId + 'out_' + this.outerId + '_back_' + this.poseId;
+        };
+        _Game_Actor.prototype.outerShadowFile = function () {
+            if (!this.hasOuter()) {
+                return null;
+            }
+            return this.baseId + 'out_' + this.outerId + '_shadow_' + this.poseId;
+        };
+        _Game_Actor.prototype.outerMainFile = function () {
+            if (!this.hasOuter()) {
+                return null;
+            }
+            return this.baseId + 'out_' + this.outerId + '_main_' + this.poseId;
+        };
+        _Game_Actor.prototype.outerFrontFile = function () {
+            if (!this.hasOuter()) {
+                return null;
+            }
+            return this.baseId + 'out_' + this.outerId + '_front_' + this.poseId;
+        };
+        _Game_Actor.prototype.bodyBackFile = function () {
+            return this.baseId + 'body_' + this.poseId;
+        };
+        _Game_Actor.prototype.bodyFrontFile = function () {
+            return this.baseId + 'face_' + this.poseId;
+        };
+        _Game_Actor.prototype.innerBottomFile = function () {
+            if (!this.hasInnerBottom()) {
+                return null;
+            }
+            return this.baseId + 'in_' + this.innerBottomId + '_bottom';
+        };
+        _Game_Actor.prototype.innerTopFile = function () {
+            if (!this.hasInnerTop()) {
+                return null;
+            }
+            return this.baseId + 'in_' + this.innerTopId + '_top';
+        };
+        _Game_Actor.prototype.hoppeFile = function () {
+            if (this.hoppeId === 0) {
+                return null;
+            }
+            return this.baseId + 'hoppe';
+        };
+        _Game_Actor.prototype.faceFile = function () {
+            return this.baseId + this.faceId;
+        };
         return _Game_Actor;
     }(Game_Actor));
     var _Game_Picture = (function (_super) {
@@ -555,7 +628,7 @@ var Tachie;
                 if (bitmap.url.indexOf('tachie') >= 0) {
                     console.error('Failed to load: ' + bitmap.url);
                     this._cache[key] = new Bitmap();
-                    return true;
+                    continue;
                 }
                 else {
                     throw new Error('Failed to load: ' + bitmap.url);
@@ -597,16 +670,16 @@ var Tachie;
             var name = ACTOR_PREFIX + actorId;
             this.showPicture(pictureId, name, 0, x, y, 1, 1, 1, 0);
         };
+        _Game_Screen.prototype.getPictureId = function (picture) {
+            for (var i = 0; i < this._pictures.length; i++) {
+                if (this._pictures[i] === picture) {
+                    return i;
+                }
+            }
+            console.error('picture not found.' + picture);
+        };
         return _Game_Screen;
     }(Game_Screen));
-    Game_Screen.prototype.getPictureId = function (picture) {
-        for (var i = 0; i < this._pictures.length; i++) {
-            if (this._pictures[i] === picture) {
-                return i;
-            }
-        }
-        console.error('picture not found.' + picture);
-    };
     var _Sprite_Picture = (function (_super) {
         __extends(_Sprite_Picture, _super);
         function _Sprite_Picture() {
@@ -670,6 +743,9 @@ var Tachie;
             //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
         };
         _Sprite_Picture.prototype.drawTachieFile = function (file, bitmap, actor) {
+            if (!file) {
+                return;
+            }
             if (useTextureAtlas) {
                 this.drawTachieTextureAtlas(file, bitmap, actor);
             }
@@ -708,61 +784,31 @@ var Tachie;
             bitmap.blt(img, 0, 0, img.width, img.height, dx, dy);
         };
         _Sprite_Picture.prototype.drawOuterBack = function (actor, bitmap) {
-            if (!actor.hasOuter()) {
-                return;
-            }
-            var file = actor.baseId + 'out_' + actor.outerId + '_back_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawOuterShadow = function (actor, bitmap) {
-            if (!actor.hasOuter()) {
-                return;
-            }
-            var file = actor.baseId + 'out_' + actor.outerId + '_shadow_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.outerShadowFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawOuterMain = function (actor, bitmap) {
-            if (!actor.hasOuter()) {
-                return;
-            }
-            var file = actor.baseId + 'out_' + actor.outerId + '_main_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.outerMainFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawOuterFront = function (actor, bitmap) {
-            if (!actor.hasOuter()) {
-                return;
-            }
-            var file = actor.baseId + 'out_' + actor.outerId + '_front_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.outerFrontFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawBodyBack = function (actor, bitmap) {
-            var file = actor.baseId + 'body_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.bodyBackFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawBodyFront = function (actor, bitmap) {
-            var file = actor.baseId + 'face_' + actor.poseId;
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.bodyFrontFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawInnerBottom = function (actor, bitmap) {
-            if (!actor.hasInnerBottom()) {
-                return;
-            }
-            var file = actor.baseId + 'in_' + actor.innerBottomId + '_bottom';
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.innerBottomFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawInnerTop = function (actor, bitmap) {
-            if (!actor.hasInnerTop()) {
-                return;
-            }
-            var file = actor.baseId + 'in_' + actor.innerTopId + '_top';
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.innerTopFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawHoppe = function (actor, bitmap) {
-            if (actor.hoppeId === 0) {
-                return;
-            }
-            var file = actor.baseId + 'hoppe';
-            this.drawTachieFile(file, bitmap, actor);
+            this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
         };
         _Sprite_Picture.prototype.drawFace = function (actor, bitmap) {
             var file = actor.baseId + actor.faceId;

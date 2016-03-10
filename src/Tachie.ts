@@ -105,6 +105,7 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         case 'showLeft':
         case 'showRight':
+            ImageManager.isReady();
             var actorId: number = parseInt(args[1]);
             var x: number = parseInt(args[2] || '0');
             var y: number = parseInt(args[3] || '0');
@@ -117,7 +118,8 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'outer':
         case 'innerTop':
         case 'innerBottom':
-            var actor = $gameActors.actor(parseInt(args[1]));
+            {
+            const actor = $gameActors.actor(parseInt(args[1]));
             if (! actor) {
                 throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');
             }
@@ -125,8 +127,13 @@ class _Game_Interpreter extends Game_Interpreter {
                 throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
             }
             this.tachieActorCommnad(actor, args[0], args[2]);
+            }
             break;
-        case 'start':
+        case 'preload':
+            {
+            const actor = $gameActors.actor(parseInt(args[1]));
+            actor.preloadTachie();
+            }
             break;
         default:
             console.error(args[0]);
@@ -485,6 +492,72 @@ class _Game_Actor extends Game_Actor {
         this._innerTopItemId = newId;
         this.setDirty();
     }
+    preloadTachie(): void {
+        this.doPreloadTachie(this.outerBackFile());
+        this.doPreloadTachie(this.outerShadowFile());
+        this.doPreloadTachie(this.outerMainFile());
+        this.doPreloadTachie(this.outerFrontFile());
+        this.doPreloadTachie(this.bodyBackFile());
+        this.doPreloadTachie(this.bodyFrontFile());
+        this.doPreloadTachie(this.innerBottomFile());
+        this.doPreloadTachie(this.innerTopFile());
+        this.doPreloadTachie(this.hoppeFile());
+        this.doPreloadTachie(this.faceFile());
+    }
+    doPreloadTachie(file: string): void {
+        if (! file) {
+            return;
+        }
+        ImageManager.loadTachie(file);
+    }
+    outerBackFile(): string {
+        return this.baseId + 'out_' + this.outerId + '_back_' + this.poseId;
+    }
+    outerShadowFile(): string {
+        if (! this.hasOuter()) {
+            return null;
+        }
+        return this.baseId + 'out_' + this.outerId + '_shadow_' + this.poseId;
+    }
+    outerMainFile(): string {
+        if (! this.hasOuter()) {
+            return null;
+        }
+        return this.baseId + 'out_' + this.outerId + '_main_' + this.poseId;
+    }
+    outerFrontFile(): string {
+        if (! this.hasOuter()) {
+            return null;
+        }
+        return this.baseId + 'out_' + this.outerId + '_front_' + this.poseId;
+    }
+    bodyBackFile(): string {
+        return this.baseId + 'body_' + this.poseId;
+    }
+    bodyFrontFile(): string {
+        return this.baseId + 'face_' + this.poseId;
+    }
+    innerBottomFile(): string {
+        if (! this.hasInnerBottom()) {
+            return null;
+        }
+        return this.baseId + 'in_' + this.innerBottomId + '_bottom';
+    }
+    innerTopFile(): string {
+        if (! this.hasInnerTop()) {
+            return null;
+        }
+        return this.baseId + 'in_' + this.innerTopId + '_top';
+    }
+    hoppeFile(): string {
+        if (this.hoppeId === 0) {
+            return null;
+        }
+        return this.baseId + 'hoppe';
+    }
+    faceFile(): string {
+        return this.baseId + this.faceId;
+    }
 }
 
 
@@ -512,7 +585,7 @@ ImageManager.isReady = function() {
             if (bitmap.url.indexOf('tachie') >= 0) {
                 console.error('Failed to load: ' + bitmap.url);
                 this._cache[key] = new Bitmap();
-                return true;
+                continue;
             } else {
                 throw new Error('Failed to load: ' + bitmap.url);
             }
@@ -548,21 +621,19 @@ class _Game_Temp extends Game_Temp {
 
 
 class _Game_Screen extends Game_Screen {
-    showActorPicture(actorId: number, pictureId: number, x: number, y: number) {
+    showActorPicture(actorId: number, pictureId: number, x: number, y: number): void {
         var name = ACTOR_PREFIX + actorId;
         this.showPicture(pictureId, name, 0, x, y, 1, 1, 1, 0);
     }
-}
-
-
-Game_Screen.prototype.getPictureId = function(picture) {
-    for (var i = 0; i < this._pictures.length; i++) {
-        if (this._pictures[i] === picture) {
-            return i;
+    getPictureId(picture: Game_Picture): number {
+        for (var i = 0; i < this._pictures.length; i++) {
+            if (this._pictures[i] === picture) {
+                return i;
+            }
         }
+        console.error('picture not found.' + picture);
     }
-    console.error('picture not found.' + picture);
-};
+}
 
 
 class _Sprite_Picture extends Sprite_Picture {
@@ -623,6 +694,9 @@ class _Sprite_Picture extends Sprite_Picture {
         //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
     }
     protected drawTachieFile(file: string, bitmap: Bitmap, actor: Game_Actor): void {
+        if (! file) {
+            return;
+        }
         if (useTextureAtlas) {
             this.drawTachieTextureAtlas(file, bitmap, actor);
         } else {
@@ -660,61 +734,31 @@ class _Sprite_Picture extends Sprite_Picture {
         bitmap.blt(img, 0, 0, img.width, img.height, dx, dy);
     }
     protected drawOuterBack(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasOuter()) {
-            return;
-        }
-        var file = actor.baseId + 'out_' + actor.outerId + '_back_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
     }
     protected drawOuterShadow(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasOuter()) {
-            return;
-        }
-        var file = actor.baseId + 'out_' + actor.outerId + '_shadow_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.outerShadowFile(), bitmap, actor);
     }
     protected drawOuterMain(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasOuter()) {
-            return;
-        }
-        var file = actor.baseId + 'out_' + actor.outerId + '_main_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.outerMainFile(), bitmap, actor);
     }
     protected drawOuterFront(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasOuter()) {
-            return;
-        }
-        var file = actor.baseId + 'out_' + actor.outerId + '_front_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.outerFrontFile(), bitmap, actor);
     }
     protected drawBodyBack(actor: Game_Actor, bitmap: Bitmap): void {
-        var file = actor.baseId + 'body_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.bodyBackFile(), bitmap, actor);
     }
     protected drawBodyFront(actor: Game_Actor, bitmap: Bitmap): void {
-        var file = actor.baseId + 'face_' + actor.poseId;
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.bodyFrontFile(), bitmap, actor);
     }
     protected drawInnerBottom(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasInnerBottom()) {
-            return;
-        }
-        var file = actor.baseId + 'in_' + actor.innerBottomId + '_bottom';
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.innerBottomFile(), bitmap, actor);
     }
     protected drawInnerTop(actor: Game_Actor, bitmap: Bitmap): void {
-        if (! actor.hasInnerTop()) {
-            return;
-        }
-        var file = actor.baseId + 'in_' + actor.innerTopId + '_top';
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.innerTopFile(), bitmap, actor);
     }
     protected drawHoppe(actor: Game_Actor, bitmap: Bitmap): void {
-        if (actor.hoppeId === 0) {
-            return;
-        }
-        var file = actor.baseId + 'hoppe';
-        this.drawTachieFile(file, bitmap, actor);
+        this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
     }
     protected drawFace(actor: Game_Actor, bitmap: Bitmap): void {
         var file = actor.baseId + actor.faceId;
@@ -931,6 +975,10 @@ interface Game_Item {
     innerBottomId(): string;
 }
 
+interface Game_Screen {
+    showActorPicture(actorId: number, pictureId: number, x: number, y: number): void;
+    getPictureId(picture: Game_Picture): number;
+}
 interface Game_Actor {
     readonly poseId: number;
     readonly faceId: string;
@@ -968,6 +1016,17 @@ interface Game_Actor {
     setInnerBottomItemId(newId: number): void;
     setHoppeId(n: number): void;
     setPoseId(n: number): void;
+    preloadTachie(): void;
+    outerBackFile(): string;
+    outerShadowFile(): string;
+    outerMainFile(): string;
+    outerFrontFile(): string;
+    bodyBackFile(): string;
+    bodyFrontFile(): string;
+    innerBottomFile(): string;
+    innerTopFile(): string;
+    hoppeFile(): string;
+    faceFile(): string;
 }
 interface ImageManager {
     loadTachie(file: string, hue?: number): Bitmap;

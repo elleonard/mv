@@ -291,17 +291,6 @@ class _Scene_Map extends Scene_Map {
     }
 }
 
-var applyMyMethods = (myClass: any, presetClass: any, applyConstructor: boolean) => {
-    let myProto = myClass.prototype;
-    for (var p in myProto) {
-        if (myProto.hasOwnProperty(p)) {
-            if (p === 'constructor' && ! applyConstructor) {
-                continue;
-            }
-            presetClass.prototype[p] = myProto[p];
-        }
-    }
-};
-applyMyMethods(_Scene_Map, Scene_Map, false);
+Saba.applyMyMethods(_Scene_Map, Scene_Map, false);
 
 }

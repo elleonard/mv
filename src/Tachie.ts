@@ -17,9 +17,11 @@
  */
 module Tachie {
 
-var parameters = PluginManager.parameters('Tachie');
-var offsetX = {};
-var offsetY = {};
+const parameters = PluginManager.parameters('Tachie');
+export const offsetX = {};
+export const offsetY = {};
+export const RIGHT_POS_OFFSET_X = 400;
+
 for (var i = 1; i < 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
     offsetX[i] = parseInt(offset1[0] || '0');
@@ -32,12 +34,12 @@ for (var i = 1; i < 10; i++) {
     }
 }
 var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-var DEFAULT_PICTURE_ID1: number = 12;
-var DEFAULT_PICTURE_ID2: number = 11;
+export var DEFAULT_PICTURE_ID1: number = 12;
+export var DEFAULT_PICTURE_ID2: number = 11;
 var ACTOR_PREFIX: string = '___actor';
 
-var LEFT_POS = 1;
-var RIGHT_POS = 2;
+export var LEFT_POS = 1;
+export var RIGHT_POS = 2;
 
 var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
@@ -55,6 +57,12 @@ class _Game_Interpreter extends Game_Interpreter {
         }
 
         switch (args[0]) {
+        case 'start':
+            $gameTemp.tachieAvairable = true;
+            break;
+        case 'end':
+            $gameTemp.tachieAvairable = false;
+            break;
         case 'showName':
             $gameTemp.tachieName = args[1];
             break;
@@ -72,11 +80,13 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'face':
         case 'pose':
         case 'hoppe':
-        case 'bote':
         case 'outer':
         case 'innerTop':
         case 'innerBottom':
             var actor = $gameActors.actor(parseInt(args[1]));
+            if (! actor) {
+                throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1]) + 'のアクターが存在しません');
+            }
             if (args[2] == null) {
                 throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
             }
@@ -98,7 +108,7 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'showRight':
             $gameTemp.tachieActorId = pictureId;
             $gameTemp.tachieActorPos = RIGHT_POS;
-            $gameScreen.showPicture(DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + 400, y, 100, 100, opacity, 0);
+            $gameScreen.showPicture(DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + RIGHT_POS_OFFSET_X, y, 100, 100, opacity, 0);
             break;
         }
     }
@@ -662,9 +672,13 @@ class Window_MessageName extends Window_Base {
         return 0;
     }
     draw(name): void {
-        this.width = name.length * 34 + 30;
+        if (! name) {
+            this.visible = false;
+            return;
+        }
+        this.width = name.length * 26 + 28;
         this.contents.clear();
-        this.drawText(name, 8, 0, 160);
+        this.drawTextEx(name, 8, 0, 160);
         this.open();
     }
 }
@@ -761,8 +775,14 @@ class Window_TachieMessage extends Window_Message {
         return false;
     }
     terminateMessage(): void {
-        this.close();
         $gameMessage.clear();
+        if ($gameTemp.tachieAvairable) {
+            return;
+        }
+        this.close();
+    }
+    textAreaWidth(): number {
+        return this.contentsWidth() + 20;
     }
 }
 
@@ -792,24 +812,15 @@ Scene_Map.prototype.createMessageWindow = function() {
     }, this);
 };
 
-var applyMyMethods = (myClass: any, presetClass: any, applyConstructor?: boolean) => {
-    for (var p in myClass.prototype) {
-        if (myClass.prototype.hasOwnProperty(p)) {
-            if (p === 'constructor' && ! applyConstructor) { continue; }
-            Object.defineProperty(presetClass.prototype, p, Object.getOwnPropertyDescriptor(myClass.prototype,p));
-            //presetClass.prototype[p] = myClass.prototype[p];
-        }
-    }
-};
 
-applyMyMethods(_Bitmap, Bitmap);
-applyMyMethods(_Game_Interpreter, Game_Interpreter);
-applyMyMethods(_Sprite_Picture, Sprite_Picture);
-applyMyMethods(_Game_Item, Game_Item);
-applyMyMethods(_Game_Actor, Game_Actor);
-applyMyMethods(_Game_Screen, Game_Screen);
-applyMyMethods(_Game_Picture, Game_Picture);
-applyMyMethods(_Game_Temp, Game_Temp);
+Saba.applyMyMethods(_Bitmap, Bitmap);
+Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
+Saba.applyMyMethods(_Sprite_Picture, Sprite_Picture);
+Saba.applyMyMethods(_Game_Item, Game_Item);
+Saba.applyMyMethods(_Game_Actor, Game_Actor);
+Saba.applyMyMethods(_Game_Screen, Game_Screen);
+Saba.applyMyMethods(_Game_Picture, Game_Picture);
+Saba.applyMyMethods(_Game_Temp, Game_Temp);
 
 }
 
@@ -829,6 +840,7 @@ interface Game_Temp {
     tachieName: string;
     tachieActorId: number;
     tachieActorPos: number;
+    tachieAvairable: boolean;   // これが true の時はメッセージウィンドウを閉じません
 }
 interface Game_Item {
     isOuter(): boolean;

@@ -23,25 +23,26 @@ var __extends = (this && this.__extends) || function (d, b) {
 var Tachie;
 (function (Tachie) {
     var parameters = PluginManager.parameters('Tachie');
-    var offsetX = {};
-    var offsetY = {};
+    Tachie.offsetX = {};
+    Tachie.offsetY = {};
+    Tachie.RIGHT_POS_OFFSET_X = 400;
     for (var i = 1; i < 10; i++) {
         var offset1 = String(parameters['actor' + i + 'offset']).split(',');
-        offsetX[i] = parseInt(offset1[0] || '0');
-        offsetY[i] = parseInt(offset1[1] || '0');
-        if (isNaN(offsetX[i])) {
-            offsetX[i] = 0;
+        Tachie.offsetX[i] = parseInt(offset1[0] || '0');
+        Tachie.offsetY[i] = parseInt(offset1[1] || '0');
+        if (isNaN(Tachie.offsetX[i])) {
+            Tachie.offsetX[i] = 0;
         }
-        if (isNaN(offsetY[i])) {
-            offsetY[i] = 0;
+        if (isNaN(Tachie.offsetY[i])) {
+            Tachie.offsetY[i] = 0;
         }
     }
     var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-    var DEFAULT_PICTURE_ID1 = 12;
-    var DEFAULT_PICTURE_ID2 = 11;
+    Tachie.DEFAULT_PICTURE_ID1 = 12;
+    Tachie.DEFAULT_PICTURE_ID2 = 11;
     var ACTOR_PREFIX = '___actor';
-    var LEFT_POS = 1;
-    var RIGHT_POS = 2;
+    Tachie.LEFT_POS = 1;
+    Tachie.RIGHT_POS = 2;
     var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
     var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
     var _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
@@ -58,6 +59,12 @@ var Tachie;
                 return;
             }
             switch (args[0]) {
+                case 'start':
+                    $gameTemp.tachieAvairable = true;
+                    break;
+                case 'end':
+                    $gameTemp.tachieAvairable = false;
+                    break;
                 case 'showName':
                     $gameTemp.tachieName = args[1];
                     break;
@@ -75,11 +82,14 @@ var Tachie;
                 case 'face':
                 case 'pose':
                 case 'hoppe':
-                case 'bote':
                 case 'outer':
                 case 'innerTop':
                 case 'innerBottom':
                     var actor = $gameActors.actor(parseInt(args[1]));
+                    if (!actor) {
+                        throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1]) + 'のアクターが存在しません';
+                        ;
+                    }
                     if (args[2] == null) {
                         throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
                     }
@@ -95,13 +105,13 @@ var Tachie;
             switch (command) {
                 case 'showLeft':
                     $gameTemp.tachieActorId = pictureId;
-                    $gameTemp.tachieActorPos = LEFT_POS;
-                    $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + pictureId, 0, x, y, 100, 100, opacity, 0);
+                    $gameTemp.tachieActorPos = Tachie.LEFT_POS;
+                    $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + pictureId, 0, x, y, 100, 100, opacity, 0);
                     break;
                 case 'showRight':
                     $gameTemp.tachieActorId = pictureId;
-                    $gameTemp.tachieActorPos = RIGHT_POS;
-                    $gameScreen.showPicture(DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + 400, y, 100, 100, opacity, 0);
+                    $gameTemp.tachieActorPos = Tachie.RIGHT_POS;
+                    $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID2, ACTOR_PREFIX + pictureId, 0, x + Tachie.RIGHT_POS_OFFSET_X, y, 100, 100, opacity, 0);
                     break;
             }
         };
@@ -314,14 +324,14 @@ var Tachie;
         });
         Object.defineProperty(_Game_Actor.prototype, "tachieOffsetX", {
             get: function () {
-                return offsetX[this.actorId()] || 0;
+                return Tachie.offsetX[this.actorId()] || 0;
             },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(_Game_Actor.prototype, "tachieOffsetY", {
             get: function () {
-                return offsetY[this.actorId()] || 0;
+                return Tachie.offsetY[this.actorId()] || 0;
             },
             enumerable: true,
             configurable: true
@@ -711,9 +721,13 @@ var Tachie;
             return 0;
         };
         Window_MessageName.prototype.draw = function (name) {
-            this.width = name.length * 34 + 30;
+            if (!name) {
+                this.visible = false;
+                return;
+            }
+            this.width = name.length * 26 + 28;
             this.contents.clear();
-            this.drawText(name, 8, 0, 160);
+            this.drawTextEx(name, 8, 0, 160);
             this.open();
         };
         return Window_MessageName;
@@ -743,11 +757,11 @@ var Tachie;
             }
         };
         Sprite_WindowBalloon.prototype.updatePosition = function () {
-            if ($gameTemp.tachieActorPos === LEFT_POS) {
+            if ($gameTemp.tachieActorPos === Tachie.LEFT_POS) {
                 this.scale.x = 1;
                 this.x = 300;
             }
-            else if ($gameTemp.tachieActorPos === RIGHT_POS) {
+            else if ($gameTemp.tachieActorPos === Tachie.RIGHT_POS) {
                 this.scale.x = -1;
                 this.x = 500;
             }
@@ -818,8 +832,14 @@ var Tachie;
             return false;
         };
         Window_TachieMessage.prototype.terminateMessage = function () {
-            this.close();
             $gameMessage.clear();
+            if ($gameTemp.tachieAvairable) {
+                return;
+            }
+            this.close();
+        };
+        Window_TachieMessage.prototype.textAreaWidth = function () {
+            return this.contentsWidth() + 20;
         };
         return Window_TachieMessage;
     }(Window_Message));
@@ -846,22 +866,12 @@ var Tachie;
             this.addWindow(window);
         }, this);
     };
-    var applyMyMethods = function (myClass, presetClass, applyConstructor) {
-        for (var p in myClass.prototype) {
-            if (myClass.prototype.hasOwnProperty(p)) {
-                if (p === 'constructor' && !applyConstructor) {
-                    continue;
-                }
-                Object.defineProperty(presetClass.prototype, p, Object.getOwnPropertyDescriptor(myClass.prototype, p));
-            }
-        }
-    };
-    applyMyMethods(_Bitmap, Bitmap);
-    applyMyMethods(_Game_Interpreter, Game_Interpreter);
-    applyMyMethods(_Sprite_Picture, Sprite_Picture);
-    applyMyMethods(_Game_Item, Game_Item);
-    applyMyMethods(_Game_Actor, Game_Actor);
-    applyMyMethods(_Game_Screen, Game_Screen);
-    applyMyMethods(_Game_Picture, Game_Picture);
-    applyMyMethods(_Game_Temp, Game_Temp);
+    Saba.applyMyMethods(_Bitmap, Bitmap);
+    Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
+    Saba.applyMyMethods(_Sprite_Picture, Sprite_Picture);
+    Saba.applyMyMethods(_Game_Item, Game_Item);
+    Saba.applyMyMethods(_Game_Actor, Game_Actor);
+    Saba.applyMyMethods(_Game_Screen, Game_Screen);
+    Saba.applyMyMethods(_Game_Picture, Game_Picture);
+    Saba.applyMyMethods(_Game_Temp, Game_Temp);
 })(Tachie || (Tachie = {}));

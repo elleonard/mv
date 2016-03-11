@@ -43,6 +43,8 @@ var Tachie;
     var ACTOR_PREFIX = '___actor';
     Tachie.LEFT_POS = 1;
     Tachie.RIGHT_POS = 2;
+    Tachie.MESSAGE_SKIP_KEY = 'control';
+    Tachie.WINDOW_HIDE_KEY = 'shift';
     var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
     var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
     var _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
@@ -422,7 +424,7 @@ var Tachie;
             this._castOffInnerTop = false;
             this._castOffInnerBottom = false;
             this._castOffOuter = false;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.isDirty = function () {
             return this._dirty;
@@ -432,6 +434,16 @@ var Tachie;
         };
         _Game_Actor.prototype.clearDirty = function () {
             this._dirty = false;
+        };
+        _Game_Actor.prototype.isCacheChanged = function () {
+            return this._cacheChanged;
+        };
+        _Game_Actor.prototype.setCacheChanged = function () {
+            this._cacheChanged = true;
+            this.setDirty();
+        };
+        _Game_Actor.prototype.clearCacheChanged = function () {
+            this._cacheChanged = false;
         };
         _Game_Actor.prototype.castOffOuter = function () {
             if (this._castOffOuter) {
@@ -445,14 +457,14 @@ var Tachie;
                 return;
             }
             this._castOffInnerBottom = true;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.castOffInnerTop = function () {
             if (this._castOffInnerTop) {
                 return;
             }
             this._castOffInnerTop = true;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.isCastOffOuter = function () {
             return this._castOffOuter;
@@ -494,49 +506,49 @@ var Tachie;
                 return;
             }
             this._poseId = n;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setOuterId = function (newId) {
             if (this._outerId === newId) {
                 return;
             }
             this._outerId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setOuterItemId = function (newId) {
             if (this._outerItemId === newId) {
                 return;
             }
             this._outerItemId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setInnerBottomId = function (newId) {
             if (this._innerBottomId === newId) {
                 return;
             }
             this._innerBottomId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setInnerBottomItemId = function (newId) {
             if (this._innerBottomItemId === newId) {
                 return;
             }
             this._innerBottomItemId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setInnerTopId = function (newId) {
             if (this._innerTopId === newId) {
                 return;
             }
             this._innerTopId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.setInnerTopItemId = function (newId) {
             if (this._innerTopItemId === newId) {
                 return;
             }
             this._innerTopItemId = newId;
-            this.setDirty();
+            this.setCacheChanged();
         };
         _Game_Actor.prototype.preloadTachie = function () {
             this.doPreloadTachie(this.outerBackFile());
@@ -736,9 +748,9 @@ var Tachie;
         _Sprite_Picture.prototype.drawActorImage = function (actor, bitmap) {
             var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
             this.bitmap.clear();
-            if (actor.isDirty()) {
+            if (actor.isCacheChanged()) {
                 cache.clear();
-                actor.clearDirty();
+                actor.clearCacheChanged();
                 this.drawOuterBack(actor, cache);
                 this.drawBodyBack(actor, cache);
                 this.drawInnerBottom(actor, cache);
@@ -852,9 +864,9 @@ var Tachie;
                 this.visible = false;
                 return;
             }
-            this.width = name.length * 26 + 28;
+            this.width = this.convertEscapeCharacters(name).length * 28 + 40;
             this.contents.clear();
-            this.drawTextEx(name, 8, 0);
+            this.drawTextEx(name, 10, 0);
             this.open();
         };
         return Window_MessageName;
@@ -900,13 +912,6 @@ var Tachie;
         };
         return Sprite_WindowBalloon;
     }(Sprite_Base));
-    var _Bitmap = (function (_super) {
-        __extends(_Bitmap, _super);
-        function _Bitmap() {
-            _super.apply(this, arguments);
-        }
-        return _Bitmap;
-    }(Bitmap));
     var Window_TachieMessage = (function (_super) {
         __extends(Window_TachieMessage, _super);
         function Window_TachieMessage() {
@@ -950,6 +955,49 @@ var Tachie;
             if (!$gameTemp.tachieAvairable && !$gameMessage.isBusy() && this.isOpen()) {
                 this.close();
             }
+            this.updateMessageSkip();
+            this.updateWindowVisibility();
+        };
+        Window_TachieMessage.prototype.updateMessageSkip = function () {
+            if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY)) {
+                if (this._windowHide) {
+                    this.changeWindowVisibility();
+                }
+                this._pauseSkip = true;
+                this._showFast = true;
+                this._triggered = true;
+                this.pause = false;
+                this._waitCount = 0;
+                if (!this._textState) {
+                    this.terminateMessage();
+                }
+            }
+        };
+        Window_TachieMessage.prototype.updateWindowVisibility = function () {
+            if (Input.isTriggered(Tachie.WINDOW_HIDE_KEY)) {
+                this.changeWindowVisibility();
+            }
+            else if (this._windowHide && Input.isTriggered('ok')) {
+                this.changeWindowVisibility();
+            }
+        };
+        Window_TachieMessage.prototype.changeWindowVisibility = function () {
+            this._windowHide = !this._windowHide;
+            if (this._windowHide && this.visible) {
+                this.visible = false;
+                this._messageNameWindow.visible = false;
+            }
+            else {
+                this.visible = true;
+                if ($gameTemp.tachieName) {
+                    this._messageNameWindow.visible = true;
+                }
+            }
+        };
+        Window_TachieMessage.prototype.isTriggered = function () {
+            var ret = _super.prototype.isTriggered.call(this) || this._triggered;
+            this._triggered = false;
+            return ret;
         };
         Window_TachieMessage.prototype.open = function () {
             _super.prototype.open.call(this);
@@ -1001,7 +1049,6 @@ var Tachie;
             this.addWindow(window);
         }, this);
     };
-    Saba.applyMyMethods(_Bitmap, Bitmap);
     Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
     Saba.applyMyMethods(_Sprite_Picture, Sprite_Picture);
     Saba.applyMyMethods(_Game_Item, Game_Item);

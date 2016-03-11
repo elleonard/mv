@@ -197,7 +197,8 @@ var SimpleScenario;
                 this['convertCommand_' + command](context);
             }
             catch (e) {
-                console.error(command + 'のコマンドが存在しません');
+                console.error(command + 'のコマンドでエラーが発生しました');
+                console.log(e);
                 throw e;
             }
         };
@@ -341,6 +342,70 @@ var SimpleScenario;
             var opacity = context.headerInt('transparent', 255);
             var blend = context.headerInt('blend', 0);
             context.push({ 'code': 231, 'indent': this.indent, 'parameters': [layer, file, origin, type, x, y, zoomX, zoomy, opacity, blend] });
+        };
+        Scenario_Converter.prototype.convertCommand_picture_move = function (context) {
+            var layer = context.headerInt('layer');
+            var origin = context.headerInt('origin', 0);
+            var type = context.header['type'] === 'var' ? 1 : 0;
+            var x = context.headerInt('x', 0);
+            var y = context.headerInt('y', 0);
+            var zoomX = context.headerInt('zoom_x', 100);
+            var zoomy = context.headerInt('zoom_y', 100);
+            var opacity = context.headerInt('transparent', 255);
+            var blend = context.headerInt('blend', 0);
+            var time = context.headerInt('time', 0);
+            var wait = context.headerStr('wait') === 'wait';
+            context.push({ 'code': 232, 'indent': this.indent, 'parameters': [layer, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait] });
+        };
+        Scenario_Converter.prototype.convertCommand_picture_erace = function (context) {
+            var layer = context.headerInt('layer');
+            context.push({ 'code': 235, 'indent': this.indent, 'parameters': [layer] });
+        };
+        Scenario_Converter.prototype.convertCommand_bgm = function (context) {
+            var name = context.headerStr('file');
+            var volume = context.headerInt('volume', 100);
+            var pitch = context.headerInt('pitch', 100);
+            var pan = context.headerInt('pan', 100);
+            var bgm = { name: name, volume: volume, pitch: pitch, pan: pan };
+            context.push({ 'code': 241, 'indent': this.indent, 'parameters': [bgm] });
+        };
+        Scenario_Converter.prototype.convertCommand_fadeout_bgm = function (context) {
+            var time = context.headerInt('time', 10);
+            context.push({ 'code': 242, 'indent': this.indent, 'parameters': [time] });
+        };
+        Scenario_Converter.prototype.convertCommand_save_bgm = function (context) {
+            context.push({ 'code': 243, 'indent': this.indent, 'parameters': [] });
+        };
+        Scenario_Converter.prototype.convertCommand_bgs = function (context) {
+            var name = context.headerStr('file');
+            var volume = context.headerInt('volume', 100);
+            var pitch = context.headerInt('pitch', 100);
+            var pan = context.headerInt('pan', 100);
+            var bgs = { name: name, volume: volume, pitch: pitch, pan: pan };
+            context.push({ 'code': 245, 'indent': this.indent, 'parameters': [bgs] });
+        };
+        Scenario_Converter.prototype.convertCommand_fadeout_bgs = function (context) {
+            var time = context.headerInt('time', 10);
+            context.push({ 'code': 246, 'indent': this.indent, 'parameters': [time] });
+        };
+        Scenario_Converter.prototype.convertCommand_me = function (context) {
+            var name = context.headerStr('file');
+            var volume = context.headerInt('volume', 100);
+            var pitch = context.headerInt('pitch', 100);
+            var pan = context.headerInt('pan', 100);
+            var me = { name: name, volume: volume, pitch: pitch, pan: pan };
+            context.push({ 'code': 249, 'indent': this.indent, 'parameters': [me] });
+        };
+        Scenario_Converter.prototype.convertCommand_se = function (context) {
+            var name = context.headerStr('file');
+            var volume = context.headerInt('volume', 100);
+            var pitch = context.headerInt('pitch', 100);
+            var pan = context.headerInt('pan', 100);
+            var se = { name: name, volume: volume, pitch: pitch, pan: pan };
+            context.push({ 'code': 250, 'indent': this.indent, 'parameters': [se] });
+        };
+        Scenario_Converter.prototype.convertCommand_stop_se = function (context) {
+            context.push({ 'code': 251, 'indent': this.indent, 'parameters': [] });
         };
         return Scenario_Converter;
     }());

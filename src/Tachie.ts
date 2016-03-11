@@ -34,12 +34,15 @@ for (var i = 1; i < 10; i++) {
     }
 }
 var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-export var DEFAULT_PICTURE_ID1: number = 12;
-export var DEFAULT_PICTURE_ID2: number = 11;
-var ACTOR_PREFIX: string = '___actor';
+export const DEFAULT_PICTURE_ID1: number = 12;
+export const DEFAULT_PICTURE_ID2: number = 11;
+const ACTOR_PREFIX: string = '___actor';
 
-export var LEFT_POS = 1;
-export var RIGHT_POS = 2;
+export const LEFT_POS = 1;
+export const RIGHT_POS = 2;
+
+export const MESSAGE_SKIP_KEY: string = 'control';
+export const WINDOW_HIDE_KEY: string = 'shift';
 
 var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
@@ -283,6 +286,7 @@ class _Game_Actor extends Game_Actor {
     protected _faceId: number;
     protected _hoppeId: number;
     protected _dirty: boolean;
+    protected _cacheChanged: boolean;
 
     protected _outerId: string;
     protected _innerTopId: string;
@@ -383,7 +387,7 @@ class _Game_Actor extends Game_Actor {
         this._castOffInnerTop = false;
         this._castOffInnerBottom = false;
         this._castOffOuter = false;
-        this.setDirty();
+        this.setCacheChanged();
     }
     isDirty(): boolean {
         return this._dirty;
@@ -393,6 +397,16 @@ class _Game_Actor extends Game_Actor {
     }
     clearDirty(): void {
         this._dirty = false;
+    }
+    isCacheChanged(): boolean {
+        return this._cacheChanged;
+    }
+    setCacheChanged(): void {
+        this._cacheChanged = true;
+        this.setDirty();
+    }
+    clearCacheChanged(): void {
+        this._cacheChanged = false;
     }
     castOffOuter(): void {
         if (this._castOffOuter) {
@@ -406,14 +420,14 @@ class _Game_Actor extends Game_Actor {
             return;
         }
         this._castOffInnerBottom = true;
-        this.setDirty();
+        this.setCacheChanged();
     }
     castOffInnerTop(): void {
         if (this._castOffInnerTop) {
             return;
         }
         this._castOffInnerTop = true;
-        this.setDirty();
+        this.setCacheChanged();
     }
     isCastOffOuter(): boolean {
         return this._castOffOuter;
@@ -455,49 +469,49 @@ class _Game_Actor extends Game_Actor {
             return;
         }
         this._poseId = n;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setOuterId(newId: string): void {
         if (this._outerId === newId) {
             return;
         }
         this._outerId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setOuterItemId(newId: number): void {
         if (this._outerItemId === newId) {
             return;
         }
         this._outerItemId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setInnerBottomId(newId: string): void {
         if (this._innerBottomId === newId) {
             return;
         }
         this._innerBottomId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setInnerBottomItemId(newId: number): void {
         if (this._innerBottomItemId === newId) {
             return;
         }
         this._innerBottomItemId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setInnerTopId(newId: string): void {
         if (this._innerTopId === newId) {
             return;
         }
         this._innerTopId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     setInnerTopItemId(newId: number): void {
         if (this._innerTopItemId === newId) {
             return;
         }
         this._innerTopItemId = newId;
-        this.setDirty();
+        this.setCacheChanged();
     }
     preloadTachie(): void {
         this.doPreloadTachie(this.outerBackFile());
@@ -686,9 +700,9 @@ class _Sprite_Picture extends Sprite_Picture {
     drawActorImage(actor: Game_Actor, bitmap: Bitmap): void {
         var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
         this.bitmap.clear();
-        if (actor.isDirty()) {
+        if (actor.isCacheChanged()) {
             cache.clear();
-            actor.clearDirty();
+            actor.clearCacheChanged();
             this.drawOuterBack(actor, cache);
             this.drawBodyBack(actor, cache);
             this.drawInnerBottom(actor, cache);
@@ -801,9 +815,9 @@ class Window_MessageName extends Window_Base {
             this.visible = false;
             return;
         }
-        this.width = name.length * 26 + 28;
+        this.width = this.convertEscapeCharacters(name).length * 28 + 40;
         this.contents.clear();
-        this.drawTextEx(name, 8, 0);
+        this.drawTextEx(name, 10, 0);
         this.open();
     }
 }
@@ -849,16 +863,13 @@ class Sprite_WindowBalloon extends Sprite_Base {
     }
 }
 
-class _Bitmap extends Bitmap {
-
-}
-
-
 
 class Window_TachieMessage extends Window_Message {
     protected _messageNameWindow: Window_MessageName;
     protected _balloonSprite: Sprite_WindowBalloon;
     protected _windowSkilId: number;
+    protected _triggered: boolean;
+    protected _windowHide: boolean;
     numVisibleRows(): number {
         return 3;
     }
@@ -895,6 +906,47 @@ class Window_TachieMessage extends Window_Message {
         if (! $gameTemp.tachieAvairable && ! $gameMessage.isBusy() && this.isOpen()) {
             this.close();
         }
+        this.updateMessageSkip();
+        this.updateWindowVisibility();
+    }
+    updateMessageSkip(): void {
+        if (Input.isPressed(MESSAGE_SKIP_KEY)) {
+            if (this._windowHide) {
+                this.changeWindowVisibility();
+            }
+            this._pauseSkip = true;
+            this._showFast = true;
+            this._triggered = true;
+            this.pause = false;
+            this._waitCount = 0;
+            if (!this._textState) {
+                this.terminateMessage();
+            }
+        }
+    }
+    updateWindowVisibility(): void {
+        if (Input.isTriggered(WINDOW_HIDE_KEY)) {
+            this.changeWindowVisibility();
+        } else if (this._windowHide && Input.isTriggered('ok')) {
+            this.changeWindowVisibility();
+        }
+    }
+    changeWindowVisibility(): void {
+        this._windowHide = ! this._windowHide;
+        if (this._windowHide && this.visible) {
+            this.visible = false;
+            this._messageNameWindow.visible = false;
+        } else {
+            this.visible = true;
+            if ($gameTemp.tachieName) {
+                this._messageNameWindow.visible = true;
+            }
+        }
+    }
+    isTriggered(): boolean {
+        const ret = super.isTriggered() || this._triggered;
+        this._triggered = false;
+        return ret;
     }
     open(): void {
         super.open();
@@ -950,7 +1002,6 @@ Scene_Map.prototype.createMessageWindow = function() {
 };
 
 
-Saba.applyMyMethods(_Bitmap, Bitmap);
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
 Saba.applyMyMethods(_Sprite_Picture, Sprite_Picture);
 Saba.applyMyMethods(_Game_Item, Game_Item);
@@ -1010,6 +1061,9 @@ interface Game_Actor {
     isDirty(): boolean;
     setDirty(): void;
     clearDirty(): void;
+    isCacheChanged(): boolean;
+    setCacheChanged(): void;
+    clearCacheChanged(): void;
     castOffOuter(): void;
     castOffInnerBottom(): void;
     castOffInnerTop(): void;

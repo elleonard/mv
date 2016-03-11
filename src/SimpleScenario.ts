@@ -194,7 +194,8 @@ class Scenario_Converter {
         try {
             this['convertCommand_' + command](context);
         } catch (e) {
-            console.error(command + 'のコマンドが存在しません');
+            console.error(command + 'のコマンドでエラーが発生しました');
+            console.log(e);
             throw e;
         }
     }
@@ -338,6 +339,74 @@ class Scenario_Converter {
         const opacity = context.headerInt('transparent', 255);
         const blend = context.headerInt('blend', 0);
         context.push({'code': 231, 'indent': this.indent, 'parameters': [layer, file, origin, type, x, y, zoomX, zoomy, opacity, blend]});
+    }
+    protected convertCommand_picture_move(context: Context): void  {
+        const layer = context.headerInt('layer');
+        const origin = context.headerInt('origin', 0);
+        const type = context.header['type'] === 'var' ? 1 : 0;
+        const x = context.headerInt('x', 0);
+        const y = context.headerInt('y', 0);
+        const zoomX = context.headerInt('zoom_x', 100);
+        const zoomy = context.headerInt('zoom_y', 100);
+        const opacity = context.headerInt('transparent', 255);
+        const blend = context.headerInt('blend', 0);
+        const time = context.headerInt('time', 0);
+        const wait = context.headerStr('wait') === 'wait';
+        context.push({'code': 232, 'indent': this.indent, 'parameters': [layer, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait]});
+    }
+    protected convertCommand_picture_erace(context: Context): void {
+        const layer = context.headerInt('layer');
+        context.push({'code': 235, 'indent': this.indent, 'parameters': [layer]});
+    }
+    protected convertCommand_bgm(context: Context): void {
+        var name = context.headerStr('file');
+        var volume = context.headerInt('volume', 100);
+        var pitch = context.headerInt('pitch', 100);
+        var pan = context.headerInt('pan', 100);
+        const bgm: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
+
+        context.push({'code': 241, 'indent': this.indent, 'parameters': [bgm]});
+    }
+    protected convertCommand_fadeout_bgm(context: Context): void {
+        const time = context.headerInt('time', 10);
+        context.push({'code': 242, 'indent': this.indent, 'parameters': [time]});
+    }
+    protected convertCommand_save_bgm(context: Context): void {
+        context.push({'code': 243, 'indent': this.indent, 'parameters': []});
+    }
+    protected convertCommand_bgs(context: Context): void {
+        var name = context.headerStr('file');
+        var volume = context.headerInt('volume', 100);
+        var pitch = context.headerInt('pitch', 100);
+        var pan = context.headerInt('pan', 100);
+        const bgs: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
+
+        context.push({'code': 245, 'indent': this.indent, 'parameters': [bgs]});
+    }
+    protected convertCommand_fadeout_bgs(context: Context): void {
+        const time = context.headerInt('time', 10);
+        context.push({'code': 246, 'indent': this.indent, 'parameters': [time]});
+    }
+    protected convertCommand_me(context: Context): void {
+        var name = context.headerStr('file');
+        var volume = context.headerInt('volume', 100);
+        var pitch = context.headerInt('pitch', 100);
+        var pan = context.headerInt('pan', 100);
+        const me: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
+
+        context.push({'code': 249, 'indent': this.indent, 'parameters': [me]});
+    }
+    protected convertCommand_se(context: Context): void {
+        var name = context.headerStr('file');
+        var volume = context.headerInt('volume', 100);
+        var pitch = context.headerInt('pitch', 100);
+        var pan = context.headerInt('pan', 100);
+        const se: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
+
+        context.push({'code': 250, 'indent': this.indent, 'parameters': [se]});
+    }
+    protected convertCommand_stop_se(context: Context): void {
+        context.push({'code': 251, 'indent': this.indent, 'parameters': []});
     }
 
 }

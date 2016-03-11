@@ -263,24 +263,21 @@ class Scenario_Converter {
             pos = parseInt(context.header['pos']);
         }
 
-        let face = 1;
         if (context.header['face']) {
-            face = parseInt(context.header['face']);
+            const face = parseInt(context.header['face']);
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie face ${actorId} ${face}`]});
         }
 
-        let pose = 1;
         if (context.header['pose']) {
-            pose = parseInt(context.header['pose']);
+            const pose = parseInt(context.header['pose']);
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie pose ${actorId} ${pose}`]});
         }
 
-        let hoppe = 0;
         if (context.header['hoppe']) {
-            hoppe = parseInt(context.header['hoppe']);
+            const hoppe = parseInt(context.header['hoppe']);
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hoppe ${actorId} ${hoppe}`]});
         }
 
-        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hoppe ${actorId} ${hoppe}`]});
-        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie pose ${actorId} ${pose}`]});
-        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie face ${actorId} ${face}`]});
 
         let name = '\\N[' + actorId + ']';
         if (context.header['name']) {
@@ -329,6 +326,20 @@ class Scenario_Converter {
             }
         }
     }
+    protected convertCommand_picture(context: Context): void  {
+        const layer = context.headerInt('layer');
+        const file = context.header['file'];
+        const origin = context.headerInt('origin', 0);
+        const type = context.header['type'] === 'var' ? 1 : 0;
+        const x = context.headerInt('x', 0);
+        const y = context.headerInt('y', 0);
+        const zoomX = context.headerInt('zoom_x', 100);
+        const zoomy = context.headerInt('zoom_y', 100);
+        const opacity = context.headerInt('transparent', 255);
+        const blend = context.headerInt('blend', 0);
+        context.push({'code': 231, 'indent': this.indent, 'parameters': [layer, file, origin, type, x, y, zoomX, zoomy, opacity, blend]});
+    }
+
 }
 
 class Block {
@@ -360,6 +371,25 @@ class Context {
     push(command: RPG.EventCommand): void {
         this.list.push(command);
     }
+    headerInt(id: string, defaultValue = 0): number {
+        const value = this.header[id];
+        if (! value) {
+            return defaultValue;
+        }
+        const valueInt = parseInt(value);
+        if (isNaN(valueInt)) {
+            return defaultValue;
+        }
+        return valueInt;
+    }
+    headerStr(id: string, defaultValue = ''): string {
+        const value = this.header[id];
+        if (! value) {
+            return defaultValue;
+        }
+        return value;
+    }
+
 }
 
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);

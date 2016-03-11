@@ -269,21 +269,18 @@ var SimpleScenario;
             if (context.header['pos']) {
                 pos = parseInt(context.header['pos']);
             }
-            var face = 1;
             if (context.header['face']) {
-                face = parseInt(context.header['face']);
+                var face = parseInt(context.header['face']);
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie face " + actorId + " " + face)] });
             }
-            var pose = 1;
             if (context.header['pose']) {
-                pose = parseInt(context.header['pose']);
+                var pose = parseInt(context.header['pose']);
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie pose " + actorId + " " + pose)] });
             }
-            var hoppe = 0;
             if (context.header['hoppe']) {
-                hoppe = parseInt(context.header['hoppe']);
+                var hoppe = parseInt(context.header['hoppe']);
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie hoppe " + actorId + " " + hoppe)] });
             }
-            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie hoppe " + actorId + " " + hoppe)] });
-            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie pose " + actorId + " " + pose)] });
-            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie face " + actorId + " " + face)] });
             var name = '\\N[' + actorId + ']';
             if (context.header['name']) {
                 name = context.header['name'];
@@ -332,6 +329,19 @@ var SimpleScenario;
                 }
             }
         };
+        Scenario_Converter.prototype.convertCommand_picture = function (context) {
+            var layer = context.headerInt('layer');
+            var file = context.header['file'];
+            var origin = context.headerInt('origin', 0);
+            var type = context.header['type'] === 'var' ? 1 : 0;
+            var x = context.headerInt('x', 0);
+            var y = context.headerInt('y', 0);
+            var zoomX = context.headerInt('zoom_x', 100);
+            var zoomy = context.headerInt('zoom_y', 100);
+            var opacity = context.headerInt('transparent', 255);
+            var blend = context.headerInt('blend', 0);
+            context.push({ 'code': 231, 'indent': this.indent, 'parameters': [layer, file, origin, type, x, y, zoomX, zoomy, opacity, blend] });
+        };
         return Scenario_Converter;
     }());
     var Block = (function () {
@@ -362,6 +372,26 @@ var SimpleScenario;
         }
         Context.prototype.push = function (command) {
             this.list.push(command);
+        };
+        Context.prototype.headerInt = function (id, defaultValue) {
+            if (defaultValue === void 0) { defaultValue = 0; }
+            var value = this.header[id];
+            if (!value) {
+                return defaultValue;
+            }
+            var valueInt = parseInt(value);
+            if (isNaN(valueInt)) {
+                return defaultValue;
+            }
+            return valueInt;
+        };
+        Context.prototype.headerStr = function (id, defaultValue) {
+            if (defaultValue === void 0) { defaultValue = ''; }
+            var value = this.header[id];
+            if (!value) {
+                return defaultValue;
+            }
+            return value;
         };
         return Context;
     }());

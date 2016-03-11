@@ -138,6 +138,13 @@ var Tachie;
                         actor.preloadTachie();
                     }
                     break;
+                case 'preloadFaces':
+                    {
+                        var actor = $gameActors.actor(parseInt(args[1]));
+                        args.splice(0, 2);
+                        actor.preloadFaces(args);
+                    }
+                    break;
                 default:
                     console.error(args[0]);
             }
@@ -543,6 +550,12 @@ var Tachie;
             this.doPreloadTachie(this.hoppeFile());
             this.doPreloadTachie(this.faceFile());
         };
+        _Game_Actor.prototype.preloadFaces = function (faceIds) {
+            for (var _i = 0, faceIds_1 = faceIds; _i < faceIds_1.length; _i++) {
+                var faceId = faceIds_1[_i];
+                this.doPreloadTachie(this.baseId + faceId.padZero(2));
+            }
+        };
         _Game_Actor.prototype.doPreloadTachie = function (file) {
             if (!file) {
                 return;
@@ -722,6 +735,7 @@ var Tachie;
         };
         _Sprite_Picture.prototype.drawActorImage = function (actor, bitmap) {
             var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
+            this.bitmap.clear();
             if (actor.isDirty()) {
                 cache.clear();
                 actor.clearDirty();
@@ -731,11 +745,11 @@ var Tachie;
                 this.drawInnerTop(actor, cache);
                 this.drawOuterMain(actor, cache);
                 this.drawBodyFront(actor, cache);
-                //this.drawOuterFront(actor, cache);
+                this.drawOuterFront(actor, cache);
                 console.log('createCache:' + actor.actorId());
             }
             this.drawCache(cache);
-            //this.drawHoppe(actor, this.bitmap);
+            this.drawHoppe(actor, this.bitmap);
             this.drawFace(actor, this.bitmap);
         };
         _Sprite_Picture.prototype.drawCache = function (cache) {

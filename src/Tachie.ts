@@ -135,6 +135,13 @@ class _Game_Interpreter extends Game_Interpreter {
             actor.preloadTachie();
             }
             break;
+        case 'preloadFaces':
+            {
+                const actor = $gameActors.actor(parseInt(args[1]));
+                args.splice(0, 2);
+                actor.preloadFaces(args);
+            }
+            break;
         default:
             console.error(args[0]);
         }
@@ -504,6 +511,11 @@ class _Game_Actor extends Game_Actor {
         this.doPreloadTachie(this.hoppeFile());
         this.doPreloadTachie(this.faceFile());
     }
+    preloadFaces(faceIds: Array<string>): void {
+        for (const faceId of faceIds) {
+            this.doPreloadTachie(this.baseId + faceId.padZero(2));
+        }
+    }
     doPreloadTachie(file: string): void {
         if (! file) {
             return;
@@ -673,6 +685,7 @@ class _Sprite_Picture extends Sprite_Picture {
     }
     drawActorImage(actor: Game_Actor, bitmap: Bitmap): void {
         var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
+        this.bitmap.clear();
         if (actor.isDirty()) {
             cache.clear();
             actor.clearDirty();
@@ -682,11 +695,11 @@ class _Sprite_Picture extends Sprite_Picture {
             this.drawInnerTop(actor, cache);
             this.drawOuterMain(actor, cache);
             this.drawBodyFront(actor, cache);
-            //this.drawOuterFront(actor, cache);
+            this.drawOuterFront(actor, cache);
             console.log('createCache:' + actor.actorId());
         }
         this.drawCache(cache);
-        //this.drawHoppe(actor, this.bitmap);
+        this.drawHoppe(actor, this.bitmap);
         this.drawFace(actor, this.bitmap);
     }
     protected drawCache(cache: Bitmap): void {
@@ -1027,6 +1040,7 @@ interface Game_Actor {
     innerTopFile(): string;
     hoppeFile(): string;
     faceFile(): string;
+    preloadFaces(faceIds: Array<string>): void;
 }
 interface ImageManager {
     loadTachie(file: string, hue?: number): Bitmap;

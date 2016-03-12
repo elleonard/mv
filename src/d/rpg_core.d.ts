@@ -3,19 +3,7 @@
 // Definitions by: aaa<https://>, bbb<https://>
 // Definitions: https://
 
-
 declare class Bitmap {
-    protected _canvas: HTMLCanvasElement;
-    protected _context: CanvasRenderingContext2D;
-    protected _baseTexture: PIXI.BaseTexture;
-    protected _image: HTMLImageElement;
-    protected _url: string;
-    protected _paintOpacity: number;
-    protected _smooth: boolean;
-    protected _loadListeners: () => void;
-    protected _isLoading: boolean;
-    protected _hasError: boolean;
-
     /**
      * The face name of the font.
      *
@@ -348,6 +336,17 @@ declare class Bitmap {
      * @param {Function} listner The callback function
      */
     addLoadListener(listner: () => void): void;
+
+    protected _canvas: HTMLCanvasElement;
+    protected _context: CanvasRenderingContext2D;
+    protected _baseTexture: PIXI.BaseTexture;
+    protected _image: HTMLImageElement;
+    protected _url: string;
+    protected _paintOpacity: number;
+    protected _smooth: boolean;
+    protected _loadListeners: () => void;
+    protected _isLoading: boolean;
+    protected _hasError: boolean;
 
     /**
      * @method _makeFontNameText
@@ -1040,6 +1039,504 @@ interface GraphicsStatic {
 declare var Graphics: GraphicsStatic;
 
 /**
+ * The static class that handles HTML5 Audio.
+ *
+ * @class Html5Audio
+ * @constructor
+ */
+interface Html5AudioStatic {
+    _initialized: boolean;
+    _unlocked: boolean;
+    _audioElement: HTMLAudioElement;
+    _gainTweenInterval: number;
+    _tweenGain: number;
+    _tweenTargetGain: number;
+    _tweenGainStep: number;
+    _staticSePath: boolean;
+    _volume: number;
+    _loadListeners: Array<() => void>;
+    _hasError: boolean;
+    _autoPlay: boolean;
+    _isLoading: boolean;
+    _buffered: boolean;
+
+    /**
+     * [read-only] The url of the audio file.
+     *
+     * @property url
+     * @type String
+     */
+    url: string;
+
+    /**
+     * The volume of the audio.
+     *
+     * @property volume
+     * @type Number
+     */
+    volume: number;
+
+    /**
+     * Sets up the Html5 Audio.
+     *
+     * @static
+     * @method setup
+     * @param {String} url The url of the audio file
+     */
+    setup(url: string): void;
+
+    /**
+     * Initializes the audio system.
+     *
+     * @static
+     * @method initialize
+     * @return {Boolean} True if the audio system is available
+     */
+    initialize(): void;
+
+    /**
+     * Clears the audio data.
+     *
+     * @static
+     * @method clear
+     */
+    clear(): void;
+
+    /**
+     * Set the URL of static se.
+     *
+     * @static
+     * @param {String} url
+     */
+    setStaticSe(url: string): void;
+
+    /**
+     * Checks whether the audio data is ready to play.
+     *
+     * @static
+     * @method isReady
+     * @return {Boolean} True if the audio data is ready to play
+     */
+    isReady(): boolean;
+
+    /**
+     * Checks whether a loading error has occurred.
+     *
+     * @static
+     * @method isError
+     * @return {Boolean} True if a loading error has occurred
+     */
+    isError(): boolean;
+
+    /**
+     * Checks whether the audio is playing.
+     *
+     * @static
+     * @method isPlaying
+     * @return {Boolean} True if the audio is playing
+     */
+    isPlaying(): boolean;
+
+    /**
+     * Plays the audio.
+     *
+     * @static
+     * @method play
+     * @param {Boolean} loop Whether the audio data play in a loop
+     * @param {Number} offset The start position to play in seconds
+     */
+    play(loop: boolean, offset: number): void;
+
+    /**
+     * Stops the audio.
+     *
+     * @static
+     * @method stop
+     */
+    stop(): void;
+
+    /**
+     * Performs the audio fade-in.
+     *
+     * @static
+     * @method fadeIn
+     * @param {Number} duration Fade-in time in seconds
+     */
+    fadeIn(duration: number): void;
+
+    /**
+     * Performs the audio fade-out.
+     *
+     * @static
+     * @method fadeOut
+     * @param {Number} duration Fade-out time in seconds
+     */
+    fadeOut(duration: number): void;
+
+    /**
+     * Gets the seek position of the audio.
+     *
+     * @static
+     * @method seek
+     */
+    seek(): void;
+
+    /**
+     * Add a callback function that will be called when the audio data is loaded.
+     *
+     * @static
+     * @method addLoadListener
+     * @param {Function} listner The callback function
+     */
+    addLoadListener(listner: () => void): void;
+
+    /**
+     * @static
+     * @method _setupEventHandlers
+     * @private
+     */
+    _setupEventHandlers(): void;
+
+    /**
+     * @static
+     * @method _onTouchStart
+     * @private
+     */
+    _onTouchStart(): void;
+
+    /**
+     * @static
+     * @method _onVisibilityChange
+     * @private
+     */
+    _onVisibilityChange(): void;
+
+    /**
+     * @static
+     * @method _onLoadedData
+     * @private
+     */
+    _onLoadedData(): void;
+
+    /**
+     * @static
+     * @method _onError
+     * @private
+     */
+    _onError(): void;
+
+    /**
+     * @static
+     * @method _onEnded
+     * @private
+     */
+    _onEnded(): void;
+
+    /**
+     * @static
+     * @method _onHide
+     * @private
+     */
+    _onHide(): void;
+
+    /**
+     * @static
+     * @method _onShow
+     * @private
+     */
+    _onShow(): void;
+
+    /**
+     * @static
+     * @method _load
+     * @param {String} url
+     * @private
+     */
+    _load(url: string): void;
+
+    /**
+     * @static
+     * @method _startPlaying
+     * @param {Boolean} loop
+     * @param {Number} offset
+     * @private
+     */
+    _startPlaying(loop: boolean, offset: number): void;
+
+    /**
+     * @static
+     * @method _onLoad
+     * @private
+     */
+    _onLoad(): void;
+
+    /**
+     * @static
+     * @method _startGainTween
+     * @params {Number} duration
+     * @private
+     */
+    _startGainTweenfunction(duration: number): void;
+
+    /**
+     * @static
+     * @method _applyTweenValue
+     * @param {Number} volume
+     * @private
+     */
+    _applyTweenValue(volume: number): void;
+}
+declare var Html5Audio: Html5AudioStatic;
+
+/**
+ * The static class that handles input data from the keyboard and gamepads.
+ *
+ * @class Input
+ */
+interface InputStatic {
+    _currentState: {[key: string]: boolean};
+    _previousState: {[key: string]: boolean};
+    _gamepadStates: Array<Array<boolean>>;
+    _latestButton: string;
+    _pressedTime: number;
+    _dir4: number;
+    _dir8: number;
+    _preferredAxis: string;
+    _date: number;
+
+    /**
+     * The wait time of the key repeat in frames.
+     *
+     * @static
+     * @property keyRepeatWait
+     * @type Number
+     */
+    keyRepeatWait: number;
+
+    /**
+     * The interval of the key repeat in frames.
+     *
+     * @static
+     * @property keyRepeatInterval
+     * @type Number
+     */
+    keyRepeatInterval: number;
+
+    /**
+     * A hash table to convert from a virtual key code to a mapped key name.
+     *
+     * @static
+     * @property keyMapper
+     * @type Object
+     */
+    keyMapper: {[key: number]: string};
+
+    /**
+     * A hash table to convert from a gamepad button to a mapped key name.
+     *
+     * @static
+     * @property gamepadMapper
+     * @type Object
+     */
+    gamepadMapper: {[key: number]: string};
+
+    /**
+     * [read-only] The four direction value as a number of the numpad, or 0 for neutral.
+     *
+     * @static
+     * @property dir4
+     * @type Number
+     */
+    dir4: number;
+
+    /**
+     * [read-only] The eight direction value as a number of the numpad, or 0 for neutral.
+     *
+     * @static
+     * @property dir8
+     * @type Number
+     */
+    dir8: number;
+
+    /**
+     * [read-only] The time of the last input in milliseconds.
+     *
+     * @static
+     * @property date
+     * @type Number
+     */
+    date: number;
+
+    /**
+     * Initializes the input system.
+     *
+     * @static
+     * @method initialize
+     */
+    initialize(): void;
+
+    /**
+     * Clears all the input data.
+     *
+     * @static
+     * @method clear
+     */
+    clear(): void;
+
+    /**
+     * Updates the input data.
+     *
+     * @static
+     * @method update
+     */
+    update(): void;
+
+    /**
+     * Checks whether a key is currently pressed down.
+     *
+     * @static
+     * @method isPressed
+     * @param {String} keyName The mapped name of the key
+     * @return {Boolean} True if the key is pressed
+     */
+    isPressed(keyName: string): boolean;
+
+    /**
+     * Checks whether a key is just pressed.
+     *
+     * @static
+     * @method isTriggered
+     * @param {String} keyName The mapped name of the key
+     * @return {Boolean} True if the key is triggered
+     */
+    isTriggered(keyName: string): boolean;
+
+    /**
+     * Checks whether a key is just pressed or a key repeat occurred.
+     *
+     * @static
+     * @method isRepeated
+     * @param {String} keyName The mapped name of the key
+     * @return {Boolean} True if the key is repeated
+     */
+    isRepeated(keyName: string): boolean;
+
+    /**
+     * Checks whether a key is kept depressed.
+     *
+     * @static
+     * @method isLongPressed
+     * @param {String} keyName The mapped name of the key
+     * @return {Boolean} True if the key is long-pressed
+     */
+    isLongPressed(keyName: string): boolean;
+
+    /**
+     * @static
+     * @method _wrapNwjsAlert
+     * @private
+     */
+    _wrapNwjsAlert(): void;
+
+    /**
+     * @static
+     * @method _setupEventHandlers
+     * @private
+     */
+    _setupEventHandlers(): void;
+
+    /**
+     * @static
+     * @method _onKeyDown
+     * @param {KeyboardEvent} event
+     * @private
+     */
+    _onKeyDown(event: KeyboardEvent): void;
+
+    /**
+     * @static
+     * @method _shouldPreventDefault
+     * @param {Number} keyCode
+     * @return {Boolean}
+     * @private
+     */
+    _shouldPreventDefault(keyCode: number): boolean;
+
+    /**
+     * @static
+     * @method _onKeyUp
+     * @param {KeyboardEvent} event
+     * @private
+     */
+    _onKeyUp(event: KeyboardEvent): void;
+
+    /**
+     * @static
+     * @method _onLostFocus
+     * @private
+     */
+    _onLostFocus(): void;
+
+    /**
+     * @static
+     * @method _pollGamepads
+     * @private
+     */
+    _pollGamepads(): void;
+
+    /**
+     * @static
+     * @method _updateGamepadState
+     * @param {Gamepad} gamepad
+     * @private
+     */
+    _updateGamepadState(gamepad: Gamepad): void;
+
+    /**
+     * @static
+     * @method _updateDirection
+     * @private
+     */
+    _updateDirection(): void;
+
+    /**
+     * @static
+     * @method _signX
+     * @return {Number}
+     * @private
+     */
+    _signX(): number;
+
+    /**
+     * @static
+     * @method _signY
+     * @return {Number}
+     * @private
+     */
+    _signY(): number;
+
+    /**
+     * @static
+     * @method _makeNumpadDirection
+     * @param {Number} x
+     * @param {Number} y
+     * @return {Number}
+     * @private
+     */
+    _makeNumpadDirection(x: number, y: number): number;
+
+    /**
+     * @static
+     * @method _isEscapeCompatible
+     * @param {String} keyName
+     * @return {Boolean}
+     * @private
+     */
+    _isEscapeCompatible(keyName: string): boolean;
+}
+declare var Input: InputStatic;
+
+/**
  * This is not a class, but contains some methods that will be added to the
  * standard Javascript objects.
  *
@@ -1227,6 +1724,11 @@ declare class Rectangle extends PIXI.Rectangle {
     height: number;
 }
 
+/**
+ * The static class that handles JSON with object information.
+ *
+ * @class JsonEx
+ */
 interface JsonExStatic {
     /**
      * The maximum depth of objects.
@@ -1725,15 +2227,15 @@ declare class Stage {
 declare class Tilemap extends PIXI.DisplayObjectContainer {
     // Tile type checkers
 
-    static TILE_ID_B: number;
-    static TILE_ID_C: number;
-    static TILE_ID_D: number;
-    static TILE_ID_E: number;
-    static TILE_ID_A5: number;
     static TILE_ID_A1: number;
     static TILE_ID_A2: number;
     static TILE_ID_A3: number;
     static TILE_ID_A4: number;
+    static TILE_ID_A5: number;
+    static TILE_ID_B: number;
+    static TILE_ID_C: number;
+    static TILE_ID_D: number;
+    static TILE_ID_E: number;
     static TILE_ID_MAX: number;
 
     static FLOOR_AUTOTILE_TABLE: Array<Array<Array<number>>>;
@@ -1844,6 +2346,22 @@ declare class Tilemap extends PIXI.DisplayObjectContainer {
     tileHeight: number;
 
     /**
+     * [read-only] The array of children of the sprite.
+     *
+     * @property children
+     * @type Array<PIXI.DisplayObject>
+     */
+    children: Array<PIXI.DisplayObject>;
+
+    /**
+     * [read-only] The object that contains the sprite.
+     *
+     * @property parent
+     * @type PIXI.DisplayObjectContainer
+     */
+    parent: PIXI.DisplayObjectContainer;
+
+    /**
      * The tilemap which displays 2D tile-based game map.
      *
      * @class Tilemap
@@ -1878,33 +2396,17 @@ declare class Tilemap extends PIXI.DisplayObjectContainer {
     update(): void;
 
     /**
-     * Forces to repaint the entire static
-     *
-     * @method refresh
-     */
-    refresh(): void;
-
-    /**
      * @method updateTransform
      * @private
      */
     updateTransform(): void;
 
     /**
-     * [read-only] The array of children of the sprite.
+     * Forces to repaint the entire static
      *
-     * @property children
-     * @type Array<PIXI.DisplayObject>
+     * @method refresh
      */
-    children: Array<PIXI.DisplayObject>;
-
-    /**
-     * [read-only] The object that contains the sprite.
-     *
-     * @property parent
-     * @type PIXI.DisplayObjectContainer
-     */
-    parent: PIXI.DisplayObjectContainer;
+    refresh(): void;
 
     /**
      * Adds a child to the container.
@@ -2106,4 +2608,1678 @@ declare class Tilemap extends PIXI.DisplayObjectContainer {
      * @private
      */
     protected _compareChildOrder(a: Sprite, b: Sprite): number;
+}
+
+declare class TilingSprite extends PIXI.TilingSprite {
+    /**
+     * The origin point of the tiling sprite for scrolling.
+     *
+     * @property origin
+     * @type Point
+     */
+    origin: Point;
+
+    /**
+     * The image for the tiling sprite.
+     *
+     * @property bitmap
+     * @type Bitmap
+     */
+    bitmap: Bitmap;
+
+    /**
+     * The opacity of the tiling sprite (0 to 255).
+     *
+     * @property opacity
+     * @type Number
+     */
+    opacity: number;
+
+    /**
+     * The visibility of the tiling sprite.
+     *
+     * @property visible
+     * @type Boolean
+     */
+    visibility: boolean;
+
+    /**
+     * The x coordinate of the tiling sprite.
+     *
+     * @property x
+     * @type Number
+     */
+    x: number;
+
+    /**
+     * The y coordinate of the tiling sprite.
+     *
+     * @property y
+     * @type Number
+     */
+    y: number;
+
+    /**
+     * The sprite object for a tiling image.
+     *
+     * @class TilingSprite
+     * @constructor
+     * @param {Bitmap} bitmap The image for the tiling sprite
+     */
+    constructor(bitmap: Bitmap);
+
+    /**
+     * Updates the tiling sprite for each frame.
+     *
+     * @method update
+     */
+    update(): void;
+
+    /**
+     * @method updateTransform
+     * @private
+     */
+    updateTransform(): void;
+
+    /**
+     * Sets the x, y, width, and height all at once.
+     *
+     * @method move
+     * @param {Number} x The x coordinate of the tiling sprite
+     * @param {Number} y The y coordinate of the tiling sprite
+     * @param {Number} width The width of the tiling sprite
+     * @param {Number} height The height of the tiling sprite
+     */
+    move(x?: number, y?: number, width?: number, height?: number): void;
+
+    /**
+     * Specifies the region of the image that the tiling sprite will use.
+     *
+     * @method setFrame
+     * @param {Number} x The x coordinate of the frame
+     * @param {Number} y The y coordinate of the frame
+     * @param {Number} width The width of the frame
+     * @param {Number} height The height of the frame
+     */
+    setFrame(x: number, y: number, width: number, height: number): void;
+
+    protected _bitmap: Bitmap;
+    protected _width: number;
+    protected _height: number;
+    protected _frame: Rectangle;
+
+    /**
+     * @method _onBitmapLoad
+     * @private
+     */
+    protected _onBitmapLoad(): void;
+
+    /**
+     * @method _refresh
+     * @private
+     */
+    protected _refresh(): void;
+}
+
+interface ToneFilterUniforms {
+    matrix: ToneFilterUniformsMatrix;
+}
+
+interface ToneFilterUniformsMatrix {
+    type: string;
+    value: Array<number>;
+}
+
+declare class ToneFilter extends PIXI.AbstractFilter {
+    passes: Array<boolean>;
+    uniforms: ToneFilterUniforms;
+    fragmentSrc: Array<string>;
+
+    /**
+     * The color matrix filter for WebGL.
+     *
+     * @class ToneFilter
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Resets the filter.
+     *
+     * @method reset
+     */
+    reset(): void;
+
+    /**
+     * Changes the hue.
+     *
+     * @method adjustHue
+     * @param {Number} value The hue value in the range (-360, 360)
+     */
+    adjustHue(value?: number): void;
+
+    /**
+     * Changes the saturation.
+     *
+     * @method adjustSaturation
+     * @param {Number} value The saturation value in the range (-255, 255)
+     */
+    adjustSaturation(value?: number): void;
+
+    /**
+     * Changes the tone.
+     *
+     * @method adjustTone
+     * @param {Number} r The red strength in the range (-255, 255)
+     * @param {Number} g The green strength in the range (-255, 255)
+     * @param {Number} b The blue strength in the range (-255, 255)
+     */
+    adjustTone(r?: number, g?: number, b?: number): void;
+
+    /**
+     * @method _multiplyMatrix
+     * @param {Array} matrix
+     * @private
+     */
+    protected _multiplyMatrix(matrix: Array<number>): void;
+}
+
+declare class ToneSprite extends PIXI.DisplayObject {
+    /**
+     * The sprite which changes the screen color in 2D canvas mode.
+     *
+     * @class ToneSprite
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Clears the tone.
+     *
+     * @method reset
+     */
+    clear(): void;
+
+    /**
+     * Sets the tone.
+     *
+     * @method setTone
+     * @param {Number} r The red strength in the range (-255, 255)
+     * @param {Number} g The green strength in the range (-255, 255)
+     * @param {Number} b The blue strength in the range (-255, 255)
+     * @param {Number} gray The grayscale level in the range (0, 255)
+     */
+    setTone(r: number, g: number, b: number, gray: number): void;
+
+    protected _red: number;
+    protected _green: number;
+    protected _blue: number;
+    protected _gray: number;
+
+    /**
+     * @method _renderCanvas
+     * @param {Object} renderSession
+     * @private
+     */
+    protected _renderCanvas(renderSession: PIXI.CanvasRenderer): void;
+
+    /**
+     * @method _renderWebGL
+     * @param {Object} renderSession
+     * @private
+     */
+    protected _renderWebGL(renderSession: PIXI.WebGLRenderer): void;
+}
+
+interface TouchInputEvents {
+    trigger: boolean;
+    cancelled: boolean;
+    moved: boolean;
+    released: boolean;
+    wheelX: number;
+    wheelY: number;
+}
+
+interface TouchInputStatic {
+    _mousePressed: boolean;
+    _screenPressed: boolean;
+    _pressedTime: number;
+    _events: TouchInputEvents;
+    _triggered: boolean;
+    _cancelled: boolean;
+    _moved: boolean;
+    _released: boolean;
+    _wheelX: number;
+    _wheelY: number;
+    _x: number;
+    _y: number;
+    _date: number;
+
+    /**
+     * The wait time of the pseudo key repeat in frames.
+     *
+     * @static
+     * @property keyRepeatWait
+     * @type Number
+     */
+    keyRepeatWait: number;
+
+    /**
+     * The interval of the pseudo key repeat in frames.
+     *
+     * @static
+     * @property keyRepeatInterval
+     * @type Number
+     */
+    keyRepeatInterval: number;
+
+    /**
+     * [read-only] The horizontal scroll amount.
+     *
+     * @static
+     * @property wheelX
+     * @type Number
+     */
+    wheelX: number;
+
+    /**
+     * [read-only] The vertical scroll amount.
+     *
+     * @static
+     * @property wheelY
+     * @type Number
+     */
+    wheelY: number;
+
+    /**
+     * [read-only] The x coordinate on the canvas area of the latest touch event.
+     *
+     * @static
+     * @property x
+     * @type Number
+     */
+    x: number;
+
+    /**
+     * [read-only] The y coordinate on the canvas area of the latest touch event.
+     *
+     * @static
+     * @property y
+     * @type Number
+     */
+    y: number;
+
+    /**
+     * [read-only] The time of the last input in milliseconds.
+     *
+     * @static
+     * @property date
+     * @type Number
+     */
+    date: number;
+
+    /**
+     * Initializes the touch system.
+     *
+     * @static
+     * @method initialize
+     */
+    initialize(): void;
+
+    /**
+     * Clears all the touch data.
+     *
+     * @static
+     * @method clear
+     */
+    clear(): void;
+
+    /**
+     * Updates the touch data.
+     *
+     * @static
+     * @method update
+     */
+    update(): void;
+
+    /**
+     * Checks whether the mouse button or touchscreen is currently pressed down.
+     *
+     * @static
+     * @method isPressed
+     * @return {Boolean} True if the mouse button or touchscreen is pressed
+     */
+    isPressed(): boolean;
+
+    /**
+     * Checks whether the left mouse button or touchscreen is just pressed.
+     *
+     * @static
+     * @method isTriggered
+     * @return {Boolean} True if the mouse button or touchscreen is triggered
+     */
+    isTriggered(): boolean;
+
+    /**
+     * Checks whether the left mouse button or touchscreen is just pressed
+     * or a pseudo key repeat occurred.
+     *
+     * @static
+     * @method isRepeated
+     * @return {Boolean} True if the mouse button or touchscreen is repeated
+     */
+    isRepeated(): boolean;
+
+    /**
+     * Checks whether the left mouse button or touchscreen is kept depressed.
+     *
+     * @static
+     * @method isLongPressed
+     * @return {Boolean} True if the left mouse button or touchscreen is long-pressed
+     */
+    isLongPressed(): boolean;
+
+    /**
+     * Checks whether the right mouse button is just pressed.
+     *
+     * @static
+     * @method isCancelled
+     * @return {Boolean} True if the right mouse button is just pressed
+     */
+    isCancelled(): boolean;
+
+    /**
+     * Checks whether the mouse or a finger on the touchscreen is moved.
+     *
+     * @static
+     * @method isMoved
+     * @return {Boolean} True if the mouse or a finger on the touchscreen is moved
+     */
+    isMoved(): boolean;
+
+    /**
+     * Checks whether the left mouse button or touchscreen is released.
+     *
+     * @static
+     * @method isReleased
+     * @return {Boolean} True if the mouse button or touchscreen is released
+     */
+    isReleased(): boolean;
+
+    /**
+     * @static
+     * @method _setupEventHandlers
+     * @private
+     */
+    _setupEventHandlers(): void;
+
+    /**
+     * @static
+     * @method _onMouseDown
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onMouseDown(event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onLeftButtonDown
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onLeftButtonDown(event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onMiddleButtonDown
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onMiddleButtonDown(event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onRightButtonDown
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onRightButtonDown(event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onMouseMove
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onMouseMove(event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onMouseUp
+     * @param {MouseEvent} event
+     * @private
+     */
+    _onMouseUp (event: MouseEvent): void;
+
+    /**
+     * @static
+     * @method _onWheel
+     * @param {WheelEvent} event
+     * @private
+     */
+    _onWheel(event: WheelEvent): void;
+
+    /**
+     * @static
+     * @method _onTouchStart
+     * @param {TouchEvent} event
+     * @private
+     */
+    _onTouchStart(event: TouchEvent): void;
+
+    /**
+     * @static
+     * @method _onTouchMove
+     * @param {TouchEvent} event
+     * @private
+     */
+    _onTouchMove(event: TouchEvent): void;
+
+    /**
+     * @static
+     * @method _onTouchEnd
+     * @param {TouchEvent} event
+     * @private
+     */
+    _onTouchEnd(event: TouchEvent): void;
+
+    /**
+     * @static
+     * @method _onTouchCancel
+     * @param {TouchEvent} event
+     * @private
+     */
+    _onTouchCancel(event: TouchEvent): void;
+
+    /**
+     * @static
+     * @method _onPointerDown
+     * @param {PointerEvent} event
+     * @private
+     */
+    _onPointerDown(event: PointerEvent): void;
+
+    /**
+     * @static
+     * @method _onTrigger
+     * @param {Number} x
+     * @param {Number} y
+     * @private
+     */
+    _onTrigger(x: number, y: number): void;
+
+    /**
+     * @static
+     * @method _onCancel
+     * @param {Number} x
+     * @param {Number} y
+     * @private
+     */
+    _onCancel(x: number, y: number): void;
+
+    /**
+     * @static
+     * @method _onMove
+     * @param {Number} x
+     * @param {Number} y
+     * @private
+     */
+    _onMove(x: number, y: number): void;
+
+    /**
+     * @static
+     * @method _onRelease
+     * @param {Number} x
+     * @param {Number} y
+     * @private
+     */
+    _onRelease(x: number, y: number): void;
+}
+declare var TouchInput: TouchInputStatic;
+
+/**
+ * The static class that defines utility methods.
+ *
+ * @class Utils
+ */
+interface UtilsStatic {
+    /**
+     * The name of the RPG Maker. 'MV' in the current version.
+     *
+     * @static
+     * @property RPGMAKER_NAME
+     * @type String
+     * @final
+     */
+    RPGMAKER_NAME: string;
+
+    /**
+     * The version of the RPG Maker.
+     *
+     * @static
+     * @property RPGMAKER_VERSION
+     * @type String
+     * @final
+     */
+    RPGMAKER_VERSION: string;
+
+    /**
+     * Checks whether the option is in the query string.
+     *
+     * @static
+     * @method isOptionValid
+     * @param {String} name The option name
+     * @return {Boolean} True if the option is in the query string
+     */
+    isOptionValid(name: string): boolean;
+
+    /**
+     * Checks whether the platform is NW.js.
+     *
+     * @static
+     * @method isNwjs
+     * @return {Boolean} True if the platform is NW.js
+     */
+    isNwjs(): boolean;
+
+    /**
+     * Checks whether the platform is a mobile device.
+     *
+     * @static
+     * @method isMobileDevice
+     * @return {Boolean} True if the platform is a mobile device
+     */
+    isMobileDevice(): boolean;
+
+    /**
+     * Checks whether the browser is Mobile Safari.
+     *
+     * @static
+     * @method isMobileSafari
+     * @return {Boolean} True if the browser is Mobile Safari
+     */
+    isMobileSafari(): boolean;
+
+    /**
+     * Checks whether the browser is Android Chrome.
+     *
+     * @static
+     * @method isAndroidChrome
+     * @return {Boolean} True if the browser is Android Chrome
+     */
+    isAndroidChrome(): boolean;
+
+    /**
+     * Checks whether the browser can read files in the game folder.
+     *
+     * @static
+     * @method canReadGameFiles
+     * @return {Boolean} True if the browser can read files in the game folder
+     */
+    canReadGameFiles(): boolean;
+
+    /**
+     * Makes a CSS color string from RGB values.
+     *
+     * @static
+     * @method rgbToCssColor
+     * @param {Number} r The red value in the range (0, 255)
+     * @param {Number} g The green value in the range (0, 255)
+     * @param {Number} b The blue value in the range (0, 255)
+     * @return {String} CSS color string
+     */
+    rgbToCssColor(r: number, g: number, b: number): string;
+}
+declare var Utils: UtilsStatic;
+
+
+declare class WebAudio {
+    static _context: AudioContext;
+    static _masterGainNode: GainNode;
+    static _initialized: boolean;
+    static _unlocked: boolean;
+
+    /**
+     * Initializes the audio system.
+     *
+     * @static
+     * @method initialize
+     * @param {Boolean} noAudio Flag for the no-audio mode
+     * @return {Boolean} True if the audio system is available
+     */
+    static initialize(noAudio?: boolean): boolean;
+
+    /**
+     * Checks whether the browser can play ogg files.
+     *
+     * @static
+     * @method canPlayOgg
+     * @return {Boolean} True if the browser can play ogg files
+     */
+    static canPlayOgg(): boolean;
+
+    /**
+     * Checks whether the browser can play m4a files.
+     *
+     * @static
+     * @method canPlayM4a
+     * @return {Boolean} True if the browser can play m4a files
+     */
+    static canPlayM4a(): boolean;
+
+    /**
+     * @static
+     * @method _createContext
+     * @private
+     */
+    static _createContext(): void;
+
+    /**
+     * @static
+     * @method _detectCodecs
+     * @private
+     */
+    static _detectCodecs(): void;
+
+    /**
+     * @static
+     * @method _createMasterGainNode
+     * @private
+     */
+    static _createMasterGainNode(): void;
+
+    /**
+     * @static
+     * @method _setupEventHandlers
+     * @private
+     */
+    static _setupEventHandlers(): void;
+
+    /**
+     * @static
+     * @method _onTouchStart
+     * @private
+     */
+    static _onTouchStart(): void;
+
+    /**
+     * @static
+     * @method _onVisibilityChange
+     * @private
+     */
+    static _onVisibilityChange(): void;
+
+    /**
+     * @static
+     * @method _onHide
+     * @private
+     */
+    static _onHide(): void;
+
+    /**
+     * @static
+     * @method _onShow
+     * @private
+     */
+    static _onShow(): void;
+
+    /**
+     * @static
+     * @method _shouldMuteOnHide
+     * @private
+     */
+    static _shouldMuteOnHide(): void;
+
+    /**
+     * @static
+     * @method _fadeIn
+     * @param {Number} duration
+     * @private
+     */
+    static _fadeIn(duration: number): void;
+
+    /**
+     * @static
+     * @method _fadeOut
+     * @param {Number} duration
+     * @private
+     */
+    static _fadeOut(duration: number): void;
+
+    /**
+     * [read-only] The url of the audio file.
+     *
+     * @property url
+     * @type String
+     */
+    url: string;
+
+    /**
+     * The volume of the audio.
+     *
+     * @property volume
+     * @type Number
+     */
+    volume: number;
+
+    /**
+     * The pitch of the audio.
+     *
+     * @property pitch
+     * @type Number
+     */
+    pitch: number;
+
+    /**
+     * The pan of the audio.
+     *
+     * @property pan
+     * @type Number
+     */
+    pan: number;
+
+    /**
+     * The audio object of Web Audio API.
+     *
+     * @class WebAudio
+     * @constructor
+     * @param {String} url The url of the audio file
+     */
+    constructor(url: string);
+
+    /**
+     * Clears the audio data.
+     *
+     * @method clear
+     */
+    clear(): void;
+
+    /**
+     * Checks whether the audio data is ready to play.
+     *
+     * @method isReady
+     * @return {Boolean} True if the audio data is ready to play
+     */
+    isReady(): boolean;
+
+    /**
+     * Checks whether a loading error has occurred.
+     *
+     * @method isError
+     * @return {Boolean} True if a loading error has occurred
+     */
+    isError(): boolean;
+
+    /**
+     * Checks whether the audio is playing.
+     *
+     * @method isPlaying
+     * @return {Boolean} True if the audio is playing
+     */
+    isPlaying(): boolean;
+
+    /**
+     * Plays the audio.
+     *
+     * @method play
+     * @param {Boolean} loop Whether the audio data play in a loop
+     * @param {Number} offset The start position to play in seconds
+     */
+    play(loop: boolean, offset: number): void;
+
+    /**
+     * Stops the audio.
+     *
+     * @method stop
+     */
+    stop(): void;
+
+    /**
+     * Performs the audio fade-in.
+     *
+     * @method fadeIn
+     * @param {Number} duration Fade-in time in seconds
+     */
+    fadeIn(duration: number): void;
+
+    /**
+     * Performs the audio fade-out.
+     *
+     * @method fadeOut
+     * @param {Number} duration Fade-out time in seconds
+     */
+    fadeOut(duration: number): void;
+
+    /**
+     * Gets the seek position of the audio.
+     *
+     * @method seek
+     */
+    seek(): void;
+
+    /**
+     * Add a callback function that will be called when the audio data is loaded.
+     *
+     * @method addLoadListener
+     * @param {Function} listner The callback function
+     */
+    addLoadListener(listner: () => void): void;
+
+    /**
+     * Add a callback function that will be called when the playback is stopped.
+     *
+     * @method addStopListener
+     * @param {Function} listner The callback function
+     */
+    addStopListener(listner: () => void): void;
+
+    protected _buffer: AudioNode;
+    protected _sourceNode: AudioBufferSourceNode;
+    protected _gainNode: GainNode;
+    protected _pannerNode: PannerNode;
+    protected _totalTime: number;
+    protected _sampleRate: number;
+    protected _loopStart: number;
+    protected _loopLength: number;
+    protected _startTime: number;
+    protected _volume: number;
+    protected _pitch: number;
+    protected _pan: number;
+    protected _endTimer: number;
+    protected _loadListeners: Array<() => void>;
+    protected _stopListeners: Array<() => void>;
+    protected _hasError: boolean;
+    protected _autoPlay: boolean;
+
+    /**
+     * @method _load
+     * @param {String} url
+     * @private
+     */
+    protected _load(url: string): void;
+
+    /**
+     * @method _onXhrLoad
+     * @param {XMLHttpRequest} xhr
+     * @private
+     */
+    protected _onXhrLoad(xhr: XMLHttpRequest): void;
+
+    /**
+     * @method _startPlaying
+     * @param {Boolean} loop
+     * @param {Number} offset
+     * @private
+     */
+    protected _startPlaying(loop: boolean, offset: number): void;
+
+    /**
+     * @method _createNodes
+     * @private
+     */
+    protected _createNodes(): void;
+
+    /**
+     * @method _connectNodes
+     * @private
+     */
+    protected _connectNodes(): void;
+
+    /**
+     * @method _removeNodes
+     * @private
+     */
+    protected _removeNodes(): void;
+
+    /**
+     * @method _createEndTimer
+     * @private
+     */
+    protected _createEndTimer(): void;
+
+    /**
+     * @method _removeEndTimer
+     * @private
+     */
+    protected _removeEndTimer(): void;
+
+    /**
+     * @method _updatePanner
+     * @private
+     */
+    protected _updatePanner(): void;
+
+    /**
+     * @method _onLoad
+     * @private
+     */
+    protected _onLoad(): void;
+
+    /**
+     * @method _readLoopComments
+     * @param {Uint8Array} array
+     * @private
+     */
+    protected _readLoopComments(array: Uint8Array): void;
+
+    /**
+     * @method _readOgg
+     * @param {Uint8Array} array
+     * @private
+     */
+    protected _readOgg(array: Uint8Array): void;
+
+    /**
+     * @method _readMp4
+     * @param {Uint8Array} array
+     * @private
+     */
+    protected _readMp4(array: Uint8Array): void;
+
+    /**
+     * @method _readMetaData
+     * @param {Uint8Array} array
+     * @param {Number} index
+     * @param {Number} size
+     * @private
+     */
+    protected _readMetaData(array: Uint8Array, index: number, size: number): void;
+
+    /**
+     * @method _readLittleEndian
+     * @param {Uint8Array} array
+     * @param {Number} index
+     * @private
+     */
+    protected _readLittleEndian(array: Uint8Array, index: number): void;
+
+    /**
+     * @method _readBigEndian
+     * @param {Uint8Array} array
+     * @param {Number} index
+     * @private
+     */
+    protected _readBigEndian(array: Uint8Array, index: number): void;
+
+    /**
+     * @method _readFourCharacters
+     * @param {Uint8Array} array
+     * @param {Number} index
+     * @private
+     */
+    protected _readFourCharacters(array: Uint8Array, index: number): void;
+}
+
+declare class Weather extends PIXI.DisplayObjectContainer {
+    /**
+     * The type of the weather in ['none', 'rain', 'storm', 'snow'].
+     *
+     * @property type
+     * @type String
+     */
+    type: string;
+
+    /**
+     * The power of the weather in the range (0, 9).
+     *
+     * @property power
+     * @type Number
+     */
+    power: number;
+
+    /**
+     * The origin point of the weather for scrolling.
+     *
+     * @property origin
+     * @type Point
+     */
+    origin: Point;
+
+    /**
+     * The weather effect which displays rain, storm, or snow.
+     *
+     * @class Weather
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Updates the weather for each frame.
+     *
+     * @method update
+     */
+    update(): void;
+
+    protected _width: number;
+    protected _height: number;
+    protected _sprites: Array<Sprite>;
+    protected _rainBitmap: Bitmap;
+    protected _stormBitmap: Bitmap;
+    protected _snowBitmap: Bitmap;
+    protected _dimmerSprite: ScreenSprite;
+
+    /**
+     * @method _createBitmaps
+     * @private
+     */
+    protected _createBitmaps(): void;
+
+    /**
+     * @method _createDimmer
+     * @private
+     */
+    protected _createDimmer(): void;
+
+    /**
+     * @method _updateDimmer
+     * @private
+     */
+    protected _updateDimmer(): void;
+
+    /**
+     * @method _updateAllSprites
+     * @private
+     */
+    protected _updateAllSprites(): void;
+
+    /**
+     * @method _addSprite
+     * @private
+     */
+    protected _addSprite(): void;
+
+    /**
+     * @method _removeSprite
+     * @private
+     */
+    protected _removeSprite(): void;
+
+    /**
+     * @method _updateSprite
+     * @param {Sprite} sprite
+     * @private
+     */
+    protected _updateSprite(sprite: Sprite): void;
+
+    /**
+     * @method _updateRainSprite
+     * @param {Sprite} sprite
+     * @private
+     */
+    protected _updateRainSprite(sprite: Sprite): void;
+
+    /**
+     * @method _updateStormSprite
+     * @param {Sprite} sprite
+     * @private
+     */
+    protected _updateStormSprite(sprite: Sprite): void;
+
+    /**
+     * @method _updateSnowSprite
+     * @param {Sprite} sprite
+     * @private
+     */
+    protected _updateSnowSprite(sprite: Sprite): void;
+
+    /**
+     * @method _rebornSprite
+     * @param {Sprite} sprite
+     * @private
+     */
+    protected _rebornSprite(sprite: Sprite): void;
+}
+
+declare class _Window extends PIXI.DisplayObjectContainer {
+    /**
+     * The origin point of the window for scrolling.
+     *
+     * @property origin
+     * @type Point
+     */
+    torigin: Point;
+
+    /**
+     * The active state for the window.
+     *
+     * @property active
+     * @type Boolean
+     */
+    active: boolean;
+
+    /**
+     * The visibility of the down scroll arrow.
+     *
+     * @property downArrowVisible
+     * @type Boolean
+     */
+    downArrowVisible: boolean;
+
+    /**
+     * The visibility of the up scroll arrow.
+     *
+     * @property upArrowVisible
+     * @type Boolean
+     */
+    upArrowVisible: boolean;
+
+    /**
+     * The visibility of the pause sign.
+     *
+     * @property pause
+     * @type Boolean
+     */
+    pause: boolean;
+
+    /**
+     * The image used as a window skin.
+     *
+     * @property windowskin
+     * @type Bitmap
+     */
+    windowskin: Bitmap;
+
+    /**
+     * The bitmap used for the window contents.
+     *
+     * @property contents
+     * @type Bitmap
+     */
+    contents: Bitmap;
+
+    /**
+     * The width of the window in pixels.
+     *
+     * @property width
+     * @type Number
+     */
+    width: number;
+
+    /**
+     * The height of the window in pixels.
+     *
+     * @property height
+     * @type Number
+     */
+    height: number;
+
+    /**
+     * The size of the padding between the frame and contents.
+     *
+     * @property padding
+     * @type Number
+     */
+    padding: number;
+
+    /**
+     * The size of the margin for the window background.
+     *
+     * @property margin
+     * @type Number
+     */
+    margin: number;
+
+    /**
+     * The opacity of the window without contents (0 to 255).
+     *
+     * @property opacity
+     * @type Number
+     */
+    opacity: number;
+
+    /**
+     * The opacity of the window background (0 to 255).
+     *
+     * @property backOpacity
+     * @type Number
+     */
+    backOpacity: number;
+
+    /**
+     * The opacity of the window contents (0 to 255).
+     *
+     * @property contentsOpacity
+     * @type Number
+     */
+    contentsOpacity: number;
+
+    /**
+     * The openness of the window (0 to 255).
+     *
+     * @property openness
+     * @type Number
+     */
+    openness: number;
+
+    /**
+     * The visibility of the sprite.
+     *
+     * @property visible
+     * @type Boolean
+     */
+    visible: boolean;
+
+    /**
+     * The x coordinate of the sprite.
+     *
+     * @property x
+     * @type Number
+     */
+    x: number;
+
+    /**
+     * The y coordinate of the sprite.
+     *
+     * @property y
+     * @type Number
+     */
+    y: number;
+
+    /**
+     * [read-only] The array of children of the sprite.
+     *
+     * @property children
+     * @type Array<PIXI.DisplayObject>
+     */
+    children: Array<PIXI.DisplayObject>;
+
+    /**
+     * [read-only] The object that contains the sprite.
+     *
+     * @property parent
+     * @type PIXI.DisplayObjectContainer
+     */
+    parent: PIXI.DisplayObjectContainer;
+
+    /**
+     * The window in the game.
+     *
+     * @class Window
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Updates the window for each frame.
+     *
+     * @method update
+     */
+    update(): void;
+
+    /**
+     * Sets the x, y, width, and height all at once.
+     *
+     * @method move
+     * @param {Number} x The x coordinate of the window
+     * @param {Number} y The y coordinate of the window
+     * @param {Number} width The width of the window
+     * @param {Number} height The height of the window
+     */
+    move(x?: number, y?: number, width?: number, height?: number): void;
+
+    /**
+     * Returns true if the window is completely open (openness == 255).
+     *
+     * @method isOpen
+     * @return {Boolean}
+     */
+    isOpen(): boolean;
+
+    /**
+     * Returns true if the window is completely closed (openness == 0).
+     *
+     * @method isClosed
+     * @return {Boolean}
+     */
+    isClosed(): boolean;
+
+    /**
+     * Sets the position of the command cursor.
+     *
+     * @method setCursorRect
+     * @param {Number} x The x coordinate of the cursor
+     * @param {Number} y The y coordinate of the cursor
+     * @param {Number} width The width of the cursor
+     * @param {Number} height The height of the cursor
+     */
+    setCursorRect(x?: number, y?: number, width?: number, height?: number): void;
+
+    /**
+     * Changes the color of the background.
+     *
+     * @method setTone
+     * @param {Number} r The red value in the range (-255, 255)
+     * @param {Number} g The green value in the range (-255, 255)
+     * @param {Number} b The blue value in the range (-255, 255)
+     */
+    setTone(r: number, g: number, b: number): void;
+
+    /**
+     * Adds a child between the background and contents.
+     *
+     * @method addChildToBack
+     * @param {Object} child The child to add
+     * @return {Object} The child that was added
+     */
+    addChildToBack(child: PIXI.DisplayObject): PIXI.DisplayObject;
+
+    /**
+     * Adds a child to the container.
+     *
+     * @method addChild
+     * @param {PIXI.DisplayObject} child The child to add
+     * @return {PIXI.DisplayObject} The child that was added
+     */
+    addChild(child: PIXI.DisplayObject): PIXI.DisplayObject;
+
+    /**
+     * Adds a child to the container at a specified index.
+     *
+     * @method addChildAt
+     * @param {PIXI.DisplayObject} child The child to add
+     * @param {Number} index The index to place the child in
+     * @return {PIXI.DisplayObject} The child that was added
+     */
+    addChildAt(child: PIXI.DisplayObject, index: number): PIXI.DisplayObject;
+
+    /**
+     * Removes a child from the container.
+     *
+     * @method removeChild
+     * @param {PIXI.DisplayObject} child The child to remove
+     * @return {PIXI.DisplayObject} The child that was removed
+     */
+    removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject;
+
+    /**
+     * Removes a child from the specified index position.
+     *
+     * @method removeChildAt
+     * @param {Number} index The index to get the child from
+     * @return {PIXI.DisplayObject} The child that was removed
+     */
+    removeChildAt(index: number): PIXI.DisplayObject;
+
+    /**
+     * @method updateTransform
+     * @private
+     */
+    updateTransform(): void;
+
+    protected _isWindow: boolean;
+    protected _windowskin: Bitmap;
+    protected _width: number;
+    protected _height: number;
+    protected _cursorRect: Rectangle;
+    protected _openness: number;
+    protected _animationCount: number;
+    protected _padding: number;
+    protected _margin: number;
+    protected _colorTone: Array<number>;
+    protected _windowSpriteContainer: PIXI.DisplayObjectContainer;
+    protected _windowBackSprite: Sprite;
+    protected _windowCursorSprite: Sprite;
+    protected _windowFrameSprite: Sprite;
+    protected _windowContentsSprite: Sprite;
+    protected _windowArrowSprites: Array<any>;
+    protected _windowPauseSignSprite: Sprite;
+    protected _downArrowSprite: Sprite;
+    protected _upArrowSprite: Sprite;
+
+    /**
+     * @method _createAllParts
+     * @private
+     */
+    protected _createAllParts(): void;
+
+    /**
+     * @method _onWindowskinLoad
+     * @private
+     */
+    protected _onWindowskinLoad(): void;
+
+    /**
+     * @method _refreshAllParts
+     * @private
+     */
+    protected _refreshAllParts(): void;
+
+    /**
+     * @method _refreshBack
+     * @private
+     */
+    protected _refreshBack(): void;
+
+    /**
+     * @method _refreshFrame
+     * @private
+     */
+    protected _refreshFrame(): void;
+
+    /**
+     * @method _refreshCursor
+     * @private
+     */
+    protected _refreshCursor(): void;
+
+    /**
+     * @method _refreshContents
+     * @private
+     */
+    protected _refreshContents(): void;
+
+    /**
+     * @method _refreshArrows
+     * @private
+     */
+    protected _refreshArrows(): void;
+
+    /**
+     * @method _refreshPauseSign
+     * @private
+     */
+    protected _refreshPauseSign(): void;
+
+    /**
+     * @method _updateCursor
+     * @private
+     */
+    protected _updateCursor(): void;
+
+    /**
+     * @method _updateContents
+     * @private
+     */
+    protected _updateContents(): void;
+
+    /**
+     * @method _updateArrows
+     * @private
+     */
+    protected _updateArrows(): void;
+
+    /**
+     * @method _updatePauseSign
+     * @private
+     */
+    protected _updatePauseSign(): void;
+}
+
+
+declare class WindowLayer extends PIXI.DisplayObjectContainer {
+    /**
+     * The width of the window layer in pixels.
+     *
+     * @property width
+     * @type Number
+     */
+    width: number;
+
+    /**
+     * The height of the window layer in pixels.
+     *
+     * @property height
+     * @type Number
+     */
+    height: number;
+
+    /**
+     * The x coordinate of the sprite.
+     *
+     * @property x
+     * @type Number
+     */
+    x: number;
+
+    /**
+     * The y coordinate of the sprite.
+     *
+     * @property y
+     * @type Number
+     */
+    y: number;
+
+    /**
+     * [read-only] The array of children of the sprite.
+     *
+     * @property children
+     * @type Array<PIXI.DisplayObject>
+     */
+    children: Array<PIXI.DisplayObject>;
+
+    /**
+     * [read-only] The object that contains the sprite.
+     *
+     * @property parent
+     * @type PIXI.DisplayObjectContainer
+     */
+    parent: PIXI.DisplayObjectContainer;
+
+    /**
+     * The layer which contains game windows.
+     *
+     * @class WindowLayer
+     * @constructor
+     */
+    constructor();
+
+    /**
+     * Sets the x, y, width, and height all at once.
+     *
+     * @method move
+     * @param {Number} x The x coordinate of the window layer
+     * @param {Number} y The y coordinate of the window layer
+     * @param {Number} width The width of the window layer
+     * @param {Number} height The height of the window layer
+     */
+    move(x: number, y: number, width: number, height: number): void;
+
+    /**
+     * Updates the window layer for each frame.
+     *
+     * @method update
+     */
+    update(): void;
+
+    /**
+     * Adds a child to the container.
+     *
+     * @method addChild
+     * @param {PIXI.DisplayObject} child The child to add
+     * @return {PIXI.DisplayObject} The child that was added
+     */
+    addChild(child: PIXI.DisplayObject): PIXI.DisplayObject;
+
+    /**
+     * Adds a child to the container at a specified index.
+     *
+     * @method addChildAt
+     * @param {PIXI.DisplayObject} child The child to add
+     * @param {Number} index The index to place the child in
+     * @return {PIXI.DisplayObject} The child that was added
+     */
+    addChildAt(child: PIXI.DisplayObject, index: number): PIXI.DisplayObject;
+
+    /**
+     * Removes a child from the container.
+     *
+     * @method removeChild
+     * @param {PIXI.DisplayObject} child The child to remove
+     * @return {PIXI.DisplayObject} The child that was removed
+     */
+    removeChild(child: PIXI.DisplayObject): PIXI.DisplayObject;
+
+    /**
+     * Removes a child from the specified index position.
+     *
+     * @method removeChildAt
+     * @param {Number} index The index to get the child from
+     * @return {PIXI.DisplayObject} The child that was removed
+     */
+    removeChildAt(index: number): PIXI.DisplayObject;
+
+    protected _width: number;
+    protected _height: number;
+    protected _tempCanvas: HTMLCanvasElement;
+    protected _vertexBuffer: WebGLBuffer;
+    protected _translationMatrix: Array<number>;
+    protected _dummySprite: Sprite;
+
+    /**
+     * @method _renderCanvas
+     * @param {PIXI.CanvasRenderer} renderSession
+     * @private
+     */
+    protected _renderCanvas(renderSession: PIXI.CanvasRenderer);
+
+    /**
+     * @method _canvasClearWindowRect
+     * @param {PIXI.CanvasRenderer} renderSession
+     * @param {Window} window
+     * @private
+     */
+    protected _canvasClearWindowRect(renderSession: PIXI.CanvasRenderer, window: Window): void;
+
+    /**
+     * @method _renderWebGL
+     * @param {PIXI.WebGLRenderer} renderSession
+     * @private
+     */
+    protected _renderWebGL(renderSession: PIXI.WebGLRenderer): void;
+
+    /**
+     * @method _webglMaskOutside
+     * @param {PIXI.WebGLRenderer} renderSession
+     * @private
+     */
+    protected _webglMaskOutside(renderSession: PIXI.WebGLRenderer): void;
+
+    /**
+     * @method _webglMaskWindow
+     * @param {PIXI.WebGLRenderer} renderSession
+     * @param {Window} window
+     * @private
+     */
+    protected _webglMaskWindow(renderSession: PIXI.WebGLRenderer, window: Window): void;
+
+    /**
+     * @method _webglMaskRect
+     * @param {Object} renderSession
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} w
+     * @param {Number} h
+     * @private
+     */
+    protected _webglMaskRect(renderSession: PIXI.WebGLRenderer, x: number, y: number, w: number, h: number): void;
 }

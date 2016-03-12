@@ -603,7 +603,7 @@ class _Game_Picture extends Game_Picture {
     }
 }
 
-var _ImageManager_isReady = ImageManager.isReady;
+const _ImageManager_isReady = ImageManager.isReady;
 ImageManager.isReady = function() {
     for (var key in this._cache) {
         var bitmap = this._cache[key];
@@ -796,16 +796,13 @@ class _Sprite_Picture extends Sprite_Picture {
 class Window_MessageName extends Window_Base {
     constructor() {
         var width = 180;
-        var height = this.windowHeight();
+        var height = super.fittingHeight(1) + 14;
         var x = 30;
         var y = 430;
         super(x, y, width, height);
 
         this.padding = 8;
         this.openness = 0;
-    }
-    windowHeight(): number {
-        return this.fittingHeight(1) + 14;
     }
     standardPadding(): number {
         return 0;
@@ -870,8 +867,27 @@ class Window_TachieMessage extends Window_Message {
     protected _windowSkilId: number;
     protected _triggered: boolean;
     protected _windowHide: boolean;
+    constructor() {
+        super();
+    }
+    contentsHeight() {
+        return this.height ;
+    };
     numVisibleRows(): number {
         return 3;
+    }
+    _refreshContents(): void {
+        this._windowContentsSprite.move(this.padding + 6, 0);
+    };
+    _updateContents(): void {
+        var w = this._width - this._padding * 2;
+        var h = this._height - 0 * 2;
+        if (w > 0 && h > 0) {
+            this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
+            this._windowContentsSprite.visible = this.isOpen();
+        } else {
+            this._windowContentsSprite.visible = false;
+        }
     }
     subWindows(): Array<Window_Base> {
         var ret = super.subWindows();
@@ -954,6 +970,7 @@ class Window_TachieMessage extends Window_Message {
     }
     startMessage(): void {
         super.startMessage();
+        this._textState.y = this.standardPadding();
         this._balloonSprite.visible = true;
         this._messageNameWindow.draw($gameTemp.tachieName);
     }
@@ -1044,18 +1061,30 @@ interface Game_Screen {
     getPictureId(picture: Game_Picture): number;
 }
 interface Game_Actor {
-    readonly poseId: number;
-    readonly faceId: string;
-    readonly hoppeId: number;
-    readonly outerItemId: number;
-    readonly innerTopItemId: number;
-    readonly innerBottomItemId: number;
-    readonly baseId: string;
-    readonly outerId: string;
-    readonly innerBottomId: string;
-    readonly innerTopId: string;
-    readonly tachieOffsetX: number;
-    readonly tachieOffsetY: number;
+    /** [read-only]  */
+    poseId: number;
+    /** [read-only]  */
+    faceId: string;
+    /** [read-only]  */
+    hoppeId: number;
+    /** [read-only]  */
+    outerItemId: number;
+    /** [read-only]  */
+    innerTopItemId: number;
+    /** [read-only]  */
+    innerBottomItemId: number;
+    /** [read-only]  */
+    baseId: string;
+    /** [read-only]  */
+    outerId: string;
+    /** [read-only]  */
+    innerBottomId: string;
+    /** [read-only]  */
+    innerTopId: string;
+    /** [read-only]  */
+    tachieOffsetX: number;
+    /** [read-only]  */
+    tachieOffsetY: number;
 
 
     isDirty(): boolean;

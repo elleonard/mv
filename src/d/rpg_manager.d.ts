@@ -12,3 +12,4 @@ declare var Utils;
 declare var DataManager;
 declare var Input;
 declare var SoundManager;
+declare var $gameMap: Game_Map;

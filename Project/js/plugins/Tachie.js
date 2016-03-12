@@ -846,16 +846,13 @@ var Tachie;
         __extends(Window_MessageName, _super);
         function Window_MessageName() {
             var width = 180;
-            var height = this.windowHeight();
+            var height = _super.prototype.fittingHeight.call(this, 1) + 14;
             var x = 30;
             var y = 430;
             _super.call(this, x, y, width, height);
             this.padding = 8;
             this.openness = 0;
         }
-        Window_MessageName.prototype.windowHeight = function () {
-            return this.fittingHeight(1) + 14;
-        };
         Window_MessageName.prototype.standardPadding = function () {
             return 0;
         };
@@ -915,10 +912,29 @@ var Tachie;
     var Window_TachieMessage = (function (_super) {
         __extends(Window_TachieMessage, _super);
         function Window_TachieMessage() {
-            _super.apply(this, arguments);
+            _super.call(this);
         }
+        Window_TachieMessage.prototype.contentsHeight = function () {
+            return this.height;
+        };
+        ;
         Window_TachieMessage.prototype.numVisibleRows = function () {
             return 3;
+        };
+        Window_TachieMessage.prototype._refreshContents = function () {
+            this._windowContentsSprite.move(this.padding + 6, 0);
+        };
+        ;
+        Window_TachieMessage.prototype._updateContents = function () {
+            var w = this._width - this._padding * 2;
+            var h = this._height - 0 * 2;
+            if (w > 0 && h > 0) {
+                this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
+                this._windowContentsSprite.visible = this.isOpen();
+            }
+            else {
+                this._windowContentsSprite.visible = false;
+            }
         };
         Window_TachieMessage.prototype.subWindows = function () {
             var ret = _super.prototype.subWindows.call(this);
@@ -1005,6 +1021,7 @@ var Tachie;
         };
         Window_TachieMessage.prototype.startMessage = function () {
             _super.prototype.startMessage.call(this);
+            this._textState.y = this.standardPadding();
             this._balloonSprite.visible = true;
             this._messageNameWindow.draw($gameTemp.tachieName);
         };

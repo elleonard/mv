@@ -1,0 +1,9 @@
+@message_h actor=Actor1 index=2
+@message value=aaaa
+
+@message_h actor=Actor1 index=2
+うひょーい
+_
+わーい
+
+@exp actor=1 value=-3000 message=true

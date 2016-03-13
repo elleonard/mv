@@ -3,9 +3,6 @@
 // Definitions by: aaa<https://>, bbb<https://>
 // Definitions: https://
 
-/// <reference path="../pixi/pixi.d.ts"/>
-/// <reference path="../lz-string/lz-string.d.ts"/>
-/// <reference path="../fpsmeter/FPSMeter.d.ts"/>
 
 declare class Bitmap {
     /**
@@ -2725,18 +2722,11 @@ declare class TilingSprite extends PIXI.TilingSprite {
     protected _refresh(): void;
 }
 
-interface ToneFilterUniforms {
-    matrix: ToneFilterUniformsMatrix;
-}
 
-interface ToneFilterUniformsMatrix {
-    type: string;
-    value: Array<number>;
-}
 
 declare class ToneFilter extends PIXI.AbstractFilter {
     passes: Array<boolean>;
-    uniforms: ToneFilterUniforms;
+    uniforms: MV.Uniforms;
     fragmentSrc: Array<string>;
 
     /**
@@ -2835,20 +2825,13 @@ declare class ToneSprite extends PIXI.DisplayObject {
     protected _renderWebGL(renderSession: PIXI.WebGLRenderer): void;
 }
 
-interface TouchInputEvents {
-    trigger: boolean;
-    cancelled: boolean;
-    moved: boolean;
-    released: boolean;
-    wheelX: number;
-    wheelY: number;
-}
+
 
 interface TouchInputStatic {
     _mousePressed: boolean;
     _screenPressed: boolean;
     _pressedTime: number;
-    _events: TouchInputEvents;
+    _events: MV.TouchInputEvents;
     _triggered: boolean;
     _cancelled: boolean;
     _moved: boolean;
@@ -6143,51 +6126,62 @@ declare module 'rpg_library' {
     export = RPG;
 }
 declare namespace MV {
-    export interface Hoge {
-        Hogeeeee: string;
-        Hoeeeeee: number;
+    interface Uniforms {
+        matrix: Matrix;
     }
-    export interface BattlerAnimation {
+    interface Matrix {
+        type: string;
+        value: Array<number>;
+    }
+    interface TouchInputEvents {
+        trigger: boolean;
+        cancelled: boolean;
+        moved: boolean;
+        released: boolean;
+        wheelX: number;
+        wheelY: number;
+    }
+    interface AudioParameters {
+        name: string;
+        volume: number;
+        pitch: number;
+        pan: number;
+        pos: number;
+    }
+    interface BattleRewards {
+        gold: number;
+        exp: number;
+        items: Array<RPG.BaseItem>;
+    }
+    interface BattlerAnimation {
         animationId: number;
         mirror: boolean;
         delay: number;
     }
-    export interface CommandItem {
+    interface CommandItem {
         name: string;
         symbol: string;
         enabled: boolean;
         ext: any;
     }
-    export interface ItemRect {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    }
-    export interface TextState {
+    interface TextState {
         index: number;
         x: number;
         y: number;
         left: number;
     }
-    export interface BattleLogMethod {
+    interface BattleLogMethod {
         name: string;
         params: any;
     }
-    export interface Motion {
+    interface Motion {
         index: number;
         loop: boolean;
     }
 }
 
 
-interface AudioParameters {
-    name: string;
-    volume: number;
-    pitch: number;
-    pan: number;
-    pos: number;
-}
+
 
 /**
  * AudioManager
@@ -6199,8 +6193,8 @@ interface AudioManagerStatic {
     _bgsVolume: number;
     _meVolume: number;
     _seVolume: number;
-    _currentBgm: AudioParameters;
-    _currentBgs: AudioParameters;
+    _currentBgm: MV.AudioParameters;
+    _currentBgs: MV.AudioParameters;
     _bgmBuffer: Html5AudioStatic | WebAudio;
     _bgsBuffer: Html5AudioStatic | WebAudio;
     _meBuffer: Html5AudioStatic | WebAudio;
@@ -6214,43 +6208,43 @@ interface AudioManagerStatic {
     meVolume: number;
     seVolume: number;
 
-    playBgm(bgm: AudioParameters, pos?: number): void;
-    replayBgm(bgm: AudioParameters): void;
-    isCurrentBgm(bgm: AudioParameters): boolean;
-    updateBgmParameters(bgm: AudioParameters): void;
-    updateCurrentBgm(bgm: AudioParameters, pos: number): void;
+    playBgm(bgm: MV.AudioParameters, pos?: number): void;
+    replayBgm(bgm: MV.AudioParameters): void;
+    isCurrentBgm(bgm: MV.AudioParameters): boolean;
+    updateBgmParameters(bgm: MV.AudioParameters): void;
+    updateCurrentBgm(bgm: MV.AudioParameters, pos: number): void;
     stopBgm(): void;
     fadeOutBgm(duration: number): void;
     fadeInBgm(duration: number): void;
 
-    playBgs(bgs: AudioParameters, pos?: number): void;
-    replayBgs(bgs: AudioParameters): void;
-    isCurrentBgs(bgs: AudioParameters): boolean;
-    updateBgsParameters(bgs: AudioParameters): void;
-    updateCurrentBgs(bgs: AudioParameters, pos: number): void;
+    playBgs(bgs: MV.AudioParameters, pos?: number): void;
+    replayBgs(bgs: MV.AudioParameters): void;
+    isCurrentBgs(bgs: MV.AudioParameters): boolean;
+    updateBgsParameters(bgs: MV.AudioParameters): void;
+    updateCurrentBgs(bgs: MV.AudioParameters, pos: number): void;
     stopBgs(): void;
     fadeOutBgs(duration: number): void;
     fadeInBgs(duration: number): void;
-    playMe(me: AudioParameters): void;
-    updateMeParameters(me: AudioParameters): void;
+    playMe(me: MV.AudioParameters): void;
+    updateMeParameters(me: MV.AudioParameters): void;
     fadeOutMe(duration: number): void;
     stopMe(): void;
-    playMe(me: AudioParameters): void;
-    updateMeParameters(me: AudioParameters): void;
+    playMe(me: MV.AudioParameters): void;
+    updateMeParameters(me: MV.AudioParameters): void;
     fadeOutMe(duration: number): void;
     stopMe(): void;
-    playSe(se: AudioParameters): void;
-    updateSeParameters(buffer: AudioParameters, se: AudioParameters): void;
+    playSe(se: MV.AudioParameters): void;
+    updateSeParameters(buffer: MV.AudioParameters, se: MV.AudioParameters): void;
     stopSe(): void;
-    playStaticSe(se: AudioParameters): void;
-    loadStaticSe(se: AudioParameters): void;
-    isStaticSe(se: AudioParameters): boolean;
+    playStaticSe(se: MV.AudioParameters): void;
+    loadStaticSe(se: MV.AudioParameters): void;
+    isStaticSe(se: MV.AudioParameters): boolean;
     stopAll(): void;
-    saveBgm(): AudioParameters;
-    saveBgs(): AudioParameters;
-    makeEmptyAudioObject(): AudioParameters;
+    saveBgm(): MV.AudioParameters;
+    saveBgs(): MV.AudioParameters;
+    makeEmptyAudioObject(): MV.AudioParameters;
     createBuffer(): Html5AudioStatic | WebAudio;
-    updateBufferParameters(buffer: AudioParameters, configVolume: number, audio: AudioParameters): void;
+    updateBufferParameters(buffer: MV.AudioParameters, configVolume: number, audio: MV.AudioParameters): void;
     audioFileExt(): string;
     shouldUseHtml5Audio(): boolean;
     checkErrors(): void;
@@ -6258,12 +6252,6 @@ interface AudioManagerStatic {
     checkWebAudioError(webAudio: Html5AudioStatic | WebAudio): void;
 }
 declare var AudioManager: AudioManagerStatic;
-
-interface BattleRewards {
-    gold: number;
-    exp: number;
-    items: Array<RPG.BaseItem>;
-}
 
 /**
  * BattleManager
@@ -6280,8 +6268,8 @@ interface BattleManagerStatic {
     _surprise: boolean;
     _actorIndex: number;
     _actionForcedBattler: Game_Battler;
-    _mapBgm: AudioParameters;
-    _mapBgs: AudioParameters;
+    _mapBgm: MV.AudioParameters;
+    _mapBgs: MV.AudioParameters;
     _actionBattlers: Array<Game_Battler>;
     _subject: Game_Battler;
     _action: Game_Action;
@@ -6291,7 +6279,7 @@ interface BattleManagerStatic {
     _spriteset: Spriteset_Battle;
     _escapeRatio: number;
     _escaped: boolean;
-    _rewards: BattleRewards;
+    _rewards: MV.BattleRewards;
 
     setup(troopId: number, canEscape: boolean, canLose: boolean): void;
     initMembers(): void;
@@ -6434,8 +6422,8 @@ interface DatabaseFile {
 interface SaveFileInfo {
     globalId: string;
     title: string;
-    characters: Array<Array<any>>;// ?
-    faces: Array<Array<any>>;// ?
+    characters: Array<Array<any>>;
+    faces: Array<Array<any>>;
     playtime: string;
     timestamp: number;
 }
@@ -6473,7 +6461,7 @@ interface DataManagerStatic {
     makeEmptyMap(): void;
     isMapLoaded(): boolean;
     onLoad(object: RPG.Map): void;
-    extractMetadata(data: any): void;//noteとmetaをもつDBオブジェクト
+    extractMetadata(data: any): void;// noteとmetaをもつDBオブジェクト
     checkError(): void;
     isBattleTest(): boolean;
     isEventTest(): boolean;
@@ -6513,20 +6501,20 @@ declare var DataManager: DataManagerStatic;
 interface ImageManagerStatic {
     _cache: {[key: string]: Bitmap};
 
-    loadAnimation(filename: string, hue: number): Bitmap;
-    loadBattleback1(filename: string, hue: number): Bitmap;
-    loadBattleback2(filename: string, hue: number): Bitmap;
-    loadEnemy(filename: string, hue: number): Bitmap;
-    loadCharacter(filename: string, hue: number): Bitmap;
-    loadFace(filename: string, hue: number): Bitmap;
-    loadParallax(filename: string, hue: number): Bitmap;
-    loadPicture(filename: string, hue: number): Bitmap;
-    loadSvActor(filename: string, hue: number): Bitmap;
-    loadSvEnemy(filename: string, hue: number): Bitmap;
-    loadSystem(filename: string, hue: number): Bitmap;
-    loadTileset(filename: string, hue: number): Bitmap;
-    loadTitle1(filename: string, hue: number): Bitmap;
-    loadTitle2(filename: string, hue: number): Bitmap;
+    loadAnimation(filename: string, hue?: number): Bitmap;
+    loadBattleback1(filename: string, hue?: number): Bitmap;
+    loadBattleback2(filename: string, hue?: number): Bitmap;
+    loadEnemy(filename: string, hue?: number): Bitmap;
+    loadCharacter(filename: string, hue?: number): Bitmap;
+    loadFace(filename: string, hue?: number): Bitmap;
+    loadParallax(filename: string, hue?: number): Bitmap;
+    loadPicture(filename: string, hue?: number): Bitmap;
+    loadSvActor(filename: string, hue?: number): Bitmap;
+    loadSvEnemy(filename: string, hue?: number): Bitmap;
+    loadSystem(filename: string, hue?: number): Bitmap;
+    loadTileset(filename: string, hue?: number): Bitmap;
+    loadTitle1(filename: string, hue?: number): Bitmap;
+    loadTitle2(filename: string, hue?: number): Bitmap;
     loadBitmap(folder: string, filename: string, hue: number, smooth: boolean): Bitmap;
     loadEmptyBitmap(path: string, hue: number): Bitmap;
     clear(): void;
@@ -7102,8 +7090,10 @@ declare class Game_Screen {
     updateWeather(): void;
     updatePictures(): void;
     startFlashForDamage(): void;
-    showPicture(pictureId: number, name: string, origin: number, x: number, y: number, scaleX: number, scaleY: number, opacity: number, blendMode: number): void;
-    movePicture(pictureId: number, origin: number, x: number, y: number, scaleX: number, scaleY: number, opacity: number, blendMode: number, duration: number): void;
+    showPicture(pictureId: number, name: string, origin: number, x: number, y: number,
+                scaleX: number, scaleY: number, opacity: number, blendMode: number): void;
+    movePicture(pictureId: number, origin: number, x: number, y: number,
+                scaleX: number, scaleY: number, opacity: number, blendMode: number, duration: number): void;
     rotatePicture(pictureId: number, speed: number): void;
     tintPicture(pictureId: number, tone: Array<number>, duration: number): void;
     erasePicture(pictureId: number): void;
@@ -9422,7 +9412,7 @@ declare class Sprite_Character extends Sprite_Base {
     initMembers(): void;
     setCharacter(character: Game_Character): void;
     isTile(): boolean;
-    tilesetBitmap(tileId: any): Bitmap;
+    tilesetBitmap(tileId: number): Bitmap;
     updateBitmap(): void;
     isImageChanged(): boolean;
     setTileBitmap(): void;
@@ -9630,7 +9620,7 @@ declare class Sprite_Animation extends Sprite {
     protected _duplicated: boolean;
 
     initMembers(): void;
-    setup(target: Sprite_Battler, animation: any, mirror: boolean, delay: number): void;
+    setup(target: Sprite_Battler, animation: RPG.Animation, mirror: boolean, delay: number): void;
     remove(): void;
     setupRate(): void;
     setupDuration(): void;
@@ -9674,7 +9664,7 @@ declare class Sprite_Damage extends Sprite {
     digitWidth(): number;
     digitHeight(): number;
     createMiss(): void;
-    createDigits(baseRow: number, value: any): void;
+    createDigits(baseRow: number, value: number): void;
     createChildSprite(): Sprite;
     updateChild(sprite: Sprite): void;
     updateFlash(): void;
@@ -10320,7 +10310,7 @@ declare class Window_ItemList extends Window_Selectable {
 
     setCategory(category: string): void;
     item(): RPG.BaseItem;
-    includes(item: RPG.BaseItem): any;
+    includes(item: RPG.BaseItem): boolean;
     needsNumber(): boolean;
     isEnabled(item: RPG.BaseItem): boolean;
     selectLast(): void;
@@ -10650,15 +10640,13 @@ declare class Window_ShopStatus extends Window_Base {
     drawActorEquipInfo(x: number, y: number, actor: Game_Actor): void;
     drawActorParamChange(x: number, y: number, actor: Game_Actor, item1: RPG.EquipItem): void;
     paramId(): number;
-    currentEquippedItem(actor: Game_Actor, etypeId: any): void;
+    currentEquippedItem(actor: Game_Actor, etypeId: number): RPG.EquipItem;
     updatePage(): void;
     isPageChangeEnabled(): boolean;
     isPageChangeRequested(): boolean;
     isTouchedInsideFrame(): boolean;
     changePage(): void;
 }
-
-
 
 /**
  * -----------------------------------------------------------------------------
@@ -10681,8 +10669,7 @@ declare class Window_NameEdit extends Window_Base {
     faceWidth(): number;
     charWidth(): number;
     left(): number;
-    itemRect(index: number): MV.ItemRect;
-    underlineRect(index: number): MV.ItemRect;
+    underlineRect(index: number): Rectangle;
     underlineColor(): string;
     drawUnderline(index: number): void;
     drawChar(index: number): void;
@@ -10714,7 +10701,6 @@ declare class Window_NameInput extends Window_Selectable {
     character(): string;
     isPageChange(): boolean;
     isOk(): boolean;
-    itemRect(index: number): MV.ItemRect;
     processJump(): void;
     processBack(): void;
     onNameAdd(): void;
@@ -10958,7 +10944,7 @@ declare class Window_BattleLog extends Window_Selectable {
     animationBaseDelay(): number;
     animationNextDelay(): number;
     drawBackground(): void;
-    backRect(): MV.ItemRect;
+    backRect(): Rectangle;
     backColor(): string;
     backPaintOpacity(): number;
     drawLineText(index: number): void;
@@ -11538,7 +11524,7 @@ declare class Scene_GameEnd extends Scene_MenuBase {
 declare class Scene_Shop extends Scene_MenuBase {
     protected _goods: Array<Array<any>>;
     protected _purchaseOnly: boolean;
-    protected _item: any;
+    protected _item: RPG.BaseItem;
 
     protected _goldWindow: Window_Gold;
     protected _commandWindow: Window_ShopCommand;

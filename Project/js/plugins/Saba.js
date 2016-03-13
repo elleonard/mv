@@ -10,4 +10,9 @@ var Saba;
             }
         }
     };
+    var A = (function () {
+        function A() {
+        }
+        return A;
+    }());
 })(Saba || (Saba = {}));

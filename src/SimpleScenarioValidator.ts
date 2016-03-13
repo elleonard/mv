@@ -175,20 +175,23 @@ const varCheck2 = (str: string): Validator => {
 };
 
 validates['n1'] = {
-    'face': isNumeric(0),
-    'pose': isNumeric(0),
-    'hoppe': isNumeric(0),
+    'face':     isNumeric(0),
+    'pose':     isNumeric(0),
+    'hoppe':    isNumeric(0),
+    'pos':      list('right', 'left'),
 };
 validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validates['n6'] = validates['n7'] = validates['n8'] = validates['n9'] = validates['n1'];
 
 validates['cos1'] = {
 };
 validates['cos2'] = validates['cos3'] = validates['cos4'] = validates['cos5'] = validates['cos6'] = validates['cos7'] = validates['cos8'] = validates['cos9'] = validates['cos1'];
-validates['messages'] = {}
-validates['not_close'] = {}
-validates['start'] = {}
-validates['end'] = {}
-validates['vehicle'] = {}
+validates['messages'] = {};
+validates['not_close'] = {
+    'flag':     list('on', 'off')
+};
+validates['start'] = {};
+validates['end'] = {};
+validates['vehicle'] = {};
 
 
 validates['message_h'] = {

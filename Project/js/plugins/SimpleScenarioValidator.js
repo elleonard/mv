@@ -191,12 +191,15 @@ var SimpleScenario;
         'face': isNumeric(0),
         'pose': isNumeric(0),
         'hoppe': isNumeric(0),
+        'pos': list('right', 'left'),
     };
     SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
     SimpleScenario.validates['cos1'] = {};
     SimpleScenario.validates['cos2'] = SimpleScenario.validates['cos3'] = SimpleScenario.validates['cos4'] = SimpleScenario.validates['cos5'] = SimpleScenario.validates['cos6'] = SimpleScenario.validates['cos7'] = SimpleScenario.validates['cos8'] = SimpleScenario.validates['cos9'] = SimpleScenario.validates['cos1'];
     SimpleScenario.validates['messages'] = {};
-    SimpleScenario.validates['not_close'] = {};
+    SimpleScenario.validates['not_close'] = {
+        'flag': list('on', 'off')
+    };
     SimpleScenario.validates['start'] = {};
     SimpleScenario.validates['end'] = {};
     SimpleScenario.validates['vehicle'] = {};

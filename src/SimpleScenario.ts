@@ -73,10 +73,10 @@
 //**************************************************************************
  *○　message_h
  *○　message
- *　　choice_h
- *　　choice_if
+ *○　choice_h
+ *○　choice_if
  *　　choice_cancel
- *　　choice_end
+ *○　choice_end
  *　　input_num
  *　　choice_item
  *　　scroll_h
@@ -999,9 +999,9 @@ class Scenario_Converter {
     }
     protected convertCommand_anime(context: Context): void {
         const target = context.headerInt('target');
-        const balloon = context.headerInt('balloon');
+        const anime = context.headerInt('anime');
         const wait = context.headerBool('wait', false);
-        context.push({'code': 212, 'indent': this.indent, 'parameters': [target, balloon, wait]});
+        context.push({'code': 212, 'indent': this.indent, 'parameters': [target, anime, wait]});
     }
     protected convertCommand_balloon(context: Context): void {
         const target = context.headerInt('target');

@@ -8,17 +8,71 @@ var __extends = (this && this.__extends) || function (d, b) {
 //=============================================================================
 /*:ja
  * @author Sabakan
+ * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
  * @param useTextureAtlas
- * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？
+ * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？ TexturePackerを使い、actor01.png actor01.json などが必要です
  * @default false
  *
  * @param actor1offset
- * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？
+ * @desc アクター１のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor2offset
+ * @desc アクター２のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor3offset
+ * @desc アクター３のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor4offset
+ * @desc アクター４のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor5offset
+ * @desc アクター５のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor6offset
+ * @desc アクター６のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor7offset
+ * @desc アクター７のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor8offset
+ * @desc アクター８のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor9offset
+ * @desc アクター９のキャラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor10offset
+ * @desc アクター10のキャラのx座標，y座標の補正値です
  * @default 0, 0
  *
  * @help
  * Ver0.1
+ *
+ * プラグインコマンド
+ * Tachie showLeft  actorId x y opacity # 立ち絵を左側に表示する
+ * Tachie showRight actorId x y opacity # 立ち絵を右側に表示する
+ * Tachie face      actorId faceId      # アクターの表情を変更する
+ * Tachie pose      actorId poseId      # アクターのポーズを変更する
+ * Tachie hoppe     actorId hoppeId     # アクターのほっぺを変更する
+ * Tachie outer     actorId cosId       # アクターのアウターを変更する
+ * Tachie innerTop     actorId cosId    # アクターのブラを変更する
+ * Tachie innerBottom  actorId cosId    # アクターのパンツを変更する
+ * Tachie preload      actorId          # アクターの現在のコスを事前に読み込んでおく
+ * Tachie preloadFaces actorId 1 2 3... # アクターの表情を事前に読み込んでおく
+ * Tachie notClose on                   # ウィンドウを閉じないようにする
+ * Tachie notClose off                  # ↑を解除する
+ * Tachie showName hoge                 # 名前欄に hoge を表示する
+ * Tachie hideName                      # 名前欄を非表示にする
+ * Tachie clear                         # 立ち絵を全て非表示にする
  */
 var Tachie;
 (function (Tachie) {
@@ -26,7 +80,7 @@ var Tachie;
     Tachie.offsetX = {};
     Tachie.offsetY = {};
     Tachie.RIGHT_POS_OFFSET_X = 400;
-    for (var i = 1; i < 10; i++) {
+    for (var i = 1; i <= 10; i++) {
         var offset1 = String(parameters['actor' + i + 'offset']).split(',');
         Tachie.offsetX[i] = parseInt(offset1[0] || '0');
         Tachie.offsetY[i] = parseInt(offset1[1] || '0');
@@ -551,18 +605,30 @@ var Tachie;
             this.setCacheChanged();
         };
         _Game_Actor.prototype.preloadTachie = function () {
-            this.doPreloadTachie(this.outerBackFile());
-            this.doPreloadTachie(this.outerShadowFile());
-            this.doPreloadTachie(this.outerMainFile());
-            this.doPreloadTachie(this.outerFrontFile());
-            this.doPreloadTachie(this.bodyBackFile());
-            this.doPreloadTachie(this.bodyFrontFile());
-            this.doPreloadTachie(this.innerBottomFile());
-            this.doPreloadTachie(this.innerTopFile());
-            this.doPreloadTachie(this.hoppeFile());
-            this.doPreloadTachie(this.faceFile());
+            if (useTextureAtlas) {
+                if (PIXI.TextureCache[this.bodyFrontFile() + '.png']) {
+                }
+                else {
+                    new PIXI.SpriteSheetLoader('img/tachie/actor' + this.actorId().padZero(2) + '.json', false).load();
+                }
+            }
+            else {
+                this.doPreloadTachie(this.outerBackFile());
+                this.doPreloadTachie(this.outerShadowFile());
+                this.doPreloadTachie(this.outerMainFile());
+                this.doPreloadTachie(this.outerFrontFile());
+                this.doPreloadTachie(this.bodyBackFile());
+                this.doPreloadTachie(this.bodyFrontFile());
+                this.doPreloadTachie(this.innerBottomFile());
+                this.doPreloadTachie(this.innerTopFile());
+                this.doPreloadTachie(this.hoppeFile());
+                this.doPreloadTachie(this.faceFile());
+            }
         };
         _Game_Actor.prototype.preloadFaces = function (faceIds) {
+            if (useTextureAtlas) {
+                return;
+            }
             for (var _i = 0, faceIds_1 = faceIds; _i < faceIds_1.length; _i++) {
                 var faceId = faceIds_1[_i];
                 this.doPreloadTachie(this.baseId + faceId.padZero(2));

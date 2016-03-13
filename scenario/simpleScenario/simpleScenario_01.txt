@@ -1,10 +1,14 @@
 @start
 
+// ↓会話ウィンドウを閉じないようにする設定ですが、
+// 実は @start を実行しても同じ効果が得られます。
 @not_close flag=on
 
 @default_pos actor=2 position=right
 
 @cos2 outer=b
+
+@balloon target=0 balloon=1 wait=true
 
 @n1
 リオさん、リオさん、聞いてください！

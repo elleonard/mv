@@ -78,10 +78,10 @@ var __extends = (this && this.__extends) || function (d, b) {
 //**************************************************************************
  *○　message_h
  *○　message
- *　　choice_h
- *　　choice_if
+ *○　choice_h
+ *○　choice_if
  *　　choice_cancel
- *　　choice_end
+ *○　choice_end
  *　　input_num
  *　　choice_item
  *　　scroll_h
@@ -1004,9 +1004,9 @@ var SimpleScenario;
         };
         Scenario_Converter.prototype.convertCommand_anime = function (context) {
             var target = context.headerInt('target');
-            var balloon = context.headerInt('balloon');
+            var anime = context.headerInt('anime');
             var wait = context.headerBool('wait', false);
-            context.push({ 'code': 212, 'indent': this.indent, 'parameters': [target, balloon, wait] });
+            context.push({ 'code': 212, 'indent': this.indent, 'parameters': [target, anime, wait] });
         };
         Scenario_Converter.prototype.convertCommand_balloon = function (context) {
             var target = context.headerInt('target');

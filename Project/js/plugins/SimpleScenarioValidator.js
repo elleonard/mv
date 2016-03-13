@@ -191,7 +191,7 @@ var SimpleScenario;
         'face': isNumeric(0),
         'pose': isNumeric(0),
         'hoppe': isNumeric(0),
-        'pos': list('right', 'left'),
+        'position': list('right', 'left'),
     };
     SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
     SimpleScenario.validates['cos1'] = {};
@@ -201,8 +201,18 @@ var SimpleScenario;
         'flag': list('on', 'off')
     };
     SimpleScenario.validates['start'] = {};
+    SimpleScenario.validates['hide'] = {};
+    SimpleScenario.validates['return'] = {};
+    SimpleScenario.validates['default_pos'] = {
+        'actor': [
+            notEmpty(),
+            isNumeric(1)
+        ],
+        'position': list('right', 'left'),
+    };
     SimpleScenario.validates['end'] = {};
     SimpleScenario.validates['vehicle'] = {};
+    SimpleScenario.validates['choice_end'] = {};
     SimpleScenario.validates['message_h'] = {
         'index': isNumeric(0, 7),
         'back': isNumeric(0, 2),

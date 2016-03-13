@@ -1,15 +1,26 @@
-@message_h actor=Actor1 index=2
-@message value=aaaa
-
-@message_h actor=Actor1 index=2
-うひょーい
-_
 わーい
 
-@exp actor=1 value=-3000 message=true
+@choice_h label1=ああああ label2=いいいい default=1 cancel=2 position=1
 
-@route_h event=-1 repeat=true skip=true wait=false
-@route type=1
-@route type=left
-@route type=3
-@route type=up
+@choice_if index=1
+    うううう
+
+    @n1
+    で、でも……。
+
+    @choice_h label1=ああああ label2=いいいい default=1 cancel=2 position=1
+    @choice_if index=1
+
+        ああしああ
+
+    @end
+    @choice_if index=2
+        ５５５５
+    @end
+@end
+
+@choice_if index=2
+    aaaa
+@end
+
+@choice_end

@@ -930,6 +930,9 @@ class Window_TachieMessage extends Window_Message {
             if (this._windowHide) {
                 this.changeWindowVisibility();
             }
+            if (this.isAnySubWindowActive()) {
+                return;
+            }
             this._pauseSkip = true;
             this._showFast = true;
             this._triggered = true;
@@ -952,10 +955,16 @@ class Window_TachieMessage extends Window_Message {
         if (this._windowHide && this.visible) {
             this.visible = false;
             this._messageNameWindow.visible = false;
+            for (const window of this.subWindows()) {
+                window.visible = false;
+            }
         } else {
             this.visible = true;
             if ($gameTemp.tachieName) {
                 this._messageNameWindow.visible = true;
+            }
+            for (const window of this.subWindows()) {
+                window.visible = true;
             }
         }
     }
@@ -977,9 +986,9 @@ class Window_TachieMessage extends Window_Message {
     updatePlacement(): void {
         this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
     }
-    isAnySubWindowActive(): boolean {
+    /*isAnySubWindowActive(): boolean {
         return false;
-    }
+    }*/
     terminateMessage(): void {
         $gameMessage.clear();
         if ($gameTemp.tachieAvairable) {

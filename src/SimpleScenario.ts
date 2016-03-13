@@ -66,7 +66,7 @@
  * 　start
  * 　＞default_posなどの設定をクリアします。
  *
- * 
+ *
  * イベント実装状況(○→実装済み)
 //**************************************************************************
 //　メッセージ系
@@ -261,7 +261,7 @@
 //**************************************************************************
 //　その他
 //**************************************************************************
- *　　end
+ *○　end
  */
 module SimpleScenario {
 
@@ -388,16 +388,20 @@ class Scenario_Converter {
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             line = this.removeWS(line);
-            const block: Block = new Block(i + 1);
             if (line.length === 0) {
                 continue;
             }
             if (line.indexOf('//') === 0) {
                 continue;
             }
+            const block: Block = new Block(i + 1);
+            blocks.push(block);
 
             if (line.indexOf('@') === 0) {
                 block.header = line;
+                if (line.indexOf('@choice_if') >= 0 || line.indexOf('@choice_h') >= 0) {
+                    continue;
+                }
                 let offset = 1;
                 while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
@@ -413,7 +417,6 @@ class Scenario_Converter {
                 }
                 i += offset - 1;
             }
-            blocks.push(block);
         }
 
         for (const block of blocks) {
@@ -514,17 +517,17 @@ class Scenario_Converter {
     }
     protected convertCommand_default_pos(context: Context): void {
         var actorId = parseInt(context.header['actor']);
-        var pos = context.header['pos'] === 'right' ? 2 : 1;
-        this.defaultPosMap[actorId] = pos;
+        var position = context.header['position'] === 'right' ? 2 : 1;
+        this.defaultPosMap[actorId] = position;
     }
     protected convertCommand_not_close(context: Context): void {
         var flag = context.header['flag'];
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose ${flag}`]});
     }
     protected convertCommand_n(actorId: number, context: Context): void {
-        let pos = this.defaultPosMap[actorId] || 1;
-        if (context.header['pos']) {
-            pos = context.header['pos'] === 'right' ? 2 : 1;
+        let position = this.defaultPosMap[actorId] || 1;
+        if (context.header['position']) {
+            position = context.header['position'] === 'right' ? 2 : 1;
         }
 
         if (context.header['face']) {
@@ -550,7 +553,7 @@ class Scenario_Converter {
 
         const x = 0;
         const y = 0;
-        if (pos === Tachie.LEFT_POS) {
+        if (position === Tachie.LEFT_POS) {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
         } else {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
@@ -587,6 +590,48 @@ class Scenario_Converter {
     protected convertCommand_message(context: Context): void {
         const value = context.header['value'];
         context.push({'code': 401, 'indent': this.indent, 'parameters': [value]});
+    }
+    protected convertCommand_choice_h(context: Context): void {
+        var labels: Array<string> = [];
+        if (context.header['label1']) {
+            labels.push(context.header['label1']);
+        }
+        if (context.header['label2']) {
+            labels.push(context.header['label2']);
+        }
+        if (context.header['label3']) {
+            labels.push(context.header['label3']);
+        }
+        if (context.header['label4']) {
+            labels.push(context.header['label4']);
+        }
+        if (context.header['label5']) {
+            labels.push(context.header['label5']);
+        }
+        if (context.header['label6']) {
+            labels.push(context.header['label6']);
+        }
+        const cancelType = context.headerInt('cancel', 0) - 1;// -2
+        const defaultType = context.headerInt('default', 0) - 1;
+        const positionType = context.headerInt('position', 2);
+        const background = context.headerInt('background', 0);
+        context.push({'code':102, 'indent': this.indent, 'parameters': [labels, cancelType, defaultType, positionType, background]});
+    }
+    protected convertCommand_choice_if(context: Context): void {
+        const index = context.headerInt('index') - 1;
+        this.indent++;
+        context.push({'code':402, 'indent': this.indent - 1, 'parameters': [index]})
+    }
+    protected convertCommand_choice_cancel(context: Context): void {
+        this.indent++;
+        context.push({'code':403, 'indent': this.indent - 1, 'parameters': []})
+    }
+    protected convertCommand_choice_end(context: Context): void {
+        this.indent--;
+        context.push({'code':0, 'indent': this.indent, 'parameters': []})
+    }
+    protected convertCommand_return(context: Context): void {
+        context.push({'code': 115, 'indent': this.indent, 'parameters': []});
     }
     protected convertCommand_common(context: Context): void {
         const id = context.headerInt('id');
@@ -1146,7 +1191,10 @@ class Scenario_Converter {
         var value = context.headerInt('value');
         context.push({'code': 323, 'indent': this.indent, 'parameters': [actor, value]});
     }
-
+    protected convertCommand_end(context: Context): void {
+        this.indent--;
+        context.push({'code': 0, 'indent': this.indent + 1, 'parameters': []});
+    }
 }
 
 class Block {

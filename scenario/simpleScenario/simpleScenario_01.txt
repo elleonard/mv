@@ -2,25 +2,49 @@
 
 @not_close flag=on
 
-@default_pos actor=2 pos=right
+@default_pos actor=2 position=right
 
 @cos2 outer=b
 
 @n1
 リオさん、リオさん、聞いてください！
 
-
 @n2
 うん、トモちゃんどうしたの？
 
 @n1
 私もツクールMVで新しくスクリプトを作り始めたのです！
+詳細を聞きたいですか？
 
-@n2 face=3
-へぇ、トモちゃんも？　どういうのを作っているの？
+@choice_h label1=はい label2=いいえ default=1 cancel=2 position=2
 
-@n1
-やだなぁ、今、私たちが使っているコレですよ。
+@choice_if index=1
+    @n2 face=3
+    へぇ、トモちゃんも？　どういうのを作っているの？
+
+    @n1
+    やだなぁ、今、私たちが使っているコレですよ。
+@end
+
+@choice_if index=2
+    @n1
+    えーっ！　聞きたくないんですか！？
+
+    @choice_h label1=はい label2=いいえ default=1 cancel=2 position=2
+    @choice_if index=1
+        @hide
+        @return
+    @end
+
+    @choice_if index=2
+        @n2 face=3
+        じゃあ、やっぱり聞こうかな。
+
+        @n1
+        まかせてください、それはなんと、これなのです！
+    @end
+
+@end
 
 @n2 face=2
 えっ？

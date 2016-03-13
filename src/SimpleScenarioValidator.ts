@@ -178,7 +178,7 @@ validates['n1'] = {
     'face':     isNumeric(0),
     'pose':     isNumeric(0),
     'hoppe':    isNumeric(0),
-    'pos':      list('right', 'left'),
+    'position':  list('right', 'left'),
 };
 validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validates['n6'] = validates['n7'] = validates['n8'] = validates['n9'] = validates['n1'];
 
@@ -190,8 +190,19 @@ validates['not_close'] = {
     'flag':     list('on', 'off')
 };
 validates['start'] = {};
+validates['hide'] = {};
+validates['return'] = {};
+validates['default_pos'] = {
+    'actor': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'position':  list('right', 'left'),
+};
+
 validates['end'] = {};
 validates['vehicle'] = {};
+validates['choice_end'] = {};
 
 
 validates['message_h'] = {

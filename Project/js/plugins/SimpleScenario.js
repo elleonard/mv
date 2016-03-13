@@ -266,7 +266,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 //**************************************************************************
 //　その他
 //**************************************************************************
- *　　end
+ *○　end
  */
 var SimpleScenario;
 (function (SimpleScenario) {
@@ -390,15 +390,19 @@ var SimpleScenario;
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
                 line = this.removeWS(line);
-                var block = new Block(i + 1);
                 if (line.length === 0) {
                     continue;
                 }
                 if (line.indexOf('//') === 0) {
                     continue;
                 }
+                var block = new Block(i + 1);
+                blocks.push(block);
                 if (line.indexOf('@') === 0) {
                     block.header = line;
+                    if (line.indexOf('@choice_if') >= 0 || line.indexOf('@choice_h') >= 0) {
+                        continue;
+                    }
                     var offset = 1;
                     while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                         block.pushMsg(this.removeWS(lines[i + offset]));
@@ -415,7 +419,6 @@ var SimpleScenario;
                     }
                     i += offset - 1;
                 }
-                blocks.push(block);
             }
             for (var _i = 0, blocks_1 = blocks; _i < blocks_1.length; _i++) {
                 var block = blocks_1[_i];
@@ -520,17 +523,17 @@ var SimpleScenario;
         };
         Scenario_Converter.prototype.convertCommand_default_pos = function (context) {
             var actorId = parseInt(context.header['actor']);
-            var pos = context.header['pos'] === 'right' ? 2 : 1;
-            this.defaultPosMap[actorId] = pos;
+            var position = context.header['position'] === 'right' ? 2 : 1;
+            this.defaultPosMap[actorId] = position;
         };
         Scenario_Converter.prototype.convertCommand_not_close = function (context) {
             var flag = context.header['flag'];
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie notClose " + flag)] });
         };
         Scenario_Converter.prototype.convertCommand_n = function (actorId, context) {
-            var pos = this.defaultPosMap[actorId] || 1;
-            if (context.header['pos']) {
-                pos = context.header['pos'] === 'right' ? 2 : 1;
+            var position = this.defaultPosMap[actorId] || 1;
+            if (context.header['position']) {
+                position = context.header['position'] === 'right' ? 2 : 1;
             }
             if (context.header['face']) {
                 var face = parseInt(context.header['face']);
@@ -551,7 +554,7 @@ var SimpleScenario;
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
             var x = 0;
             var y = 0;
-            if (pos === Tachie.LEFT_POS) {
+            if (position === Tachie.LEFT_POS) {
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
             }
             else {
@@ -591,6 +594,48 @@ var SimpleScenario;
         Scenario_Converter.prototype.convertCommand_message = function (context) {
             var value = context.header['value'];
             context.push({ 'code': 401, 'indent': this.indent, 'parameters': [value] });
+        };
+        Scenario_Converter.prototype.convertCommand_choice_h = function (context) {
+            var labels = [];
+            if (context.header['label1']) {
+                labels.push(context.header['label1']);
+            }
+            if (context.header['label2']) {
+                labels.push(context.header['label2']);
+            }
+            if (context.header['label3']) {
+                labels.push(context.header['label3']);
+            }
+            if (context.header['label4']) {
+                labels.push(context.header['label4']);
+            }
+            if (context.header['label5']) {
+                labels.push(context.header['label5']);
+            }
+            if (context.header['label6']) {
+                labels.push(context.header['label6']);
+            }
+            var cancelType = context.headerInt('cancel', 0) - 1; // -2
+            var defaultType = context.headerInt('default', 0) - 1;
+            var positionType = context.headerInt('position', 2);
+            var background = context.headerInt('background', 0);
+            context.push({ 'code': 102, 'indent': this.indent, 'parameters': [labels, cancelType, defaultType, positionType, background] });
+        };
+        Scenario_Converter.prototype.convertCommand_choice_if = function (context) {
+            var index = context.headerInt('index') - 1;
+            this.indent++;
+            context.push({ 'code': 402, 'indent': this.indent - 1, 'parameters': [index] });
+        };
+        Scenario_Converter.prototype.convertCommand_choice_cancel = function (context) {
+            this.indent++;
+            context.push({ 'code': 403, 'indent': this.indent - 1, 'parameters': [] });
+        };
+        Scenario_Converter.prototype.convertCommand_choice_end = function (context) {
+            this.indent--;
+            context.push({ 'code': 0, 'indent': this.indent, 'parameters': [] });
+        };
+        Scenario_Converter.prototype.convertCommand_return = function (context) {
+            context.push({ 'code': 115, 'indent': this.indent, 'parameters': [] });
         };
         Scenario_Converter.prototype.convertCommand_common = function (context) {
             var id = context.headerInt('id');
@@ -1146,6 +1191,10 @@ var SimpleScenario;
             var actor = context.headerInt('actor');
             var value = context.headerInt('value');
             context.push({ 'code': 323, 'indent': this.indent, 'parameters': [actor, value] });
+        };
+        Scenario_Converter.prototype.convertCommand_end = function (context) {
+            this.indent--;
+            context.push({ 'code': 0, 'indent': this.indent + 1, 'parameters': [] });
         };
         return Scenario_Converter;
     }());

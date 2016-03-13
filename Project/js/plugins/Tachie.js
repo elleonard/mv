@@ -979,6 +979,9 @@ var Tachie;
                 if (this._windowHide) {
                     this.changeWindowVisibility();
                 }
+                if (this.isAnySubWindowActive()) {
+                    return;
+                }
                 this._pauseSkip = true;
                 this._showFast = true;
                 this._triggered = true;
@@ -1002,11 +1005,19 @@ var Tachie;
             if (this._windowHide && this.visible) {
                 this.visible = false;
                 this._messageNameWindow.visible = false;
+                for (var _i = 0, _a = this.subWindows(); _i < _a.length; _i++) {
+                    var window_1 = _a[_i];
+                    window_1.visible = false;
+                }
             }
             else {
                 this.visible = true;
                 if ($gameTemp.tachieName) {
                     this._messageNameWindow.visible = true;
+                }
+                for (var _b = 0, _c = this.subWindows(); _b < _c.length; _b++) {
+                    var window_2 = _c[_b];
+                    window_2.visible = true;
                 }
             }
         };
@@ -1028,9 +1039,9 @@ var Tachie;
         Window_TachieMessage.prototype.updatePlacement = function () {
             this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
         };
-        Window_TachieMessage.prototype.isAnySubWindowActive = function () {
+        /*isAnySubWindowActive(): boolean {
             return false;
-        };
+        }*/
         Window_TachieMessage.prototype.terminateMessage = function () {
             $gameMessage.clear();
             if ($gameTemp.tachieAvairable) {

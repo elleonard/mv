@@ -17,8 +17,15 @@ var __extends = (this && this.__extends) || function (d, b) {
  * Ver0.1
  *
  *
- *
  * イベント一覧(@→実装済み)
+ *****************************************************************************
+ * 独自コマンド
+ *****************************************************************************
+    @ n1 n2 n3 ... n99
+        立ち絵を表示します。
+    ■パラメータ
+        face: number
+            →表情ID
  *****************************************************************************
  * メッセージ系
  *****************************************************************************
@@ -103,22 +110,22 @@ var __extends = (this && this.__extends) || function (d, b) {
  *****************************************************************************
  * 移動系
  *****************************************************************************
-      map_move
-      vehicle_pos
-      event_pos
-      scroll_map
-      route_h
-      route
-      vehicle
+    @ map_move
+    @ vehicle_pos
+    @ event_pos
+    @ scroll_map
+    @ route_h
+    @ route
+    @ vehicle
  *****************************************************************************
  * キャラクター系
  *****************************************************************************
     @ transparent
     @ followers
     @ gather
-      anime
-      balloon
-      erace
+    @ anime
+    @ balloon
+    @ erace
  *****************************************************************************
  * 画面効果系
  *****************************************************************************
@@ -346,7 +353,7 @@ var SimpleScenario;
                 if (line.indexOf('@') === 0) {
                     block.header = line;
                     var offset = 1;
-                    while (i + offset < lines.length && lines[i + offset].indexOf('@') === -1 && lines[i + offset].length > 0) {
+                    while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                         block.pushMsg(this.removeWS(lines[i + offset]));
                         offset++;
                     }
@@ -389,9 +396,19 @@ var SimpleScenario;
             var command = headerList[0].substr(1);
             var header = this.parseHeader(headerList);
             var context = new Context(file, block.lineNumber, command, list, header, block.data);
+            var n = /n(\d+)/.exec(command);
+            var cos = /cos(\d+)/.exec(command);
             try {
                 this.validate(context);
-                this['convertCommand_' + command](context);
+                if (n) {
+                    this['convertCommand_n'](parseInt(n[1]), context);
+                }
+                else if (cos) {
+                    this['convertCommand_cos'](parseInt(cos[1]), context);
+                }
+                else {
+                    this['convertCommand_' + command](context);
+                }
             }
             catch (e) {
                 console.error(command + 'のコマンドでエラーが発生しました');
@@ -445,7 +462,7 @@ var SimpleScenario;
                 var data = text.split('=');
                 result[data[0]] = data[1];
             }
-            return result;
+            return new Header(result);
         };
         Scenario_Converter.prototype.convertCommand_start = function (context) {
             this.defaultPosMap = {};
@@ -463,26 +480,7 @@ var SimpleScenario;
             var flag = context.header['flag'];
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie notClose " + flag)] });
         };
-        Scenario_Converter.prototype.convertCommand_n1 = function (context) {
-            this.convertCommand_nx(context, 1);
-        };
-        Scenario_Converter.prototype.convertCommand_n2 = function (context) {
-            this.convertCommand_nx(context, 2);
-        };
-        ;
-        Scenario_Converter.prototype.convertCommand_n3 = function (context) {
-            this.convertCommand_nx(context, 3);
-        };
-        ;
-        Scenario_Converter.prototype.convertCommand_n4 = function (context) {
-            this.convertCommand_nx(context, 4);
-        };
-        ;
-        Scenario_Converter.prototype.convertCommand_n5 = function (context) {
-            this.convertCommand_nx(context, 5);
-        };
-        ;
-        Scenario_Converter.prototype.convertCommand_nx = function (context, actorId) {
+        Scenario_Converter.prototype.convertCommand_n = function (actorId, context) {
             var pos = this.defaultPosMap[actorId] || 1;
             if (context.header['pos']) {
                 pos = parseInt(context.header['pos']);
@@ -522,22 +520,7 @@ var SimpleScenario;
                 context.push({ 'code': 401, 'indent': this.indent, 'parameters': [msg] });
             }
         };
-        Scenario_Converter.prototype.convertCommand_cos1 = function (context) {
-            this.convertCommand_cosx(context, 1);
-        };
-        Scenario_Converter.prototype.convertCommand_cos2 = function (context) {
-            this.convertCommand_cosx(context, 2);
-        };
-        Scenario_Converter.prototype.convertCommand_cos3 = function (context) {
-            this.convertCommand_cosx(context, 3);
-        };
-        Scenario_Converter.prototype.convertCommand_cos4 = function (context) {
-            this.convertCommand_cosx(context, 4);
-        };
-        Scenario_Converter.prototype.convertCommand_cos5 = function (context) {
-            this.convertCommand_cosx(context, 5);
-        };
-        Scenario_Converter.prototype.convertCommand_cosx = function (context, actorId) {
+        Scenario_Converter.prototype.convertCommand_cos = function (actorId, context) {
             var types = ['outer', 'innerTop', 'innerBottom'];
             for (var _i = 0, types_1 = types; _i < types_1.length; _i++) {
                 var type = types_1[_i];
@@ -604,9 +587,343 @@ var SimpleScenario;
             var flag = context.headerBool('flag', true) ? 0 : 1;
             context.push({ 'code': 137, 'indent': this.indent, 'parameters': [flag] });
         };
+        Scenario_Converter.prototype.convertCommand_map_move = function (context) {
+            var direction;
+            switch (context.headerStr('direction')) {
+                case '2':
+                case 'down':
+                    direction = 2;
+                    break;
+                case '4':
+                case 'left':
+                    direction = 4;
+                    break;
+                case '6':
+                case 'right':
+                    direction = 6;
+                    break;
+                case '8':
+                case 'up':
+                    direction = 8;
+            }
+            var fade;
+            switch (context.headerStr('fade')) {
+                case '1':
+                case 'white':
+                    fade = 1;
+                    break;
+                case '2':
+                case 'none':
+                    fade = 2;
+                    break;
+                default:
+                    fade = 0;
+            }
+            var type = context.headerStr('type', 'const') === 'const' ? 0 : 1;
+            var map = context.headerInt('map');
+            var x = context.headerInt('x');
+            var y = context.headerInt('y');
+            context.push({ 'code': 201, 'indent': this.indent, 'parameters': [type, map, x, y, direction, fade] });
+        };
+        Scenario_Converter.prototype.convertCommand_vehicle_pos = function (context) {
+            var vehicle = context.headerInt('vehicle');
+            var type = context.headerStr('type', 'const') === 'const' ? 0 : 1;
+            var map = context.headerInt('map');
+            var x = context.headerInt('x');
+            var y = context.headerInt('y');
+            context.push({ 'code': 202, 'indent': this.indent, 'parameters': [vehicle, type, map, x, y] });
+        };
+        Scenario_Converter.prototype.convertCommand_event_pos = function (context) {
+            var id = context.headerInt('id');
+            var type;
+            if (context.headerStr('type') === 'var') {
+                type = 1;
+            }
+            else if (context.headerStr('type') === 'var') {
+                type = 2;
+            }
+            else {
+                type = 0;
+            }
+            var x = context.headerInt('x');
+            var y = context.headerInt('y');
+            var direction;
+            switch (context.headerStr('direction')) {
+                case '2':
+                case 'down':
+                    direction = 2;
+                    break;
+                case '4':
+                case 'left':
+                    direction = 4;
+                    break;
+                case '6':
+                case 'right':
+                    direction = 6;
+                    break;
+                case '8':
+                case 'up':
+                    direction = 8;
+                    break;
+                default:
+                    direction = 0;
+                    break;
+            }
+            context.push({ 'code': 203, 'indent': this.indent, 'parameters': [id, type, x, y, direction] });
+        };
+        Scenario_Converter.prototype.convertCommand_scroll_map = function (context) {
+            var direction;
+            switch (context.headerStr('direction')) {
+                case '2':
+                case 'down':
+                    direction = 2;
+                    break;
+                case '4':
+                case 'left':
+                    direction = 4;
+                    break;
+                case '6':
+                case 'right':
+                    direction = 6;
+                    break;
+                case '8':
+                case 'up':
+                    direction = 8;
+                    break;
+            }
+            var num = context.headerInt('num');
+            var speed = context.headerInt('speed', 4);
+            context.push({ 'code': 204, 'indent': this.indent, 'parameters': [direction, num, speed] });
+        };
+        Scenario_Converter.prototype.convertCommand_route_h = function (context) {
+            var event = context.headerInt('event');
+            var repeat = context.headerBool('repeat', false);
+            var skip = context.headerBool('skip', false);
+            var wait = context.headerBool('wait', true);
+            if (context.data.length === 0) {
+                context.error('移動ルートが設定されていません。');
+                return;
+            }
+            var list = [];
+            for (var _i = 0, _a = context.data; _i < _a.length; _i++) {
+                var line = _a[_i];
+                list.push(this.convertCommand_route(context, line));
+            }
+            var routes = { repeat: repeat, skippable: skip, wait: wait, list: list };
+            context.push({ 'code': 205, 'indent': this.indent, 'parameters': [event, routes] });
+        };
+        Scenario_Converter.prototype.convertCommand_route = function (context, line) {
+            var headerList = line.split(' ');
+            var header = this.parseHeader(headerList);
+            var type = header.headerStr('type');
+            var parameters = [];
+            var code = parseInt(type);
+            if (isNaN(code)) {
+                switch (type) {
+                    case 'down':
+                        code = 1;
+                        break;
+                    case 'left':
+                        code = 2;
+                        break;
+                    case 'right':
+                        code = 3;
+                        break;
+                    case 'up':
+                        code = 4;
+                        break;
+                    case 'dl':
+                        code = 5;
+                        break;
+                    case 'dr':
+                        code = 6;
+                        break;
+                    case 'ul':
+                        code = 7;
+                        break;
+                    case 'ur':
+                        code = 8;
+                        break;
+                    case 'random':
+                        code = 9;
+                        break;
+                    case 'toward':
+                        code = 10;
+                        break;
+                    case 'away':
+                        code = 11;
+                        break;
+                    case 'foward':
+                        code = 12;
+                        break;
+                    case 'backward':
+                        code = 13;
+                        break;
+                    case 'jump':
+                        code = 14;
+                        new SimpleScenario.NumericValidator(-100, 100).validate(context, 'x', header['x']);
+                        new SimpleScenario.NumericValidator(-100, 100).validate(context, 'y', header['y']);
+                        parameters.push(header.headerInt('x', 0));
+                        parameters.push(header.headerInt('y', 0));
+                        break;
+                    case 'wait':
+                        code = 15;
+                        new SimpleScenario.NumericValidator(1, 999).validate(context, 'time', header['time']);
+                        parameters.push(header.headerInt('time', 60));
+                        break;
+                    case 'turn_down':
+                        code = 16;
+                        break;
+                    case 'turn_left':
+                        code = 17;
+                        break;
+                    case 'turn_right':
+                        code = 18;
+                        break;
+                    case 'turn_up':
+                        code = 19;
+                        break;
+                    case 'turn_90_r':
+                        code = 20;
+                        break;
+                    case 'turn_90_l':
+                        code = 21;
+                        break;
+                    case 'turn_180':
+                        code = 22;
+                        break;
+                    case 'turn_90_rl':
+                    case 'turn_90_lr':
+                        code = 23;
+                        break;
+                    case 'turn_random':
+                        code = 24;
+                        break;
+                    case 'turn_toward':
+                        code = 25;
+                        break;
+                    case 'turn_away':
+                        code = 26;
+                        break;
+                    case 'switch_on':
+                    case 'sw_on':
+                        code = 27;
+                        new SimpleScenario.NotEmptyValidator().validate(context, 'id', header['id']);
+                        new SimpleScenario.NumericValidator(1).validate(context, 'id', header['id']);
+                        parameters.push(header.headerInt('id'));
+                        break;
+                    case 'switch_off':
+                    case 'sw_off':
+                        code = 28;
+                        new SimpleScenario.NotEmptyValidator().validate(context, 'id', header['id']);
+                        new SimpleScenario.NumericValidator(1).validate(context, 'id', header['id']);
+                        parameters.push(header.headerInt('id'));
+                        break;
+                    case 'change_speed':
+                        code = 29;
+                        new SimpleScenario.NumericValidator(1, 6).validate(context, 'speed', header['speed']);
+                        parameters.push(header.headerInt('speed', 3));
+                        break;
+                    case 'change_freq':
+                        code = 30;
+                        new SimpleScenario.NumericValidator(1, 5).validate(context, 'freq', header['freq']);
+                        parameters.push(header.headerInt('freq', 3));
+                        break;
+                    case 'walk_anime_on':
+                        code = 31;
+                        break;
+                    case 'walk_anime_off':
+                        code = 32;
+                        break;
+                    case 'step_anime_on':
+                        code = 33;
+                        break;
+                    case 'step_anime_off':
+                        code = 34;
+                        break;
+                    case 'dir_fix_on':
+                        code = 35;
+                        break;
+                    case 'dir_fix_off':
+                        code = 36;
+                        break;
+                    case 'through_on':
+                        code = 37;
+                        break;
+                    case 'through_off':
+                        code = 38;
+                        break;
+                    case 'transparent_on':
+                        code = 39;
+                        break;
+                    case 'transparent_off':
+                        code = 40;
+                        break;
+                    case 'change_graphic':
+                        code = 41;
+                        new SimpleScenario.NotEmptyValidator().validate(context, 'file', header['file']);
+                        new SimpleScenario.NotEmptyValidator().validate(context, 'index', header['index']);
+                        new SimpleScenario.NumericValidator(0, 7).validate(context, 'index', header['index']);
+                        parameters.push(header.headerStr('file'));
+                        parameters.push(header.headerInt('index'));
+                        break;
+                    case 'change_opacity':
+                        code = 42;
+                        new SimpleScenario.NumericValidator(0, 255).validate(context, 'opacity', header['opacity']);
+                        parameters.push(header.headerInt('opacity', 255));
+                        break;
+                    case 'change_blend':
+                        code = 43;
+                        new SimpleScenario.NumericValidator(0, 2).validate(context, 'blend', header['blend']);
+                        parameters.push(header.headerInt('blend', 0));
+                        break;
+                    case 'play_se':
+                        code = 44;
+                        new SimpleScenario.NumericValidator(0, 100).validate(context, 'volume', header['volume']);
+                        new SimpleScenario.NumericValidator(50, 150).validate(context, 'pitch', header['pitch']);
+                        new SimpleScenario.NumericValidator(-100, 100).validate(context, 'pan', header['pan']);
+                        var file = header.headerStr('file', '');
+                        var volume = header.headerInt('volume', 100);
+                        var pitch = header.headerInt('pitch', 100);
+                        var pan = header.headerInt('pitch', 0);
+                        parameters.push({ file: file, volume: volume, pitch: pitch, pan: pan });
+                        break;
+                    case 'script':
+                        code = 45;
+                        new SimpleScenario.NotEmptyValidator().validate(context, 'script', header['script']);
+                        var script = header['script'];
+                        script = script.replace(/<!!>/g, '=');
+                        script = script.replace(/<ii>/g, ' ');
+                        parameters.push(script);
+                        break;
+                    default:
+                        context.error('存在しない移動コマンドです。' + type);
+                        break;
+                }
+            }
+            return { code: code, indent: null };
+        };
+        Scenario_Converter.prototype.convertCommand_vehicle = function (context) {
+            context.push({ 'code': 206, 'indent': this.indent, 'parameters': [] });
+        };
         Scenario_Converter.prototype.convertCommand_transparent = function (context) {
             var flag = context.headerBool('flag', true) ? 0 : 1;
             context.push({ 'code': 211, 'indent': this.indent, 'parameters': [flag] });
+        };
+        Scenario_Converter.prototype.convertCommand_anime = function (context) {
+            var target = context.headerInt('target');
+            var balloon = context.headerInt('balloon');
+            var wait = context.headerBool('wait', false);
+            context.push({ 'code': 212, 'indent': this.indent, 'parameters': [target, balloon, wait] });
+        };
+        Scenario_Converter.prototype.convertCommand_balloon = function (context) {
+            var target = context.headerInt('target');
+            var balloon = context.headerInt('balloon');
+            var wait = context.headerBool('wait', false);
+            context.push({ 'code': 213, 'indent': this.indent, 'parameters': [target, balloon, wait] });
+        };
+        Scenario_Converter.prototype.convertCommand_erace = function (context) {
+            context.push({ 'code': 214, 'indent': this.indent, 'parameters': [] });
         };
         Scenario_Converter.prototype.convertCommand_followers = function (context) {
             var flag = context.headerBool('flag', true) ? 0 : 1;
@@ -791,7 +1108,7 @@ var SimpleScenario;
             this.data = [];
         }
         Block.prototype.pushMsg = function (line) {
-            if (AUTO_WARD_WRAP) {
+            if (AUTO_WARD_WRAP && line.indexOf('@') === -1) {
                 if (this.data.length === 0) {
                     this.data.push('<wrap>' + line);
                 }
@@ -806,18 +1123,56 @@ var SimpleScenario;
         return Block;
     }());
     var Context = (function () {
-        function Context(file, lineNumber, command, list, header, data) {
+        function Context(file, lineNumber, command, list, _header, data) {
             this.file = file;
             this.lineNumber = lineNumber;
             this.command = command;
             this.list = list;
-            this.header = header;
+            this._header = _header;
             this.data = data;
         }
         Context.prototype.push = function (command) {
             this.list.push(command);
         };
+        Object.defineProperty(Context.prototype, "header", {
+            get: function () {
+                return this._header.header;
+            },
+            enumerable: true,
+            configurable: true
+        });
         Context.prototype.headerInt = function (id, defaultValue) {
+            if (defaultValue === void 0) { defaultValue = 0; }
+            return this._header.headerInt(id, defaultValue);
+        };
+        Context.prototype.headerStr = function (id, defaultValue) {
+            if (defaultValue === void 0) { defaultValue = ''; }
+            return this._header.headerStr(id, defaultValue);
+        };
+        Context.prototype.headerBool = function (id, defaultValue) {
+            if (defaultValue === void 0) { defaultValue = false; }
+            return this._header.headerBool(id, defaultValue);
+        };
+        Context.prototype.headerTone = function () {
+            return this._header.headerTone();
+        };
+        Context.prototype.headerVar = function (id) {
+            return this._header.headerVar(id);
+        };
+        Context.prototype.headerOperateVar = function (id) {
+            return this._header.headerOperateVar(id);
+        };
+        Context.prototype.error = function (msg) {
+            console.error("file: " + this.file + " line: " + this.lineNumber + " command: " + this.command + " " + msg);
+        };
+        return Context;
+    }());
+    SimpleScenario.Context = Context;
+    var Header = (function () {
+        function Header(header) {
+            this.header = header;
+        }
+        Header.prototype.headerInt = function (id, defaultValue) {
             if (defaultValue === void 0) { defaultValue = 0; }
             var value = this.header[id];
             if (!value) {
@@ -829,7 +1184,7 @@ var SimpleScenario;
             }
             return valueInt;
         };
-        Context.prototype.headerStr = function (id, defaultValue) {
+        Header.prototype.headerStr = function (id, defaultValue) {
             if (defaultValue === void 0) { defaultValue = ''; }
             var value = this.header[id];
             if (!value) {
@@ -837,7 +1192,7 @@ var SimpleScenario;
             }
             return value;
         };
-        Context.prototype.headerBool = function (id, defaultValue) {
+        Header.prototype.headerBool = function (id, defaultValue) {
             if (defaultValue === void 0) { defaultValue = false; }
             var value = this.header[id];
             if (value === 'true') {
@@ -848,7 +1203,7 @@ var SimpleScenario;
             }
             return defaultValue;
         };
-        Context.prototype.headerTone = function () {
+        Header.prototype.headerTone = function () {
             var red = this.headerInt('red', 0);
             var green = this.headerInt('green', 0);
             var blue = this.headerInt('blue', 0);
@@ -856,7 +1211,7 @@ var SimpleScenario;
             var tone = [red, green, blue, gray];
             return tone;
         };
-        Context.prototype.headerVar = function (id) {
+        Header.prototype.headerVar = function (id) {
             var value = this.header[id];
             var reg = /^[+]{0,1}(var\.){0,1}(\d+)$/;
             var ret = reg.exec(value);
@@ -868,7 +1223,7 @@ var SimpleScenario;
                 return [1, paramId];
             }
         };
-        Context.prototype.headerOperateVar = function (id) {
+        Header.prototype.headerOperateVar = function (id) {
             var value = this.header[id];
             var reg = /^([-]{0,1})(var\.){0,1}(\d+)$/;
             var ret = reg.exec(value);
@@ -881,12 +1236,8 @@ var SimpleScenario;
                 return [operation, 1, paramId];
             }
         };
-        Context.prototype.error = function (msg) {
-            console.error("file: " + this.file + " line: " + this.lineNumber + " command: " + this.command + " " + msg);
-        };
-        return Context;
+        return Header;
     }());
-    SimpleScenario.Context = Context;
     Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
     Saba.applyMyMethods(_Scene_Map, Scene_Map);
 })(SimpleScenario || (SimpleScenario = {}));

@@ -9739,7 +9739,6 @@ Game_Interpreter.prototype.command205 = function() {
     $gameMap.refreshIfNeeded();
     this._character = this.character(this._params[0]);
     if (this._character) {
-        console.log(this._params[1])
         this._character.forceMoveRoute(this._params[1]);
         if (this._params[1].wait) {
             this.setWaitMode('route');

@@ -7,3 +7,9 @@ _
 わーい
 
 @exp actor=1 value=-3000 message=true
+
+@route_h event=-1 repeat=true skip=true wait=false
+@route type=1
+@route type=left
+@route type=3
+@route type=up

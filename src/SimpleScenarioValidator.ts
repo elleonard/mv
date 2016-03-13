@@ -10,7 +10,7 @@ export interface Validator {
     validate(ontext: Context, paramName: string, value: string): void;
     priority(): number;
 }
-class NumericValidator implements Validator {
+export class NumericValidator implements Validator {
     constructor(private _lowerLimit: number, private _upperLimit?: number, private _type?: string) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -40,7 +40,7 @@ class NumericValidator implements Validator {
         return 10;
     }
 }
-class NotEmptyValidator implements Validator {
+export class NotEmptyValidator implements Validator {
     validate(context: Context, paramName: string, value: string): void {
         if (value == null) {
             context.error(`param: ${paramName} は必須です。`);
@@ -50,7 +50,7 @@ class NotEmptyValidator implements Validator {
         return 20;
     }
 }
-class NumericParamValidator implements Validator {
+export class NumericParamValidator implements Validator {
     constructor(private _target: string) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -73,7 +73,7 @@ class NumericParamValidator implements Validator {
     }
 }
 
-class ListValidator implements Validator {
+export class ListValidator implements Validator {
     constructor(private _target: string[]) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -88,7 +88,7 @@ class ListValidator implements Validator {
         return 5;
     }
 }
-class RegExpValidator implements Validator {
+export class RegExpValidator implements Validator {
     constructor(private _target: RegExp) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -103,7 +103,7 @@ class RegExpValidator implements Validator {
         return 5;
     }
 }
-class VarValidator implements Validator {
+export class VarValidator implements Validator {
     constructor(private _target: RegExp) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -123,7 +123,7 @@ class VarValidator implements Validator {
         return 5;
     }
 }
-class VarValidator2 implements Validator {
+export class VarValidator2 implements Validator {
     constructor(private _type: string) {
     }
     validate(context: Context, paramName: string, value: string): void {
@@ -184,6 +184,11 @@ validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validate
 validates['cos1'] = {
 };
 validates['cos2'] = validates['cos3'] = validates['cos4'] = validates['cos5'] = validates['cos6'] = validates['cos7'] = validates['cos8'] = validates['cos9'] = validates['cos1'];
+validates['messages'] = {}
+validates['not_close'] = {}
+validates['start'] = {}
+validates['end'] = {}
+validates['vehicle'] = {}
 
 
 validates['message_h'] = {
@@ -223,6 +228,81 @@ validates['choice_item'] = {
     'var': [
                 notEmpty(),
                 isNumeric(1)
+    ]
+};
+
+validates['map_move'] = {
+    'type':     list('const', 'var'),
+    'map': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'x': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ],
+    'y': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ],
+    'direction': list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down'),
+    'fade':     list('0', '1', '2', 'black', 'white', 'none'),
+};
+
+validates['vehicle_pos'] = {
+    'vehicle': [
+                notEmpty(),
+                isNumeric(0, 2)
+    ],
+    'type':     list('const', 'var'),
+    'map': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'x': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ],
+    'y': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ]
+};
+
+validates['event_pos'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(-1)
+    ],
+    'type':     list('const', 'var', 'target'),
+    'x': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ],
+    'y': [
+                notEmpty(),
+                isNumeric(0),
+                varCheck2('type')
+    ],
+    'direction':list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down')
+};
+
+validates['scroll_map'] = {
+    'direction': [
+                notEmpty(),
+                list('2', '4', '6', '8', 'left', 'right', 'up', 'down')
+    ],
+    'num': [
+                notEmpty(),
+                isNumeric(0, 100)
+    ],
+    'speed': [
+                isNumeric(1, 6)
     ]
 };
 
@@ -298,25 +378,47 @@ validates['save_disable'] = {
 };
 
 validates['menu_disable'] = {
-    'flag': isBool()
+    'flag':     isBool()
 };
 
 validates['encount_disable'] = {
-    'flag': isBool()
+    'flag':     isBool()
 };
 
 validates['formation_disable'] = {
-    'flag': isBool()
+    'flag':     isBool()
 };
 
 validates['transparent'] = {
-    'flag': isBool()
+    'flag':     isBool()
 };
 
 validates['followers'] = {
-    'flag': isBool()
+    'flag':     isBool()
 };
 validates['gather'] = {};
+validates['erace'] = {};
+
+validates['anime'] = {
+    'target': [
+                notEmpty(),
+                isNumeric(-1)
+    ],
+    'anime': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'wait':     isBool()
+};
+validates['route_h'] = {
+    'event': [
+                notEmpty(),
+                isNumeric(-1)
+    ],
+    'repeat':   isBool(),
+    'skip':     isBool(),
+    'wait':     isBool()
+};
 
 validates['balloon'] = {
     'target': [

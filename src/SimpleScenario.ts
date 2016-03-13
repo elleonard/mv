@@ -12,8 +12,15 @@
  * Ver0.1
  *
  *
- *
  * イベント一覧(@→実装済み)
+ *****************************************************************************
+ * 独自コマンド
+ *****************************************************************************
+    @ n1 n2 n3 ... n99
+        立ち絵を表示します。
+    ■パラメータ
+        face: number
+            →表情ID
  *****************************************************************************
  * メッセージ系
  *****************************************************************************
@@ -98,22 +105,22 @@
  *****************************************************************************
  * 移動系
  *****************************************************************************
-      map_move
-      vehicle_pos
-      event_pos
-      scroll_map
-      route_h
-      route
-      vehicle
+    @ map_move
+    @ vehicle_pos
+    @ event_pos
+    @ scroll_map
+    @ route_h
+    @ route
+    @ vehicle
  *****************************************************************************
  * キャラクター系
  *****************************************************************************
     @ transparent
     @ followers
     @ gather
-      anime
-      balloon
-      erace
+    @ anime
+    @ balloon
+    @ erace
  *****************************************************************************
  * 画面効果系
  *****************************************************************************
@@ -345,7 +352,7 @@ class Scenario_Converter {
             if (line.indexOf('@') === 0) {
                 block.header = line;
                 let offset = 1;
-                while (i + offset < lines.length && lines[i + offset].indexOf('@') === -1 && lines[i + offset].length > 0) {
+                while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
                     offset++;
                 }
@@ -386,9 +393,17 @@ class Scenario_Converter {
         const command = headerList[0].substr(1);
         const header = this.parseHeader(headerList);
         var context = new Context(file, block.lineNumber, command, list, header, block.data);
+        var n = /n(\d+)/.exec(command);
+        var cos = /cos(\d+)/.exec(command);
         try {
             this.validate(context);
-            this['convertCommand_' + command](context);
+            if (n) {
+                this['convertCommand_n'](parseInt(n[1]), context);
+            } else if (cos) {
+                this['convertCommand_cos'](parseInt(cos[1]), context);
+            } else {
+                this['convertCommand_' + command](context);
+            }
         } catch (e) {
             console.error(command + 'のコマンドでエラーが発生しました');
             console.log(e);
@@ -432,14 +447,14 @@ class Scenario_Converter {
     /**
      * ヘッダをパースします。
      */
-    protected parseHeader(headerList): {[key: string]: string} {
+    protected parseHeader(headerList): Header {
         var result = {};
         for (var i = 1; i < headerList.length; i++) {
             var text = headerList[i];
             var data = text.split('=');
             result[data[0]] = data[1];
         }
-        return result;
+        return new Header(result);
     }
 
 
@@ -459,23 +474,7 @@ class Scenario_Converter {
         var flag = context.header['flag'];
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose ${flag}`]});
     }
-    protected convertCommand_n1(context: Context): void {
-        this.convertCommand_nx(context, 1);
-    }
-    protected convertCommand_n2(context: Context): void {
-        this.convertCommand_nx(context, 2);
-    };
-    protected convertCommand_n3(context: Context): void {
-        this.convertCommand_nx(context, 3);
-    };
-    protected convertCommand_n4(context: Context): void {
-        this.convertCommand_nx(context, 4);
-    };
-    protected convertCommand_n5(context: Context): void {
-        this.convertCommand_nx(context, 5);
-    };
-    protected convertCommand_nx(context: Context, actorId: number): void {
-
+    protected convertCommand_n(actorId: number, context: Context): void {
         let pos = this.defaultPosMap[actorId] || 1;
         if (context.header['pos']) {
             pos = parseInt(context.header['pos']);
@@ -518,22 +517,7 @@ class Scenario_Converter {
             context.push({'code': 401, 'indent': this.indent, 'parameters': [msg]});
         }
     }
-    protected convertCommand_cos1(context: Context): void {
-        this.convertCommand_cosx(context, 1);
-    }
-    protected convertCommand_cos2(context: Context): void  {
-        this.convertCommand_cosx(context, 2);
-    }
-    protected convertCommand_cos3(context: Context): void  {
-        this.convertCommand_cosx(context, 3);
-    }
-    protected convertCommand_cos4(context: Context): void  {
-        this.convertCommand_cosx(context, 4);
-    }
-    protected convertCommand_cos5(context: Context): void  {
-        this.convertCommand_cosx(context, 5);
-    }
-    protected convertCommand_cosx(context: Context, actorId: number): void  {
+    protected convertCommand_cos(actorId: number, context: Context): void {
         var types = ['outer', 'innerTop', 'innerBottom'];
 
         for (const type of types) {
@@ -599,9 +583,342 @@ class Scenario_Converter {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 137, 'indent': this.indent, 'parameters': [flag]});
     }
+    protected convertCommand_map_move(context: Context): void {
+        let direction;
+        switch (context.headerStr('direction')) {
+        case '2':
+        case 'down':
+            direction = 2;
+            break;
+        case '4':
+        case 'left':
+            direction = 4;
+            break;
+        case '6':
+        case 'right':
+            direction = 6;
+            break;
+        case '8':
+        case 'up':
+            direction = 8;
+        }
+        let fade;
+        switch (context.headerStr('fade')) {
+        case '1':
+        case 'white':
+            fade = 1;
+            break;
+        case '2':
+        case 'none':
+            fade = 2;
+            break;
+        default:
+            fade = 0;
+        }
+        const type = context.headerStr('type', 'const') === 'const' ? 0 : 1;
+        const map = context.headerInt('map');
+        const x = context.headerInt('x');
+        const y = context.headerInt('y');
+        context.push({'code': 201, 'indent': this.indent, 'parameters': [type, map, x, y, direction, fade]});
+    }
+    protected convertCommand_vehicle_pos(context: Context): void {
+        const vehicle = context.headerInt('vehicle');
+        const type = context.headerStr('type', 'const') === 'const' ? 0 : 1;
+        const map = context.headerInt('map');
+        const x = context.headerInt('x');
+        const y = context.headerInt('y');
+        context.push({'code': 202, 'indent': this.indent, 'parameters': [vehicle, type, map, x, y]});
+    }
+    protected convertCommand_event_pos(context: Context): void {
+        const id = context.headerInt('id');
+        let type;
+        if (context.headerStr('type') === 'var') {
+            type = 1;
+        } else if (context.headerStr('type') === 'var') {
+            type = 2;
+        } else {
+            type = 0;
+        }
+        const x = context.headerInt('x');
+        const y = context.headerInt('y');
+        let direction;
+        switch (context.headerStr('direction')) {
+        case '2':
+        case 'down':
+            direction = 2;
+            break;
+        case '4':
+        case 'left':
+            direction = 4;
+            break;
+        case '6':
+        case 'right':
+            direction = 6;
+            break;
+        case '8':
+        case 'up':
+            direction = 8;
+            break;
+        default:
+            direction = 0;
+            break;
+        }
+        context.push({'code': 203, 'indent': this.indent, 'parameters': [id, type, x, y, direction]});
+    }
+    protected convertCommand_scroll_map(context: Context): void {
+        let direction;
+        switch (context.headerStr('direction')) {
+        case '2':
+        case 'down':
+            direction = 2;
+            break;
+        case '4':
+        case 'left':
+            direction = 4;
+            break;
+        case '6':
+        case 'right':
+            direction = 6;
+            break;
+        case '8':
+        case 'up':
+            direction = 8;
+            break;
+        }
+        const num = context.headerInt('num');
+        const speed = context.headerInt('speed', 4);
+        context.push({'code': 204, 'indent': this.indent, 'parameters': [direction, num, speed]});
+    }
+    protected convertCommand_route_h(context: Context): void {
+        var event = context.headerInt('event');
+        var repeat = context.headerBool('repeat', false);
+        var skip = context.headerBool('skip', false);
+        var wait = context.headerBool('wait', true);
+
+        if (context.data.length === 0) {
+            context.error('移動ルートが設定されていません。');
+            return;
+        }
+        var list = [];
+        for (const line of context.data) {
+            list.push(this.convertCommand_route(context, line));
+        }
+        var routes = {repeat: repeat, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    protected convertCommand_route(context: Context, line: string): {} {
+        const headerList = line.split(' ');
+        const header  = this.parseHeader(headerList);
+        var type = header.headerStr('type');
+        var parameters = [];
+        var code = parseInt(type);
+        if (isNaN(code)) {
+            switch (type) {
+            case 'down':
+                code = 1;
+                break;
+            case 'left':
+                code = 2;
+                break;
+            case 'right':
+                code = 3;
+                break;
+            case 'up':
+                code = 4;
+                break;
+            case 'dl':
+                code = 5;
+                break;
+            case 'dr':
+                code = 6;
+                break;
+            case 'ul':
+                code = 7;
+                break;
+            case 'ur':
+                code = 8;
+                break;
+            case 'random':
+                code = 9;
+                break;
+            case 'toward':
+                code = 10;
+                break;
+            case 'away':
+                code = 11;
+                break;
+            case 'foward':
+                code = 12;
+                break;
+            case 'backward':
+                code = 13;
+                break;
+            case 'jump':
+                code = 14;
+                new NumericValidator(-100, 100).validate(context, 'x', header['x']);
+                new NumericValidator(-100, 100).validate(context, 'y', header['y']);
+                parameters.push(header.headerInt('x', 0));
+                parameters.push(header.headerInt('y', 0));
+                break;
+            case 'wait':
+                code = 15;
+                new NumericValidator(1, 999).validate(context, 'time', header['time']);
+                parameters.push(header.headerInt('time', 60));
+                break;
+            case 'turn_down':
+                code = 16;
+                break;
+            case 'turn_left':
+                code = 17;
+                break;
+            case 'turn_right':
+                code = 18;
+                break;
+            case 'turn_up':
+                code = 19;
+                break;
+            case 'turn_90_r':
+                code = 20;
+                break;
+            case 'turn_90_l':
+                code = 21;
+                break;
+            case 'turn_180':
+                code = 22;
+                break;
+            case 'turn_90_rl':
+            case 'turn_90_lr':
+                code = 23;
+                break;
+            case 'turn_random':
+                code = 24;
+                break;
+            case 'turn_toward':
+                code = 25;
+                break;
+            case 'turn_away':
+                code = 26;
+                break;
+            case 'switch_on':
+            case 'sw_on':
+                code = 27;
+                new NotEmptyValidator().validate(context, 'id', header['id']);
+                new NumericValidator(1).validate(context, 'id', header['id']);
+                parameters.push(header.headerInt('id'));
+                break;
+            case 'switch_off':
+            case 'sw_off':
+                code = 28;
+                new NotEmptyValidator().validate(context, 'id', header['id']);
+                new NumericValidator(1).validate(context, 'id', header['id']);
+                parameters.push(header.headerInt('id'));
+                break;
+            case 'change_speed':
+                code = 29;
+                new NumericValidator(1, 6).validate(context, 'speed', header['speed']);
+                parameters.push(header.headerInt('speed', 3));
+                break;
+            case 'change_freq':
+                code = 30;
+                new NumericValidator(1, 5).validate(context, 'freq', header['freq']);
+                parameters.push(header.headerInt('freq', 3));
+                break;
+            case 'walk_anime_on':
+                code = 31;
+                break;
+            case 'walk_anime_off':
+                code = 32;
+                break;
+            case 'step_anime_on':
+                code = 33;
+                break;
+            case 'step_anime_off':
+                code = 34;
+                break;
+            case 'dir_fix_on':
+                code = 35;
+                break;
+            case 'dir_fix_off':
+                code = 36;
+                break;
+            case 'through_on':
+                code = 37;
+                break;
+            case 'through_off':
+                code = 38;
+                break;
+            case 'transparent_on':
+                code = 39;
+                break;
+            case 'transparent_off':
+                code = 40;
+                break;
+            case 'change_graphic':
+                code = 41;
+                new NotEmptyValidator().validate(context, 'file', header['file']);
+                new NotEmptyValidator().validate(context, 'index', header['index']);
+                new NumericValidator(0, 7).validate(context, 'index', header['index']);
+                parameters.push(header.headerStr('file'));
+                parameters.push(header.headerInt('index'));
+                break;
+            case 'change_opacity':
+                code = 42;
+                new NumericValidator(0, 255).validate(context, 'opacity', header['opacity']);
+                parameters.push(header.headerInt('opacity', 255));
+                break;
+            case 'change_blend':
+                code = 43;
+                new NumericValidator(0, 2).validate(context, 'blend', header['blend']);
+                parameters.push(header.headerInt('blend', 0));
+                break;
+            case 'play_se':
+                code = 44;
+                new NumericValidator(0, 100).validate(context, 'volume', header['volume']);
+                new NumericValidator(50, 150).validate(context, 'pitch', header['pitch']);
+                new NumericValidator(-100, 100).validate(context, 'pan', header['pan']);
+
+                const file = header.headerStr('file', '');
+                const volume = header.headerInt('volume', 100);
+                const pitch = header.headerInt('pitch', 100);
+                const pan = header.headerInt('pitch', 0);
+                parameters.push({file, volume, pitch, pan});
+                break;
+            case 'script':
+                code = 45;
+                new NotEmptyValidator().validate(context, 'script', header['script']);
+                var script = header['script'];
+                script = script.replace(/<!!>/g, '=');
+                script = script.replace(/<ii>/g, ' ');
+                parameters.push(script);
+                break;
+            default:
+                context.error('存在しない移動コマンドです。' + type);
+                break;
+            }
+        }
+        return {code: code, indent: null};
+    }
+    protected convertCommand_vehicle(context: Context): void {
+        context.push({'code': 206, 'indent': this.indent, 'parameters': []});
+    }
     protected convertCommand_transparent(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 211, 'indent': this.indent, 'parameters': [flag]});
+    }
+    protected convertCommand_anime(context: Context): void {
+        const target = context.headerInt('target');
+        const balloon = context.headerInt('balloon');
+        const wait = context.headerBool('wait', false);
+        context.push({'code': 212, 'indent': this.indent, 'parameters': [target, balloon, wait]});
+    }
+    protected convertCommand_balloon(context: Context): void {
+        const target = context.headerInt('target');
+        const balloon = context.headerInt('balloon');
+        const wait = context.headerBool('wait', false);
+        context.push({'code': 213, 'indent': this.indent, 'parameters': [target, balloon, wait]});
+    }
+    protected convertCommand_erace(context: Context): void {
+        context.push({'code': 214, 'indent': this.indent, 'parameters': []});
     }
     protected convertCommand_followers(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
@@ -791,7 +1108,7 @@ class Block {
     constructor(public lineNumber: number) {
     }
     pushMsg(line: string) {
-        if (AUTO_WARD_WRAP) {
+        if (AUTO_WARD_WRAP && line.indexOf('@') === -1) {
             if (this.data.length === 0) {
                 this.data.push('<wrap>' + line);
             } else {
@@ -807,11 +1124,39 @@ export class Context {
                 public lineNumber: number,
                 public command: string,
                 public list: Array<RPG.EventCommand>,
-                public header: {[key: string]: string},
+                public _header: Header,
                 public data: Array<string>) {
     }
     push(command: RPG.EventCommand): void {
         this.list.push(command);
+    }
+    get header(): {[key: string]: string} {
+        return this._header.header;
+    }
+    headerInt(id: string, defaultValue = 0): number {
+        return this._header.headerInt(id, defaultValue);
+    }
+    headerStr(id: string, defaultValue = ''): string {
+        return this._header.headerStr(id, defaultValue);
+    }
+    headerBool(id: string, defaultValue = false): boolean {
+        return this._header.headerBool(id, defaultValue);
+    }
+    headerTone(): Array<number> {
+        return this._header.headerTone();
+    }
+    headerVar(id: string): Array<number> {
+        return this._header.headerVar(id);
+    }
+    headerOperateVar(id: string): Array<number> {
+        return this._header.headerOperateVar(id);
+    }
+    error(msg: string): void {
+        console.error(`file: ${this.file} line: ${this.lineNumber} command: ${this.command} ${msg}`);
+    }
+}
+class Header {
+    constructor(public header: {[key: string]: string}) {
     }
     headerInt(id: string, defaultValue = 0): number {
         const value = this.header[id];
@@ -873,9 +1218,6 @@ export class Context {
         } else {
             return [operation, 1, paramId];
         }
-    }
-    error(msg: string): void {
-        console.error(`file: ${this.file} line: ${this.lineNumber} command: ${this.command} ${msg}`);
     }
 }
 

@@ -49,6 +49,14 @@
  * @desc アクター10のキャラのx座標，y座標の補正値です
  * @default 0, 0
  *
+ * @param balloonEnabled
+ * @desc ウィンドウに吹き出しをつける場合、trueにします。
+ * @default true
+ *
+ * @param windowColor
+ * @desc 各キャラのウィンドウカラーの配列です(0だとデフォルト色)
+ * @default 3, 0, 1, 2, 1
+ *
  * @help
  * Ver0.1
  *
@@ -70,11 +78,12 @@
  * Tachie clear                         # 立ち絵を全て非表示にする
  *
  * 画像のレイヤー解説
- * 
+ *
  */
 module Tachie {
 
 const parameters = PluginManager.parameters('Tachie');
+export const windowColors = {};
 export const offsetX = {};
 export const offsetY = {};
 export const RIGHT_POS_OFFSET_X = 400;
@@ -90,6 +99,20 @@ for (let i = 1; i <= 10; i++) {
         offsetY[i] = 0;
     }
 }
+
+for (let i = 0; i < 99; i++) {
+    windowColors[i + 1] = 0;
+}
+var colors = String(parameters['windowColor']).split(',');
+for (let i = 0; i < colors.length; i++) {
+    var color = parseInt(colors[i]);
+    if (! isNaN(color)) {
+        windowColors[i + 1] = color;
+    }
+}
+
+const balloonEnabled = parameters['balloonEnabled'] === 'true';
+
 var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
 export const DEFAULT_PICTURE_ID1: number = 12;
 export const DEFAULT_PICTURE_ID2: number = 11;
@@ -888,8 +911,7 @@ class Window_MessageName extends Window_Base {
 }
 
 class Sprite_WindowBalloon extends Sprite_Base {
-    protected _balloonColorId: number;
-    protected _windowSkinId: number;
+    protected _windowAcrotId: number;
     protected _messageWindow: Window_TachieMessage;
     constructor(messageWindow: Window_TachieMessage) {
         super();
@@ -901,7 +923,11 @@ class Sprite_WindowBalloon extends Sprite_Base {
         this.updatePosition();
     }
     updateBitmap(): void {
-        if (this._balloonColorId === $gameTemp.tachieActorId) {
+        if (! balloonEnabled) {
+            this.visible = false;
+            return;
+        }
+        if (this._windowAcrotId === $gameTemp.tachieActorId) {
             return;
         }
         if ($gameTemp.tachieActorId > 0) {
@@ -909,12 +935,17 @@ class Sprite_WindowBalloon extends Sprite_Base {
                 this.visible = false;
                 return;
             }
-            this._windowSkinId = $gameTemp.tachieActorId;
-            this.bitmap = ImageManager.loadSystem('WindowBaloon' + $gameTemp.tachieActorId);
+            this._windowAcrotId = $gameTemp.tachieActorId;
+            const color = windowColors[this._windowAcrotId];
+            if (color > 0) {
+                this.bitmap = ImageManager.loadSystem('WindowBalloon' + color);
+            } else {
+                this.bitmap = ImageManager.loadSystem('WindowBalloon');
+            }
             this.visible = true;
         } else {
             this.visible = false;
-            this._windowSkinId = 0;
+            this._windowAcrotId = 0;
         }
     }
     updatePosition(): void {
@@ -932,7 +963,7 @@ class Sprite_WindowBalloon extends Sprite_Base {
 class Window_TachieMessage extends Window_Message {
     protected _messageNameWindow: Window_MessageName;
     protected _balloonSprite: Sprite_WindowBalloon;
-    protected _windowSkilId: number;
+    protected _windowSkinId: number;
     protected _triggered: boolean;
     protected _windowHide: boolean;
     constructor() {
@@ -971,12 +1002,17 @@ class Window_TachieMessage extends Window_Message {
     }
     update(): void {
         super.update();
-        if (this._windowSkilId !== $gameTemp.tachieActorId) {
+        if (this._windowSkinId !== $gameTemp.tachieActorId) {
             if ($gameTemp.tachieActorId > 0) {
-                this._windowSkilId = $gameTemp.tachieActorId;
-                this.windowskin = ImageManager.loadSystem('Window' + $gameTemp.tachieActorId);
+                this._windowSkinId = $gameTemp.tachieActorId;
+                var color = windowColors[this._windowSkinId];
+                if (color > 0) {
+                    this.windowskin = ImageManager.loadSystem('Window' + color);
+                } else {
+                    this.windowskin = ImageManager.loadSystem('window');
+                }
             } else {
-                this._windowSkilId = 0;
+                this._windowSkinId = 0;
                 this.windowskin = ImageManager.loadSystem('Window');
                 $gameTemp.tachieActorId = 0;
             }
@@ -1047,6 +1083,9 @@ class Window_TachieMessage extends Window_Message {
     }
     startMessage(): void {
         super.startMessage();
+        if (BackLog) {
+            BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
+        }
         this._textState.y = this.standardPadding();
         this._balloonSprite.visible = true;
         this._messageNameWindow.draw($gameTemp.tachieName);

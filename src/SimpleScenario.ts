@@ -9,6 +9,10 @@
  * @desc Word Wrap のプラグインの機能の自動改行用の文字列(<wrap> <br>)を自動で埋め込みます。
  * @default false
  *
+ * @param scenarioFolder
+ * @desc シナリオファイルがある場所を設定します
+ * @default /../scenario/
+ *
  * @help
  * Ver0.1
  *
@@ -16,6 +20,19 @@
  * hime.be/rgss3/tes.html
  * リファレンスも、↑をご覧ください。
  * ただし、未実装箇所が多くあります。
+ *
+ * ■使い方
+ * プロジェクトフォルダと同じディレクトリに
+ * scenario フォルダを作成します。
+ * その中に.txt ファイルを作成し、シナリオを書いていきます。
+ *
+ * その後、ツクールの開発環境からゲームを起動し、
+ * マップ画面でF7キーを押すことで変換が完了します。
+ *
+ * シナリオを実行するには、プラグインコマンドで
+ * scenatio <<ファイル名>>
+ * と記述します。
+ *
  //**************************************************************************
  //　独自コマンド
  //**************************************************************************
@@ -273,8 +290,9 @@ if (Utils.isNwjs()) {
     var path = require('path');
 }
 
+const pathParam = parameters['scenarioFolder'];
 const SCENARIO_FILE_NAME = 'Scenario.json';
-const SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/../scenario/');
+const SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
 const DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
 
 DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
@@ -376,6 +394,7 @@ class Scenario_Converter {
             console.log(scenario);
             fs.writeFileSync(DATA_PATH + 'Scenario.json', JSON.stringify(scenario));
             DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
+            console.log('シナリオの変換が終わりました');
         });
     }
     protected convert(file, text): Array<RPG.EventCommand> {

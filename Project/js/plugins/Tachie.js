@@ -73,6 +73,9 @@ var __extends = (this && this.__extends) || function (d, b) {
  * Tachie showName hoge                 # 名前欄に hoge を表示する
  * Tachie hideName                      # 名前欄を非表示にする
  * Tachie clear                         # 立ち絵を全て非表示にする
+ *
+ * 画像のレイヤー解説
+ *
  */
 var Tachie;
 (function (Tachie) {

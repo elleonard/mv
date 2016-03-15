@@ -8,5 +8,5 @@ var $plugins =
 {"name":"SimpleScenario","status":true,"description":"テキストファイルからツクールのイベントを書き出すプラグインです。","parameters":{"autoWordWrap":"true","scenarioFolder":"/../scenario/"}},
 {"name":"YED_WordWrap","status":true,"description":"文章の改行機能を提供します。長文を適切な位置で改行します。","parameters":{"Break Word":"true"}},
 {"name":"SimpleScenarioValidator","status":true,"description":"","parameters":{}},
-{"name":"BackLog","status":true,"description":"バックログを表示するプラグインです。","parameters":{"backLogButton":"pageup","nameLength":"150","fontSize":"22","scrollSpeed":"4","windowHeight":"1200","maxLogCount":"50","bottmMargin":"50"}}
+{"name":"BackLog","status":true,"description":"バックログを表示するプラグインです。","parameters":{"backLogButton":"pageup","nameLength":"150","fontSize":"24","scrollSpeed":"4","windowHeight":"1800","maxLogCount":"50","bottmMargin":"50","logMargin":"44"}}
 ];

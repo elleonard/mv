@@ -21,7 +21,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  * @param fontSize
  * @desc フォントサイズです。変更した場合、改行位置がずれる場合があります。
- * @default 22
+ * @default 24
  *
  * @param scrollSpeed
  * @desc カーソルキーでスクロールするときの速度です
@@ -29,7 +29,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  * @param windowHeight
  * @desc ウィンドウの高さです。大きいほど多く表示できます。
- * @default 1500
+ * @default 1800
  *
  * @param maxLogCount
  * @desc ログを保存しておく最大数です
@@ -41,27 +41,17 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  * @param logMargin
  * @desc ログとログの間の隙間です
- * @default 14
+ * @default 44
  *
  * @help
  * Ver0.1
  *
- * 睡工房さんのTES　と互換があるようにしています。
- * hime.be/rgss3/tes.html
- * リファレンスも、↑をご覧ください。
- * ただし、未実装箇所が多くあります。
+ * テキストのバックログを表示するプラグインです。
+ * 立ち絵スクリプトとの併用を想定しています。
+ * 併用しない場合、独自に
+ * $gameBackLog.addLog(name, message);
+ * を呼ぶ必要があります。
  *
- * ■使い方
- * プロジェクトフォルダと同じディレクトリに
- * scenario フォルダを作成します。
- * その中に.txt ファイルを作成し、シナリオを書いていきます。
- *
- * その後、ツクールの開発環境からゲームを起動し、
- * マップ画面でF7キーを押すことで変換が完了します。
- *
- * シナリオを実行するには、プラグインコマンドで
- * scenatio <<ファイル名>>
- * と記述します。
  */
 var BackLog;
 (function (BackLog) {
@@ -74,6 +64,9 @@ var BackLog;
     var maxLogCount = parseInt(parameters['maxLogCount']);
     var fontSize = parseInt(parameters['fontSize']);
     var logMargin = parseInt(parameters['logMargin']);
+    var nameLeft = 20;
+    var marginLeft = 70;
+    console.log(parameters);
     var Game_BackLog = (function () {
         function Game_BackLog() {
             this.logList = [];
@@ -94,6 +87,9 @@ var BackLog;
         }
         return Game_TalkLog;
     }());
+    /**
+     * バックログを表示するウィンドウクラスです。
+     */
     var Window_BackLog = (function (_super) {
         __extends(Window_BackLog, _super);
         function Window_BackLog() {
@@ -113,10 +109,10 @@ var BackLog;
                 y += this.drawLog(log, y);
                 y += this.logMargin();
             }
-            if (y > this.height) {
-                this._maxHeight = this.height;
+            if (y > windowHeight) {
+                this._maxHeight = windowHeight;
                 // 一回目の描画ではみだしていたら、はみ出す部分をけずって歳描画
-                var diff = y - this.height + bottmMargin;
+                var diff = y - windowHeight + bottmMargin;
                 while (true) {
                     if (BackLog.$gameBackLog.logList.length === 0) {
                         break;
@@ -134,7 +130,7 @@ var BackLog;
                     y += this.logMargin();
                 }
                 // 一番下までスクロールさせる
-                this.y = Graphics.height - this.height;
+                this.y = Graphics.height - windowHeight;
             }
             else {
                 this._maxHeight = y + bottmMargin;
@@ -144,12 +140,31 @@ var BackLog;
                 this.y = Graphics.height - this._maxHeight;
             }
         };
+        /**
+         * ログをひとつ描画します
+         * @param  {Game_TalkLog} log 描画するログ
+         * @param  {number}       y   描画する y 座標
+         * @return {number}           描画した高さ
+         */
         Window_BackLog.prototype.drawLog = function (log, y) {
             this._lineCount = 1;
-            this.drawTextEx(log.name, 5, y);
-            this.drawTextEx(log.message, nameLength, y);
-            var height = this._lineCount * (this.standardFontSize() + 8);
+            var message = log.message;
+            var height = 0;
+            if (log.name) {
+                this.drawTextEx(log.name, nameLeft, y);
+                console.log(message.charAt(message.length - 1));
+                if (message.charAt(message.length - 1) === '。') {
+                    message = message.substring(0, message.length - 1);
+                }
+                message = message + '」';
+                y += this.standardFontSize() + 8;
+                height = this.standardFontSize() + 8;
+                this.drawTextEx('「', marginLeft - this.standardFontSize(), y);
+            }
+            this.drawTextEx(message, marginLeft, y);
+            height += this._lineCount * (this.standardFontSize() + 8);
             log.y = y + height;
+            console.log(height);
             return height;
         };
         Window_BackLog.prototype.processNewLine = function (textState) {
@@ -158,6 +173,9 @@ var BackLog;
         };
         Window_BackLog.prototype.logMargin = function () {
             return logMargin;
+        };
+        Window_BackLog.prototype.textAreaWidth = function () {
+            return this.contentsWidth() - 30;
         };
         Window_BackLog.prototype.update = function () {
             _super.prototype.update.call(this);

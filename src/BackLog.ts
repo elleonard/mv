@@ -16,7 +16,7 @@
  *
  * @param fontSize
  * @desc フォントサイズです。変更した場合、改行位置がずれる場合があります。
- * @default 22
+ * @default 24
  *
  * @param scrollSpeed
  * @desc カーソルキーでスクロールするときの速度です
@@ -24,7 +24,7 @@
  *
  * @param windowHeight
  * @desc ウィンドウの高さです。大きいほど多く表示できます。
- * @default 1500
+ * @default 1800
  *
  * @param maxLogCount
  * @desc ログを保存しておく最大数です
@@ -36,27 +36,17 @@
  *
  * @param logMargin
  * @desc ログとログの間の隙間です
- * @default 14
+ * @default 44
  *
  * @help
  * Ver0.1
  *
- * 睡工房さんのTES　と互換があるようにしています。
- * hime.be/rgss3/tes.html
- * リファレンスも、↑をご覧ください。
- * ただし、未実装箇所が多くあります。
+ * テキストのバックログを表示するプラグインです。
+ * 立ち絵スクリプトとの併用を想定しています。
+ * 併用しない場合、独自に
+ * $gameBackLog.addLog(name, message);
+ * を呼ぶ必要があります。
  *
- * ■使い方
- * プロジェクトフォルダと同じディレクトリに
- * scenario フォルダを作成します。
- * その中に.txt ファイルを作成し、シナリオを書いていきます。
- *
- * その後、ツクールの開発環境からゲームを起動し、
- * マップ画面でF7キーを押すことで変換が完了します。
- *
- * シナリオを実行するには、プラグインコマンドで
- * scenatio <<ファイル名>>
- * と記述します。
  */
 module BackLog {
 
@@ -71,7 +61,10 @@ const windowHeight = parseInt(parameters['windowHeight']);
 const maxLogCount = parseInt(parameters['maxLogCount']);
 const fontSize = parseInt(parameters['fontSize']);
 const logMargin = parseInt(parameters['logMargin']);
+const nameLeft = 20;
+const marginLeft = 70;
 
+console.log(parameters)
 class Game_BackLog {
     logList: Array<Game_TalkLog> = [];
     addLog(name: string, message: string) {
@@ -89,7 +82,9 @@ class Game_TalkLog {
     }
 }
 
-
+/**
+ * バックログを表示するウィンドウクラスです。
+ */
 class Window_BackLog extends Window_Base {
     protected _lineCount: number;
     protected _maxHeight: number;
@@ -110,10 +105,10 @@ class Window_BackLog extends Window_Base {
             y += this.logMargin();
         }
 
-        if (y > this.height) {
-            this._maxHeight = this.height;
+        if (y > windowHeight) {
+            this._maxHeight = windowHeight;
             // 一回目の描画ではみだしていたら、はみ出す部分をけずって歳描画
-            const diff = y - this.height + bottmMargin;
+            const diff = y - windowHeight + bottmMargin;
             while (true) {
                 if ($gameBackLog.logList.length === 0) {
                     break;
@@ -131,7 +126,7 @@ class Window_BackLog extends Window_Base {
             }
 
             // 一番下までスクロールさせる
-            this.y = Graphics.height - this.height;
+            this.y = Graphics.height - windowHeight;
         } else {
             this._maxHeight = y + bottmMargin;
             if (this._maxHeight < Graphics.height) {
@@ -140,12 +135,31 @@ class Window_BackLog extends Window_Base {
             this.y = Graphics.height - this._maxHeight;
         }
     }
+    /**
+     * ログをひとつ描画します
+     * @param  {Game_TalkLog} log 描画するログ
+     * @param  {number}       y   描画する y 座標
+     * @return {number}           描画した高さ
+     */
     drawLog(log: Game_TalkLog, y: number): number {
         this._lineCount = 1;
-        this.drawTextEx(log.name, 5, y);
-        this.drawTextEx(log.message, nameLength, y);
-        const height = this._lineCount * (this.standardFontSize() + 8);
+        let message = log.message;
+        let height = 0;
+        if (log.name) {
+            this.drawTextEx(log.name, nameLeft, y);
+            console.log(message.charAt(message.length - 1) )
+            if (message.charAt(message.length - 1) === '。') {
+                message = message.substring(0, message.length - 1);
+            }
+            message = message + '」';
+            y += this.standardFontSize() + 8;
+            height = this.standardFontSize() + 8;
+            this.drawTextEx('「', marginLeft - this.standardFontSize(), y);
+        }
+        this.drawTextEx(message, marginLeft, y);
+        height += this._lineCount * (this.standardFontSize() + 8);
         log.y = y + height;
+        console.log(height)
         return height;
     }
     processNewLine(textState: MV.TextState): void {
@@ -155,6 +169,9 @@ class Window_BackLog extends Window_Base {
 
     logMargin(): number {
         return logMargin;
+    }
+    textAreaWidth(): number {
+        return this.contentsWidth() - 30;
     }
     update(): void {
         super.update();

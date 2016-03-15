@@ -922,8 +922,19 @@ class Sprite_WindowBalloon extends Sprite_Base {
         this.updateBitmap();
         this.updatePosition();
     }
+    showBalloon(): void {
+        if (! $gameTemp.tachieName) {
+            this.visible = false;
+            return;
+        }
+        this.visible = true;
+    }
     updateBitmap(): void {
         if (! balloonEnabled) {
+            this.visible = false;
+            return;
+        }
+        if (! $gameTemp.tachieName) {
             this.visible = false;
             return;
         }
@@ -1021,7 +1032,7 @@ class Window_TachieMessage extends Window_Message {
             this._balloonSprite.visible = false;
             this._messageNameWindow.close();
         } else if (this.openness >= 255) {
-            this._balloonSprite.visible = true;
+            this._balloonSprite.showBalloon();
         }
         if (! $gameTemp.tachieAvairable && ! $gameMessage.isBusy() && this.isOpen()) {
             this.close();
@@ -1093,9 +1104,6 @@ class Window_TachieMessage extends Window_Message {
     updatePlacement(): void {
         this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
     }
-    /*isAnySubWindowActive(): boolean {
-        return false;
-    }*/
     terminateMessage(): void {
         $gameMessage.clear();
         if ($gameTemp.tachieAvairable) {
@@ -1107,18 +1115,6 @@ class Window_TachieMessage extends Window_Message {
         return this.contentsWidth() + 20;
     }
 }
-
-/*var _Scene_Map_update = Scene_Map.prototype.update;
-Scene_Map.prototype.update = function() {
-    _Scene_Map_update.call(this);
-    if (false) {
-        this._messageWindow.visible = false;
-        this._tachieMessageWindow.visible = true;
-    } else {
-        this._messageWindow.visible = true;
-        this._tachieMessageWindow.visible = false;
-    }
-};*/
 
 var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
 Scene_Map.prototype.createMessageWindow = function() {

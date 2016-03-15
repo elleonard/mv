@@ -430,7 +430,7 @@ var SimpleScenario;
                     i += offset - 1;
                 }
                 else {
-                    block.header = '@messages';
+                    block.header = '@normal_messages';
                     var offset = 0;
                     while (i + offset < lines.length && lines[i + offset].indexOf('@') === -1 && lines[i + offset].length > 0) {
                         block.pushMsg(this.removeWS(lines[i + offset]));
@@ -580,6 +580,10 @@ var SimpleScenario;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
             }
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': ['MessageName open ' + $gameActors.actor(actorId).name()] });
+            this.convertCommand_messages(context);
+        };
+        Scenario_Converter.prototype.convertCommand_normal_messages = function (context) {
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
             this.convertCommand_messages(context);
         };
         Scenario_Converter.prototype.convertCommand_messages = function (context) {

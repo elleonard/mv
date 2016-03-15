@@ -968,8 +968,19 @@ var Tachie;
             this.updateBitmap();
             this.updatePosition();
         };
+        Sprite_WindowBalloon.prototype.showBalloon = function () {
+            if (!$gameTemp.tachieName) {
+                this.visible = false;
+                return;
+            }
+            this.visible = true;
+        };
         Sprite_WindowBalloon.prototype.updateBitmap = function () {
             if (!balloonEnabled) {
+                this.visible = false;
+                return;
+            }
+            if (!$gameTemp.tachieName) {
                 this.visible = false;
                 return;
             }
@@ -1071,7 +1082,7 @@ var Tachie;
                 this._messageNameWindow.close();
             }
             else if (this.openness >= 255) {
-                this._balloonSprite.visible = true;
+                this._balloonSprite.showBalloon();
             }
             if (!$gameTemp.tachieAvairable && !$gameMessage.isBusy() && this.isOpen()) {
                 this.close();
@@ -1147,9 +1158,6 @@ var Tachie;
         Window_TachieMessage.prototype.updatePlacement = function () {
             this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
         };
-        /*isAnySubWindowActive(): boolean {
-            return false;
-        }*/
         Window_TachieMessage.prototype.terminateMessage = function () {
             $gameMessage.clear();
             if ($gameTemp.tachieAvairable) {
@@ -1162,17 +1170,6 @@ var Tachie;
         };
         return Window_TachieMessage;
     }(Window_Message));
-    /*var _Scene_Map_update = Scene_Map.prototype.update;
-    Scene_Map.prototype.update = function() {
-        _Scene_Map_update.call(this);
-        if (false) {
-            this._messageWindow.visible = false;
-            this._tachieMessageWindow.visible = true;
-        } else {
-            this._messageWindow.visible = true;
-            this._tachieMessageWindow.visible = false;
-        }
-    };*/
     var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
     Scene_Map.prototype.createMessageWindow = function () {
         _Scene_Map_createMessageWindow.call(this);

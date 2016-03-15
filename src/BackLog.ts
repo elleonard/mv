@@ -10,9 +10,17 @@
  * @desc バックログを表示するボタンです
  * @default pageup
  *
- * @param nameLength
- * @desc 名前表示領域の幅です。変更した場合、改行位置がずれる場合があります。
- * @default 150
+ * @param marginLeft
+ * @desc 本文の左のスペースです。変更した場合、改行位置がずれる場合があります。
+ * @default 70
+ *
+ * @param marginRight
+ * @desc 本文の右のスペースです。変更した場合、改行位置がずれる場合があります。
+ * @default 30
+ *
+ * @param nameLeft
+ * @desc 名前の左のスペースです。
+ * @default 20
  *
  * @param fontSize
  * @desc フォントサイズです。変更した場合、改行位置がずれる場合があります。
@@ -54,15 +62,15 @@ const parameters = PluginManager.parameters('BackLog');
 
 
 const backLogButton = parameters['backLogButton'];
-const nameLength = parseInt(parameters['nameLength']);
 const scrollSpeed = parseInt(parameters['scrollSpeed']);
 const bottmMargin = parseInt(parameters['bottmMargin']);
 const windowHeight = parseInt(parameters['windowHeight']);
 const maxLogCount = parseInt(parameters['maxLogCount']);
 const fontSize = parseInt(parameters['fontSize']);
 const logMargin = parseInt(parameters['logMargin']);
-const nameLeft = 20;
-const marginLeft = 70;
+const marginLeft = parseInt(parameters['marginLeft']);
+const marginRight = parseInt(parameters['marginRight']);
+const nameLeft = parseInt(parameters['nameLeft']);
 
 console.log(parameters)
 class Game_BackLog {
@@ -166,12 +174,11 @@ class Window_BackLog extends Window_Base {
         this._lineCount++;
         super.processNewLine(textState);
     }
-
     logMargin(): number {
         return logMargin;
     }
     textAreaWidth(): number {
-        return this.contentsWidth() - 30;
+        return this.contentsWidth() - marginRight;
     }
     update(): void {
         super.update();

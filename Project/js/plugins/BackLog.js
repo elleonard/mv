@@ -15,9 +15,17 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc バックログを表示するボタンです
  * @default pageup
  *
- * @param nameLength
- * @desc 名前表示領域の幅です。変更した場合、改行位置がずれる場合があります。
- * @default 150
+ * @param marginLeft
+ * @desc 本文の左のスペースです。変更した場合、改行位置がずれる場合があります。
+ * @default 70
+ *
+ * @param marginRight
+ * @desc 本文の右のスペースです。変更した場合、改行位置がずれる場合があります。
+ * @default 30
+ *
+ * @param nameLeft
+ * @desc 名前の左のスペースです。
+ * @default 20
  *
  * @param fontSize
  * @desc フォントサイズです。変更した場合、改行位置がずれる場合があります。
@@ -57,15 +65,15 @@ var BackLog;
 (function (BackLog) {
     var parameters = PluginManager.parameters('BackLog');
     var backLogButton = parameters['backLogButton'];
-    var nameLength = parseInt(parameters['nameLength']);
     var scrollSpeed = parseInt(parameters['scrollSpeed']);
     var bottmMargin = parseInt(parameters['bottmMargin']);
     var windowHeight = parseInt(parameters['windowHeight']);
     var maxLogCount = parseInt(parameters['maxLogCount']);
     var fontSize = parseInt(parameters['fontSize']);
     var logMargin = parseInt(parameters['logMargin']);
-    var nameLeft = 20;
-    var marginLeft = 70;
+    var marginLeft = parseInt(parameters['marginLeft']);
+    var marginRight = parseInt(parameters['marginRight']);
+    var nameLeft = parseInt(parameters['nameLeft']);
     console.log(parameters);
     var Game_BackLog = (function () {
         function Game_BackLog() {
@@ -175,7 +183,7 @@ var BackLog;
             return logMargin;
         };
         Window_BackLog.prototype.textAreaWidth = function () {
-            return this.contentsWidth() - 30;
+            return this.contentsWidth() - marginRight;
         };
         Window_BackLog.prototype.update = function () {
             _super.prototype.update.call(this);

@@ -13,6 +13,10 @@
  * @desc シナリオファイルがある場所を設定します
  * @default /../scenario/
  *
+ * @param rightPosX
+ * @desc 右側に立つ場合のx座標です
+ * @default 400
+ * 
  * @help
  * Ver0.1
  *
@@ -51,6 +55,20 @@
  * 　　　　→立ち位置(right→右, left→左)
  * 　　　　　　　　　(default_posよりも優先します)
  *
+ * 　m1 m2 m3 ... m99
+ * 　＞立ち絵なし、名前ありのメッセージを表示します。m の後の数字はモブIDです。
+ * 　　■パラメータ
+ * 　　　face: number
+ * 　　　　→表情ID
+ * 　　　name: string
+ * 　　　　→表示する名前
+ *
+ * 　mob1 mob2 mob3 ... mob99
+ * 　＞m1 などのコマンドで表示されるデフォルトの名前を設定します。
+ * 　　■パラメータ
+ * 　　　name: string
+ * 　　　　→設定する名前
+ *
  * 　cos1 cos2 cos3 ... cos99
  * 　＞キャラクターの衣装を変更します。n の後の数字はアクターIDです。
  * 　　■パラメータ
@@ -83,6 +101,11 @@
  * 　start
  * 　＞default_posなどの設定をクリアします。
  *
+ * 　preloadPicture
+ * 　＞picture ファイルを先に読み込んでおきます
+ * 　　■パラメータ
+ * 　　　file: 読み込んでおくファイル名
+ *
  *
  * イベント実装状況(○→実装済み)
 //**************************************************************************
@@ -92,7 +115,7 @@
  *○　message
  *○　choice_h
  *○　choice_if
- *　　choice_cancel
+ *○　choice_cancel
  *○　choice_end
  *　　input_num
  *　　choice_item
@@ -291,10 +314,10 @@ if (Utils.isNwjs()) {
 }
 
 const pathParam = parameters['scenarioFolder'];
+const rightPosX = parseInt(parameters['rightPosX']);
 const SCENARIO_FILE_NAME = 'Scenario.json';
 const SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
 const DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
-
 DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
 
 declare var $dataScenraio: {[id: string]: Array<RPG.EventCommand>};
@@ -315,6 +338,7 @@ class _Game_Interpreter extends Game_Interpreter {
             if (! list) {
                 throw new Error('id:' + id + ' のデータが見つかりません');
             }
+            console.log(`コマンド実行:${args[0]}`);
             console.log(list);
             this.setupChild(list, this._eventId);
         }
@@ -326,7 +350,7 @@ class _Scene_Map extends Scene_Map {
         _Scene_Map_update.call(this);
         this.updateConvertScenario();
     }
-    protected updateConvertScenario(): void {
+    updateConvertScenario(): void {
         if (Input.isTriggered('debug2') && $gameTemp.isPlaytest()) {
             SoundManager.playSave();
             var converter = new Scenario_Converter();
@@ -347,14 +371,18 @@ DataManager.checkError = function() {
 /**
  * シナリオテキストをMVで使えるJSON形式に変換するクラスです
  */
-class Scenario_Converter {
+export class Scenario_Converter {
     indent: number;         // 現在のインデント
     defaultPosMap: {[actorId: number]: number};   // アクターごとのデフォルト立ち位置
+    _defaultMobNameMap: {[mobId: number]: string};   // モフごとのデフォルトの名前
+    _replaceMap: {[key: string]: string};
     /**
      * 全てのシナリオを変換します。
      */
     convertAll(): void {
         const self = this;
+        
+        this._replaceMap = {};
 
         const scenario: {[name: string]: Array<RPG.EventCommand>} = {};
         fs.readdir(SCENARIO_PATH, function (err, files) {
@@ -362,12 +390,11 @@ class Scenario_Converter {
                 console.error(err.message);
                 return;
             }
-            console.log(files);
             if (! files) {
                 return;
             }
+            self.convertReplace(files);
             for (const file of files) {
-                console.log(file);
                 const filePath = path.resolve(SCENARIO_PATH, file);
                 const stat = fs.statSync(filePath);
                 if (stat.isDirectory()) {
@@ -397,7 +424,32 @@ class Scenario_Converter {
             console.log('シナリオの変換が終わりました');
         });
     }
-    protected convert(file, text): Array<RPG.EventCommand> {
+    convertReplace(files): void {
+        for (const file of files) {
+            const index = file.indexOf('replace.txt');
+            if (index === -1) {
+                continue;
+            }
+            const name = file.substr(0, index);
+            const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
+            this.parseReplace(text);
+        }
+    }
+    parseReplace(text: string): void {
+        const lines = text.split('\n');
+        for (const line of lines) {
+            if (line.indexOf('//') === 0) {
+                continue;
+            }
+            const chars = line.split(/\s/);
+            if (chars.length < 2) {
+                continue;
+            }
+            this._replaceMap[chars[0]] = chars[chars.length - 1];
+        }
+        //console.log(this._replaceMap)
+    }
+    convert(file, text): Array<RPG.EventCommand> {
         this.indent = 0;
 
         const list = [];
@@ -446,7 +498,7 @@ class Scenario_Converter {
     /**
      * ホワイトスペースを削除します。
      */
-    protected removeWS(line: string): string {
+    removeWS(line: string): string {
         const ret = line.replace(/^\s+/g, '');
         if (ret === '_') {
             return '';
@@ -457,21 +509,31 @@ class Scenario_Converter {
     /**
      * コマンドを変換します。
      */
-    protected convertCommand(file, list: Array<RPG.EventCommand>, block: Block): void {
+    convertCommand(file, list: Array<RPG.EventCommand>, block: Block): void {
         const headerList = block.header.split(' ');
         const command = headerList[0].substr(1);
         const header = this.parseHeader(headerList);
         var context = new Context(file, block.lineNumber, command, list, header, block.data);
         var n = /n(\d+)/.exec(command);
         var cos = /cos(\d+)/.exec(command);
+        var m = /m(\d+)/.exec(command);
+        var mob = /mob(\d+)/.exec(command);
         try {
             this.validate(context);
             if (n) {
                 this['convertCommand_n'](parseInt(n[1]), context);
             } else if (cos) {
                 this['convertCommand_cos'](parseInt(cos[1]), context);
+            } else if (m) {
+                this['convertCommand_m'](parseInt(m[1]), context);
+            } else if (mob) {
+                this['convertCommand_mob'](parseInt(mob[1]), context);
             } else {
-                this['convertCommand_' + command](context);
+                if (! this['convertCommand_' + command]) {
+                    console.error(command + 'のコマンドが存在しません');
+                } else {
+                    this['convertCommand_' + command](context);
+                }
             }
         } catch (e) {
             console.error(command + 'のコマンドでエラーが発生しました');
@@ -484,7 +546,7 @@ class Scenario_Converter {
      * コマンドのパラメータが正しいかどうかを検証します。
      * @param {Context} context [description]
      */
-    protected validate(context: Context): void {
+    validate(context: Context): void {
         var validaor = validates[context.command];
         if (! validaor) {
             console.error(context.command + 'のコマンドの Validator が存在しません');
@@ -516,34 +578,42 @@ class Scenario_Converter {
     /**
      * ヘッダをパースします。
      */
-    protected parseHeader(headerList): Header {
+    parseHeader(headerList): Header {
         var result = {};
         for (var i = 1; i < headerList.length; i++) {
             var text = headerList[i];
-            var data = text.split('=');
-            result[data[0]] = data[1];
+            var index = text.indexOf('=');
+            var key = text.substr(0, index);
+            var value = text.substr(index + 1);
+            result[key] = value;
         }
         return new Header(result);
     }
 
 
-    protected convertCommand_start(context: Context): void {
+    convertCommand_start(context: Context): void {
         this.defaultPosMap = {};
+        this._defaultMobNameMap = {};
     }
-    protected convertCommand_hide(context: Context): void {
+    convertCommand_hide(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose off`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hide`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
     }
-    protected convertCommand_default_pos(context: Context): void {
+    convertCommand_default_pos(context: Context): void {
         var actorId = parseInt(context.header['actor']);
         var position = context.header['position'] === 'right' ? 2 : 1;
         this.defaultPosMap[actorId] = position;
     }
-    protected convertCommand_not_close(context: Context): void {
+    convertCommand_not_close(context: Context): void {
         var flag = context.header['flag'];
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose ${flag}`]});
     }
-    protected convertCommand_n(actorId: number, context: Context): void {
+    convertCommand_preloadPicture(context: Context): void {
+        var file = context.headerStr('file');
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie preloadPicture ${file}`]});
+    }
+    convertCommand_n(actorId: number, context: Context): void {
         let position = this.defaultPosMap[actorId] || 1;
         if (context.header['position']) {
             position = context.header['position'] === 'right' ? 2 : 1;
@@ -570,27 +640,51 @@ class Scenario_Converter {
         }
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
 
-        const x = 0;
-        const y = 0;
+        let x = 0;
+        let y = 0;
         if (position === Tachie.LEFT_POS) {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
         } else {
+            x = rightPosX;
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
         }
-        context.push({'code': 356, 'indent': this.indent, 'parameters': ['MessageName open ' + $gameActors.actor(actorId).name()]});
         this.convertCommand_messages(context);
     }
-    protected convertCommand_normal_messages(context: Context) {
+    convertCommand_m(mobId: number, context: Context): void {
+        let name = this._defaultMobNameMap[mobId] || '';
+        if (context.header['name']) {
+            name = context.headerStr('name');
+        }
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
+
+        let face = '';
+        if (context.header['face']) {
+            face = context.headerStr('face');
+        }
+
+        let index = 0;
+        if (context.header['index']) {
+            index = context.headerInt('index');
+        }
+
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideBalloon`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+        context.push({'code': 101, 'indent': this.indent, 'parameters': [face, index, 0, 2]});
+        for (const msg of context.data) {
+            context.push({'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)]});
+        }
+    }
+    convertCommand_normal_messages(context: Context) {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         this.convertCommand_messages(context);
     }
-    protected convertCommand_messages(context: Context) {
+    convertCommand_messages(context: Context) {
         context.push({'code': 101, 'indent': this.indent, 'parameters': ['', 0, 0, 2]});
         for (const msg of context.data) {
-            context.push({'code': 401, 'indent': this.indent, 'parameters': [msg]});
+            context.push({'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)]});
         }
     }
-    protected convertCommand_cos(actorId: number, context: Context): void {
+    convertCommand_cos(actorId: number, context: Context): void {
         var types = ['outer', 'innerTop', 'innerBottom'];
 
         for (const type of types) {
@@ -600,7 +694,11 @@ class Scenario_Converter {
             }
         }
     }
-    protected convertCommand_message_h(context: Context): void {
+    convertCommand_mob(mobId: number, context: Context): void {
+        var name = context.headerStr('name')
+        this._defaultMobNameMap[mobId] = name;
+    }
+    convertCommand_message_h(context: Context): void {
         const actor = context.header['actor'] || '';
         const index = context.headerInt('index', 0);
         const back = context.headerInt('back', 0);
@@ -610,11 +708,22 @@ class Scenario_Converter {
             context.push({'code': 401, 'indent': this.indent, 'parameters': [msg]});
         }
     }
-    protected convertCommand_message(context: Context): void {
+    convertCommand_message(context: Context): void {
         const value = context.header['value'];
-        context.push({'code': 401, 'indent': this.indent, 'parameters': [value]});
+        context.push({'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(value)]});
     }
-    protected convertCommand_choice_h(context: Context): void {
+    replaceMessage(text: string): string {
+        for (const key in this._replaceMap) {
+            if (! this._replaceMap.hasOwnProperty(key)) {
+                continue;
+            }
+            const value = this._replaceMap[key];
+            var regExp = new RegExp(value, 'g') ;
+            text = text.replace(regExp , value) ;
+        }
+        return text;
+    }
+    convertCommand_choice_h(context: Context): void {
         var labels: Array<string> = [];
         if (context.header['label1']) {
             labels.push(context.header['label1']);
@@ -640,65 +749,405 @@ class Scenario_Converter {
         const background = context.headerInt('background', 0);
         context.push({'code':102, 'indent': this.indent, 'parameters': [labels, cancelType, defaultType, positionType, background]});
     }
-    protected convertCommand_choice_if(context: Context): void {
+    convertCommand_choice_if(context: Context): void {
         const index = context.headerInt('index') - 1;
         this.indent++;
         context.push({'code':402, 'indent': this.indent - 1, 'parameters': [index]})
     }
-    protected convertCommand_choice_cancel(context: Context): void {
+    convertCommand_choice_cancel(context: Context): void {
         this.indent++;
         context.push({'code':403, 'indent': this.indent - 1, 'parameters': []})
     }
-    protected convertCommand_choice_end(context: Context): void {
+    convertCommand_choice_end(context: Context): void {
         this.indent--;
         context.push({'code':0, 'indent': this.indent, 'parameters': []})
     }
-    protected convertCommand_return(context: Context): void {
+    /**
+     * ○ 条件分岐（スイッチ）
+     */
+    convertCommand_if_sw(context: Context): void {
+        this.indent++;
+        const ifnum = 0
+        const id = context.headerInt('id');
+        const flag  = context.headerStr('flag', 'on') === 'on' ? 0 : 1
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag]})
+    }
+    /**
+     * ○ 条件分岐（変数）
+     */
+    convertCommand_if_var(context: Context): void {
+        this.indent++;
+        const ifnum = 1
+        const id = context.headerInt('id');
+        const value = context.headerStr('value');
+        var reg = /(var\.)/;
+        const type  = reg.exec(value) ? 1 : 0;	//0:数値 1:変数
+        let op    = ['eq', 'ge', 'le', 'gt', 'lt', 'ne'].indexOf(context.headerStr('op')) || 0
+        if (type === 1 && parseInt(value) <= 0) {
+            throw new Error('変数指定時に「0」以下が使われました。');
+        }
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, parseInt(value), op]});
+    }
+    /**
+     * ○ 条件分岐（セルフスイッチ）
+     */
+    convertCommand_if_self_sw(context: Context): void {
+        this.indent++;
+        const ifnum = 2
+        const id = context.headerInt('id');
+        const flag  = context.headerStr('flag', 'on') === 'on' ? 0 : 1
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag]});
+    }
+    /**
+     * ○ 条件分岐（タイマー）
+     */
+    convertCommand_if_timer(context: Context): void {
+        this.indent++;
+        const ifnum = 3
+        const time = context.headerInt('time');
+        const op    = ['ge', 'le'].indexOf(context.headerStr('op')) || 0
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, time, op]});
+    }
+    /**
+     * ○ 条件分岐（アクター）
+     */
+    convertCommand_if_actor(context: Context): void {
+        this.indent++;
+        const ifnum = 4
+        const id = context.headerInt('id');
+        let type = 0;
+        let value = 0;
+        switch (context.headerStr('type')) {
+        case 'party':
+            type  = 0;
+            value = 0;
+            break;
+        case 'name':
+            type  = 1;
+            value = context.headerInt('value');
+            break;
+        case 'class':
+            type  = 2;
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        case 'skill':
+            type  = 3
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        case 'weapon':
+            type  = 4
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        case 'armor':
+            type  = 5
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        case 'state':
+            type  = 6
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        default:
+            type  = 0
+            value = 0
+            break;
+        }
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, value]});
+    }
+    /**
+     * ○ 条件分岐（敵キャラ）
+     */
+    convertCommand_if_enemy(context: Context): void {
+        this.indent++;
+        const ifnum = 5
+        let type = 0;
+        let value = 0;
+        const enemy = context.headerInt('enemy');
+        switch (context.headerStr('type')) {
+        case 'visible':
+            type  = 0
+            value = 0
+            break;
+        case 'state':
+            type  = 1
+            new NotEmptyValidator().validate(context, 'value', context.header['value']);
+            new NumericValidator(1).validate(context, 'value', context.header['value']);
+            value = context.headerInt('value');
+            break;
+        default:
+            type  = 0
+            value = 0
+            break;
+        }
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, enemy, type, value]});
+    }
+    /**
+     * ○ 条件分岐（キャラクター）
+     */
+    convertCommand_if_character(context: Context): void {
+        this.indent++;
+        const ifnum = 6
+        const id = context.headerInt('id');
+        let direction = 0;
+        switch (context.headerStr('direction')) {
+        case '2':
+        case 'down':
+            direction = 2
+            break;
+        case '4':
+        case 'left':
+            direction = 4
+            break;
+        case '6':
+        case 'right':
+            direction = 6
+            break;
+        case '8':
+        case 'up':
+            direction = 8
+            break;
+        }
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, direction]});
+    }
+    /**
+     * ○ 条件分岐（乗り物）
+     */
+    convertCommand_if_vehicle(context: Context): void {
+        this.indent++;
+        const ifnum = 13
+        const vehicle = context.headerInt('vehicle');
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, vehicle]});
+    }
+    /**
+     * ○ 条件分岐（お金）
+     */
+    convertCommand_if_money(context: Context): void {
+        this.indent++;
+        const ifnum = 7
+        const money = context.headerInt('money');
+        const op    = ['ge', 'le', 'lt'].indexOf(context.header['op']) || 0
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, money, op]});
+    }
+    /**
+     * ○ 条件分岐（アイテム）
+     */
+    convertCommand_if_item(context: Context): void {
+        this.indent++;
+        const ifnum = 8
+        const id = context.headerInt('id');
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id]});
+    }
+    /**
+     * ○ 条件分岐（武器）
+     */
+    convertCommand_if_weapon(context: Context): void {
+        this.indent++;
+        const ifnum = 9
+        const id = context.headerInt('id');
+        const equip = context.headerStr('equip', 'false') == 'true' ? true : false;
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, equip]});
+    }
+    /**
+     * ○ 条件分岐（防具）
+     */
+    convertCommand_if_armor(context: Context): void {
+        this.indent++;
+        const ifnum = 10
+        const id = context.headerInt('id');
+        const equip = context.headerStr('equip', 'false') == 'true' ? true : false;
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, equip]});
+    }
+    /**
+     * ○ 条件分岐（ボタン）
+     */
+    convertCommand_if_button(context: Context): void {
+        this.indent++;
+        const ifnum = 11
+        let button = 0;
+        switch (context.headerStr('button')) {
+        case '2':
+        case 'down':
+            button = 2;
+            break;
+        case '4':
+        case 'left':
+            button = 4;
+            break;
+        case '6':
+        case 'right':
+            button = 6;
+            break;
+        case '8':
+        case 'up':
+            button = 8;
+            break;
+        case '11':
+        case 'A':
+            button = 11;
+            break;
+        case '12':
+        case 'B':
+            button = 12;
+            break;
+        case '13':
+        case 'C':
+            button = 13;
+            break;
+        case '14':
+        case 'X':
+            button = 14;
+            break;
+        case '15':
+        case 'Y':
+            button = 15;
+            break;
+        case '16':
+        case 'Z':
+            button = 16;
+            break;
+        case '17':
+        case 'L':
+            button = 17;
+            break;
+        case '18':
+        case 'R':
+            button = 18;
+            break;
+        }
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, button]});
+    }
+    /**
+     * ○ 条件分岐（スクリプト）
+     */
+    convertCommand_if_script(context: Context): void {
+        this.indent++;
+        const ifnum = 12;
+        let script = context.headerStr('script');
+        script = script.replace(/<!!>/g, '=');
+        script = script.replace(/<ii>/g, ' ');
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, script]});
+    }
+    /**
+     * ○ 条件分岐（それ以外）
+     */
+    convertCommand_else(context: Context): void {
+        this.indent++;
+        context.push({'code':411, 'indent': this.indent - 1, 'parameters': []});
+    }
+    convertCommand_end_else(context: Context): void {
+        this.indent--;
+        context.push({'code': 0, 'indent': this.indent + 1, 'parameters': []});
+        this.indent++;
+        context.push({'code':411, 'indent': this.indent - 1, 'parameters': []});
+    }
+    /**
+     * ○ イベントの中断
+     */
+    convertCommand_event_break(context: Context): void {
         context.push({'code': 115, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_common(context: Context): void {
+    /**
+     * ○ イベントの中断（returnタグにて）
+     */
+    convertCommand_return(context: Context): void {
+        context.push({'code': 115, 'indent': this.indent, 'parameters': []});
+    }
+    /**
+     * ○ コモンイベント
+     */
+    convertCommand_common(context: Context): void {
         const id = context.headerInt('id');
         context.push({'code': 117, 'indent': this.indent, 'parameters': [id]});
     }
-    protected convertCommand_sw(context: Context): void {
+    /**
+     * ○ ラベル
+     */
+    convertCommand_label(context: Context): void {
+        const value = context.headerStr('value');
+        context.push({'code': 118, 'indent': this.indent, 'parameters': [value]});
+    }
+    /**
+     * ○ ラベルジャンプ
+     */
+    convertCommand_label_jump(context: Context): void {
+        const value = context.headerStr('value');
+        context.push({'code': 119, 'indent': this.indent, 'parameters': [value]});
+    }
+    /**
+     * ○ 注釈
+     */
+    convertCommand_comment(context: Context): void {
+        const value = context.headerStr('value');
+        context.push({'code': 108, 'indent': this.indent, 'parameters': [value]});
+    }
+    /**
+     * ○ 注釈（２行目以降）
+     */
+    convertCommand_comment2(context: Context): void {
+        const value = context.headerStr('value');
+        context.push({'code': 408, 'indent': this.indent, 'parameters': [value]});
+    }
+    convertCommand_sw(context: Context): void {
         const id = context.headerInt('id');
         const end = context.headerInt('end', id);
         const flag = context.headerStr('flag') === 'on' ? 0 : 1;
         context.push({'code': 121, 'indent': this.indent, 'parameters': [id, end, flag]});
     }
-    protected convertCommand_var(context: Context): void {
+    convertCommand_var(context: Context): void {
         const id = context.headerInt('id');
         const end = context.headerInt('end', id);
         const op = context.headerStr('op');
-        context.push({'code': 122, 'indent': this.indent, 'parameters': [id, end, op, 0]});
+        const opType = this.convertOperation(context, op);
+        const value = context.headerInt('value');
+        context.push({'code': 122, 'indent': this.indent, 'parameters': [id, end, opType, 0, value]});
     }
-    protected convertCommand_self_sw(context: Context): void {
+    convertOperation(context: Context, operation: string): number {
+        switch(operation) {
+        case '=': return 0;
+        case '+': return 1;
+        case '-': return 2;
+        case '*': return 3;
+        case '/': return 4;
+        case '%': return 5;
+        }
+        context.error('illegal operation:' + operation);
+    }
+    convertCommand_self_sw(context: Context): void {
         const id = context.headerInt('id');
         const flag = context.headerStr('flag') === 'on' ? 0 : 1;
         context.push({'code': 123, 'indent': this.indent, 'parameters': [id, flag]});
     }
-    protected convertCommand_timer(context: Context): void {
+    convertCommand_timer(context: Context): void {
         const flag = context.headerStr('flag') === 'on' ? 0 : 1;
         const time = context.headerInt('time');
         context.push({'code': 124, 'indent': this.indent, 'parameters': [flag, time]});
     }
-    protected convertCommand_save_disable(context: Context): void {
+    convertCommand_save_disable(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 134, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_menu_disable(context: Context): void {
+    convertCommand_menu_disable(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 135, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_encount_disable(context: Context): void {
+    convertCommand_encount_disable(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 136, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_formation_disable(context: Context): void {
+    convertCommand_formation_disable(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 137, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_map_move(context: Context): void {
+    convertCommand_map_move(context: Context): void {
         let direction;
         switch (context.headerStr('direction')) {
         case '2':
@@ -736,7 +1185,7 @@ class Scenario_Converter {
         const y = context.headerInt('y');
         context.push({'code': 201, 'indent': this.indent, 'parameters': [type, map, x, y, direction, fade]});
     }
-    protected convertCommand_vehicle_pos(context: Context): void {
+    convertCommand_vehicle_pos(context: Context): void {
         const vehicle = context.headerInt('vehicle');
         const type = context.headerStr('type', 'const') === 'const' ? 0 : 1;
         const map = context.headerInt('map');
@@ -744,7 +1193,7 @@ class Scenario_Converter {
         const y = context.headerInt('y');
         context.push({'code': 202, 'indent': this.indent, 'parameters': [vehicle, type, map, x, y]});
     }
-    protected convertCommand_event_pos(context: Context): void {
+    convertCommand_event_pos(context: Context): void {
         const id = context.headerInt('id');
         let type;
         if (context.headerStr('type') === 'var') {
@@ -780,7 +1229,7 @@ class Scenario_Converter {
         }
         context.push({'code': 203, 'indent': this.indent, 'parameters': [id, type, x, y, direction]});
     }
-    protected convertCommand_scroll_map(context: Context): void {
+    convertCommand_scroll_map(context: Context): void {
         let direction;
         switch (context.headerStr('direction')) {
         case '2':
@@ -804,7 +1253,7 @@ class Scenario_Converter {
         const speed = context.headerInt('speed', 4);
         context.push({'code': 204, 'indent': this.indent, 'parameters': [direction, num, speed]});
     }
-    protected convertCommand_route_h(context: Context): void {
+    convertCommand_route_h(context: Context): void {
         var event = context.headerInt('event');
         var repeat = context.headerBool('repeat', false);
         var skip = context.headerBool('skip', false);
@@ -818,10 +1267,11 @@ class Scenario_Converter {
         for (const line of context.data) {
             list.push(this.convertCommand_route(context, line));
         }
+        list.push({'code': 0});
         var routes = {repeat: repeat, skippable: skip, wait: wait, list: list};
         context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
     }
-    protected convertCommand_route(context: Context, line: string): {} {
+    convertCommand_route(context: Context, line: string): {} {
         const headerList = line.split(' ');
         const header  = this.parseHeader(headerList);
         var type = header.headerStr('type');
@@ -919,7 +1369,7 @@ class Scenario_Converter {
                 code = 27;
                 new NotEmptyValidator().validate(context, 'id', header['id']);
                 new NumericValidator(1).validate(context, 'id', header['id']);
-                parameters.push(header.headerInt('id'));
+                parameters['id'] = header.headerInt('id');
                 break;
             case 'switch_off':
             case 'sw_off':
@@ -996,7 +1446,12 @@ class Scenario_Converter {
                 const volume = header.headerInt('volume', 100);
                 const pitch = header.headerInt('pitch', 100);
                 const pan = header.headerInt('pitch', 0);
-                parameters.push({file, volume, pitch, pan});
+                let obj = {};
+                obj['name'] = file;
+                obj['volume'] = volume;
+                obj['pitch'] = pitch;
+                obj['pan'] = pan;
+                parameters.push(obj);
                 break;
             case 'script':
                 code = 45;
@@ -1011,50 +1466,50 @@ class Scenario_Converter {
                 break;
             }
         }
-        return {code: code, indent: null};
+        return {code: code, indent: null, parameters: parameters};
     }
-    protected convertCommand_vehicle(context: Context): void {
+    convertCommand_vehicle(context: Context): void {
         context.push({'code': 206, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_transparent(context: Context): void {
+    convertCommand_transparent(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 211, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_anime(context: Context): void {
+    convertCommand_anime(context: Context): void {
         const target = context.headerInt('target');
         const anime = context.headerInt('anime');
         const wait = context.headerBool('wait', false);
         context.push({'code': 212, 'indent': this.indent, 'parameters': [target, anime, wait]});
     }
-    protected convertCommand_balloon(context: Context): void {
+    convertCommand_balloon(context: Context): void {
         const target = context.headerInt('target');
         const balloon = context.headerInt('balloon');
         const wait = context.headerBool('wait', false);
         context.push({'code': 213, 'indent': this.indent, 'parameters': [target, balloon, wait]});
     }
-    protected convertCommand_erace(context: Context): void {
+    convertCommand_erace(context: Context): void {
         context.push({'code': 214, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_followers(context: Context): void {
+    convertCommand_followers(context: Context): void {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 216, 'indent': this.indent, 'parameters': [flag]});
     }
-    protected convertCommand_gather(context: Context): void {
+    convertCommand_gather(context: Context): void {
         context.push({'code': 217, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_fadeout(context: Context): void {
+    convertCommand_fadeout(context: Context): void {
         context.push({'code': 221, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_fadein(context: Context): void {
+    convertCommand_fadein(context: Context): void {
         context.push({'code': 222, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_tone(context: Context): void  {
+    convertCommand_tone(context: Context): void  {
         const tone = context.headerTone();
         const time = context.headerInt('time', 60);
         const wait = context.headerBool('wait', true);
         context.push({'code': 223, 'indent': this.indent, 'parameters': [tone, time, wait]});
     }
-    protected convertCommand_flash(context: Context): void  {
+    convertCommand_flash(context: Context): void  {
         const red = context.headerInt('red', 255);
         const green = context.headerInt('green', 255);
         const blue = context.headerInt('blue', 255);
@@ -1064,18 +1519,18 @@ class Scenario_Converter {
         const wait = context.headerBool('wait', true);
         context.push({'code': 224, 'indent': this.indent, 'parameters': [color, time, wait]});
     }
-    protected convertCommand_shake(context: Context): void  {
+    convertCommand_shake(context: Context): void  {
         const strength = context.headerInt('strength', 5);
         const speed = context.headerInt('speed', 5);
         const time = context.headerInt('time', 60);
         const wait = context.headerBool('wait', true);
         context.push({'code': 225, 'indent': this.indent, 'parameters': [strength, speed, time, wait]});
     }
-    protected convertCommand_wait(context: Context): void  {
+    convertCommand_wait(context: Context): void  {
         const time = context.headerInt('time', 60);
         context.push({'code': 230, 'indent': this.indent, 'parameters': [time]});
     }
-    protected convertCommand_picture(context: Context): void  {
+    convertCommand_picture(context: Context): void  {
         const layer = context.headerInt('layer');
         const file = context.header['file'];
         const origin = context.header['origin'] === 'center' ? 1 : 0;
@@ -1088,7 +1543,7 @@ class Scenario_Converter {
         const blend = context.headerInt('blend', 0);
         context.push({'code': 231, 'indent': this.indent, 'parameters': [layer, file, origin, type, x, y, zoomX, zoomy, opacity, blend]});
     }
-    protected convertCommand_picture_move(context: Context): void  {
+    convertCommand_picture_move(context: Context): void  {
         const layer = context.headerInt('layer');
         const origin = context.headerInt('origin', 0);
         const type = context.header['type'] === 'var' ? 1 : 0;
@@ -1102,30 +1557,30 @@ class Scenario_Converter {
         const wait = context.headerBool('wait', true);
         context.push({'code': 232, 'indent': this.indent, 'parameters': [layer, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait]});
     }
-    protected convertCommand_picture_rotation(context: Context): void  {
+    convertCommand_picture_rotation(context: Context): void  {
         const layer = context.headerInt('layer');
         const speed = context.headerInt('speed', 5);
         context.push({'code': 233, 'indent': this.indent, 'parameters': [layer, speed]});
     }
-    protected convertCommand_picture_tone(context: Context): void  {
+    convertCommand_picture_tone(context: Context): void  {
         const layer = context.headerInt('layer');
         const tone = context.headerTone();
         const time = context.headerInt('time', 60);
         const wait = context.headerBool('wait', true);
         context.push({'code': 234, 'indent': this.indent, 'parameters': [layer, tone, time, wait]});
     }
-    protected convertCommand_picture_erace(context: Context): void {
+    convertCommand_picture_erace(context: Context): void {
         const layer = context.headerInt('layer');
         context.push({'code': 235, 'indent': this.indent, 'parameters': [layer]});
     }
-    protected convertCommand_picture_weather(context: Context): void  {
+    convertCommand_picture_weather(context: Context): void  {
         const weather = context.headerStr('weather', 'none');
         const strength = context.headerInt('strength', 5);
         const time = context.headerInt('time', 60);
         const wait = context.headerBool('wait', true);
         context.push({'code': 236, 'indent': this.indent, 'parameters': [weather, strength, time, wait]});
     }
-    protected convertCommand_bgm(context: Context): void {
+    convertCommand_bgm(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
@@ -1134,17 +1589,17 @@ class Scenario_Converter {
 
         context.push({'code': 241, 'indent': this.indent, 'parameters': [bgm]});
     }
-    protected convertCommand_fadeout_bgm(context: Context): void {
+    convertCommand_fadeout_bgm(context: Context): void {
         const time = context.headerInt('time', 10);
         context.push({'code': 242, 'indent': this.indent, 'parameters': [time]});
     }
-    protected convertCommand_save_bgm(context: Context): void {
+    convertCommand_save_bgm(context: Context): void {
         context.push({'code': 243, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_resume_bgm(context: Context): void {
+    convertCommand_resume_bgm(context: Context): void {
         context.push({'code': 244, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_bgs(context: Context): void {
+    convertCommand_bgs(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
@@ -1153,11 +1608,11 @@ class Scenario_Converter {
 
         context.push({'code': 245, 'indent': this.indent, 'parameters': [bgs]});
     }
-    protected convertCommand_fadeout_bgs(context: Context): void {
+    convertCommand_fadeout_bgs(context: Context): void {
         const time = context.headerInt('time', 10);
         context.push({'code': 246, 'indent': this.indent, 'parameters': [time]});
     }
-    protected convertCommand_me(context: Context): void {
+    convertCommand_me(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
@@ -1166,7 +1621,7 @@ class Scenario_Converter {
 
         context.push({'code': 249, 'indent': this.indent, 'parameters': [me]});
     }
-    protected convertCommand_se(context: Context): void {
+    convertCommand_se(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
@@ -1175,46 +1630,46 @@ class Scenario_Converter {
 
         context.push({'code': 250, 'indent': this.indent, 'parameters': [se]});
     }
-    protected convertCommand_stop_se(context: Context): void {
+    convertCommand_stop_se(context: Context): void {
         context.push({'code': 251, 'indent': this.indent, 'parameters': []});
     }
-    protected convertCommand_stop_movie(context: Context): void {
+    convertCommand_movie(context: Context): void {
         var file = context.headerStr('file');
         context.push({'code': 261, 'indent': this.indent, 'parameters': [file]});
     }
-    protected convertCommand_all_recovery(context: Context): void {
+    convertCommand_all_recovery(context: Context): void {
         var params = context.headerVar('actor');
         context.push({'code': 314, 'indent': this.indent, 'parameters': [params[0], params[1]]});
     }
-    protected convertCommand_exp(context: Context): void {
+    convertCommand_exp(context: Context): void {
         var actor = context.headerVar('actor');
         var value = context.headerOperateVar('value');
         var message = context.headerBool('message', false);
         context.push({'code': 315, 'indent': this.indent, 'parameters': [actor[0], actor[1], value[0], value[1], value[2], message]});
     }
-    protected convertCommand_level(context: Context): void {
+    convertCommand_level(context: Context): void {
         var actor = context.headerVar('actor');
         var value = context.headerOperateVar('value');
         var message = context.headerBool('message', false);
         context.push({'code': 316, 'indent': this.indent, 'parameters': [actor[0], actor[1], value[0], value[1], value[2], message]});
     }
-    protected convertCommand_name(context: Context): void {
+    convertCommand_name(context: Context): void {
         var actor = context.headerInt('actor');
         var value = context.headerStr('value');
         context.push({'code': 320, 'indent': this.indent, 'parameters': [actor, value]});
     }
-    protected convertCommand_class(context: Context): void {
+    convertCommand_class(context: Context): void {
         var actor = context.headerInt('actor');
         var value = context.headerInt('value');
         var keep_exp = context.headerBool('keep_exp', false);
         context.push({'code': 321, 'indent': this.indent, 'parameters': [actor, value, keep_exp]});
     }
-    protected convertCommand_nickname(context: Context): void {
+    convertCommand_nickname(context: Context): void {
         var actor = context.headerInt('actor');
         var value = context.headerInt('value');
         context.push({'code': 323, 'indent': this.indent, 'parameters': [actor, value]});
     }
-    protected convertCommand_end(context: Context): void {
+    convertCommand_end(context: Context): void {
         this.indent--;
         context.push({'code': 0, 'indent': this.indent + 1, 'parameters': []});
     }
@@ -1271,6 +1726,9 @@ export class Context {
     }
     error(msg: string): void {
         console.error(`file: ${this.file} line: ${this.lineNumber} command: ${this.command} ${msg}`);
+    }
+    insertTop(command: RPG.EventCommand): void {
+        this.list.splice(0, 0, command);
     }
 }
 class Header {

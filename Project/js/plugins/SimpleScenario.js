@@ -18,6 +18,10 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc シナリオファイルがある場所を設定します
  * @default /../scenario/
  *
+ * @param rightPosX
+ * @desc 右側に立つ場合のx座標です
+ * @default 400
+ *
  * @help
  * Ver0.1
  *
@@ -56,6 +60,20 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　　　　→立ち位置(right→右, left→左)
  * 　　　　　　　　　(default_posよりも優先します)
  *
+ * 　m1 m2 m3 ... m99
+ * 　＞立ち絵なし、名前ありのメッセージを表示します。m の後の数字はモブIDです。
+ * 　　■パラメータ
+ * 　　　face: number
+ * 　　　　→表情ID
+ * 　　　name: string
+ * 　　　　→表示する名前
+ *
+ * 　mob1 mob2 mob3 ... mob99
+ * 　＞m1 などのコマンドで表示されるデフォルトの名前を設定します。
+ * 　　■パラメータ
+ * 　　　name: string
+ * 　　　　→設定する名前
+ *
  * 　cos1 cos2 cos3 ... cos99
  * 　＞キャラクターの衣装を変更します。n の後の数字はアクターIDです。
  * 　　■パラメータ
@@ -88,6 +106,11 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　start
  * 　＞default_posなどの設定をクリアします。
  *
+ * 　preloadPicture
+ * 　＞picture ファイルを先に読み込んでおきます
+ * 　　■パラメータ
+ * 　　　file: 読み込んでおくファイル名
+ *
  *
  * イベント実装状況(○→実装済み)
 //**************************************************************************
@@ -97,7 +120,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *○　message
  *○　choice_h
  *○　choice_if
- *　　choice_cancel
+ *○　choice_cancel
  *○　choice_end
  *　　input_num
  *　　choice_item
@@ -294,6 +317,7 @@ var SimpleScenario;
         var path = require('path');
     }
     var pathParam = parameters['scenarioFolder'];
+    var rightPosX = parseInt(parameters['rightPosX']);
     var SCENARIO_FILE_NAME = 'Scenario.json';
     var SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
     var DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
@@ -311,12 +335,13 @@ var SimpleScenario;
             _Game_Interpreter_pluginCommand.call(this, command, args);
             if (command === 'Scenario' || command === 'scenario') {
                 var id = args[0];
-                var list = $dataScenraio[id];
-                if (!list) {
+                var list_1 = $dataScenraio[id];
+                if (!list_1) {
                     throw new Error('id:' + id + ' のデータが見つかりません');
                 }
-                console.log(list);
-                this.setupChild(list, this._eventId);
+                console.log("\u30B3\u30DE\u30F3\u30C9\u5B9F\u884C:" + args[0]);
+                console.log(list_1);
+                this.setupChild(list_1, this._eventId);
             }
         };
         return _Game_Interpreter;
@@ -358,19 +383,19 @@ var SimpleScenario;
          */
         Scenario_Converter.prototype.convertAll = function () {
             var self = this;
+            this._replaceMap = {};
             var scenario = {};
             fs.readdir(SCENARIO_PATH, function (err, files) {
                 if (err) {
                     console.error(err.message);
                     return;
                 }
-                console.log(files);
                 if (!files) {
                     return;
                 }
+                self.convertReplace(files);
                 for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
                     var file = files_1[_i];
-                    console.log(file);
                     var filePath = path.resolve(SCENARIO_PATH, file);
                     var stat = fs.statSync(filePath);
                     if (stat.isDirectory()) {
@@ -400,6 +425,33 @@ var SimpleScenario;
                 DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
                 console.log('シナリオの変換が終わりました');
             });
+        };
+        Scenario_Converter.prototype.convertReplace = function (files) {
+            for (var _i = 0, files_2 = files; _i < files_2.length; _i++) {
+                var file = files_2[_i];
+                var index = file.indexOf('replace.txt');
+                if (index === -1) {
+                    continue;
+                }
+                var name_3 = file.substr(0, index);
+                var text = fs.readFileSync(SCENARIO_PATH + file, 'utf8');
+                this.parseReplace(text);
+            }
+        };
+        Scenario_Converter.prototype.parseReplace = function (text) {
+            var lines = text.split('\n');
+            for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
+                var line = lines_1[_i];
+                if (line.indexOf('//') === 0) {
+                    continue;
+                }
+                var chars = line.split(/\s/);
+                if (chars.length < 2) {
+                    continue;
+                }
+                this._replaceMap[chars[0]] = chars[chars.length - 1];
+            }
+            //console.log(this._replaceMap)
         };
         Scenario_Converter.prototype.convert = function (file, text) {
             this.indent = 0;
@@ -467,6 +519,8 @@ var SimpleScenario;
             var context = new Context(file, block.lineNumber, command, list, header, block.data);
             var n = /n(\d+)/.exec(command);
             var cos = /cos(\d+)/.exec(command);
+            var m = /m(\d+)/.exec(command);
+            var mob = /mob(\d+)/.exec(command);
             try {
                 this.validate(context);
                 if (n) {
@@ -475,8 +529,19 @@ var SimpleScenario;
                 else if (cos) {
                     this['convertCommand_cos'](parseInt(cos[1]), context);
                 }
+                else if (m) {
+                    this['convertCommand_m'](parseInt(m[1]), context);
+                }
+                else if (mob) {
+                    this['convertCommand_mob'](parseInt(mob[1]), context);
+                }
                 else {
-                    this['convertCommand_' + command](context);
+                    if (!this['convertCommand_' + command]) {
+                        console.error(command + 'のコマンドが存在しません');
+                    }
+                    else {
+                        this['convertCommand_' + command](context);
+                    }
                 }
             }
             catch (e) {
@@ -528,17 +593,21 @@ var SimpleScenario;
             var result = {};
             for (var i = 1; i < headerList.length; i++) {
                 var text = headerList[i];
-                var data = text.split('=');
-                result[data[0]] = data[1];
+                var index = text.indexOf('=');
+                var key = text.substr(0, index);
+                var value = text.substr(index + 1);
+                result[key] = value;
             }
             return new Header(result);
         };
         Scenario_Converter.prototype.convertCommand_start = function (context) {
             this.defaultPosMap = {};
+            this._defaultMobNameMap = {};
         };
         Scenario_Converter.prototype.convertCommand_hide = function (context) {
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie notClose off"] });
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hide"] });
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
         };
         Scenario_Converter.prototype.convertCommand_default_pos = function (context) {
             var actorId = parseInt(context.header['actor']);
@@ -548,6 +617,10 @@ var SimpleScenario;
         Scenario_Converter.prototype.convertCommand_not_close = function (context) {
             var flag = context.header['flag'];
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie notClose " + flag)] });
+        };
+        Scenario_Converter.prototype.convertCommand_preloadPicture = function (context) {
+            var file = context.headerStr('file');
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie preloadPicture " + file)] });
         };
         Scenario_Converter.prototype.convertCommand_n = function (actorId, context) {
             var position = this.defaultPosMap[actorId] || 1;
@@ -577,10 +650,32 @@ var SimpleScenario;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
             }
             else {
+                x = rightPosX;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
             }
-            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ['MessageName open ' + $gameActors.actor(actorId).name()] });
             this.convertCommand_messages(context);
+        };
+        Scenario_Converter.prototype.convertCommand_m = function (mobId, context) {
+            var name = this._defaultMobNameMap[mobId] || '';
+            if (context.header['name']) {
+                name = context.headerStr('name');
+            }
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
+            var face = '';
+            if (context.header['face']) {
+                face = context.headerStr('face');
+            }
+            var index = 0;
+            if (context.header['index']) {
+                index = context.headerInt('index');
+            }
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideBalloon"] });
+            context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+            context.push({ 'code': 101, 'indent': this.indent, 'parameters': [face, index, 0, 2] });
+            for (var _i = 0, _a = context.data; _i < _a.length; _i++) {
+                var msg = _a[_i];
+                context.push({ 'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)] });
+            }
         };
         Scenario_Converter.prototype.convertCommand_normal_messages = function (context) {
             context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
@@ -590,7 +685,7 @@ var SimpleScenario;
             context.push({ 'code': 101, 'indent': this.indent, 'parameters': ['', 0, 0, 2] });
             for (var _i = 0, _a = context.data; _i < _a.length; _i++) {
                 var msg = _a[_i];
-                context.push({ 'code': 401, 'indent': this.indent, 'parameters': [msg] });
+                context.push({ 'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)] });
             }
         };
         Scenario_Converter.prototype.convertCommand_cos = function (actorId, context) {
@@ -602,6 +697,10 @@ var SimpleScenario;
                     context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie " + type + " " + actorId + " " + outer)] });
                 }
             }
+        };
+        Scenario_Converter.prototype.convertCommand_mob = function (mobId, context) {
+            var name = context.headerStr('name');
+            this._defaultMobNameMap[mobId] = name;
         };
         Scenario_Converter.prototype.convertCommand_message_h = function (context) {
             var actor = context.header['actor'] || '';
@@ -616,7 +715,18 @@ var SimpleScenario;
         };
         Scenario_Converter.prototype.convertCommand_message = function (context) {
             var value = context.header['value'];
-            context.push({ 'code': 401, 'indent': this.indent, 'parameters': [value] });
+            context.push({ 'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(value)] });
+        };
+        Scenario_Converter.prototype.replaceMessage = function (text) {
+            for (var key in this._replaceMap) {
+                if (!this._replaceMap.hasOwnProperty(key)) {
+                    continue;
+                }
+                var value = this._replaceMap[key];
+                var regExp = new RegExp(value, 'g');
+                text = text.replace(regExp, value);
+            }
+            return text;
         };
         Scenario_Converter.prototype.convertCommand_choice_h = function (context) {
             var labels = [];
@@ -657,12 +767,339 @@ var SimpleScenario;
             this.indent--;
             context.push({ 'code': 0, 'indent': this.indent, 'parameters': [] });
         };
+        /**
+         * ○ 条件分岐（スイッチ）
+         */
+        Scenario_Converter.prototype.convertCommand_if_sw = function (context) {
+            this.indent++;
+            var ifnum = 0;
+            var id = context.headerInt('id');
+            var flag = context.headerStr('flag', 'on') === 'on' ? 0 : 1;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag] });
+        };
+        /**
+         * ○ 条件分岐（変数）
+         */
+        Scenario_Converter.prototype.convertCommand_if_var = function (context) {
+            this.indent++;
+            var ifnum = 1;
+            var id = context.headerInt('id');
+            var value = context.headerStr('value');
+            var reg = /(var\.)/;
+            var type = reg.exec(value) ? 1 : 0; //0:数値 1:変数
+            var op = ['eq', 'ge', 'le', 'gt', 'lt', 'ne'].indexOf(context.headerStr('op')) || 0;
+            if (type === 1 && parseInt(value) <= 0) {
+                throw new Error('変数指定時に「0」以下が使われました。');
+            }
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, parseInt(value), op] });
+        };
+        /**
+         * ○ 条件分岐（セルフスイッチ）
+         */
+        Scenario_Converter.prototype.convertCommand_if_self_sw = function (context) {
+            this.indent++;
+            var ifnum = 2;
+            var id = context.headerInt('id');
+            var flag = context.headerStr('flag', 'on') === 'on' ? 0 : 1;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag] });
+        };
+        /**
+         * ○ 条件分岐（タイマー）
+         */
+        Scenario_Converter.prototype.convertCommand_if_timer = function (context) {
+            this.indent++;
+            var ifnum = 3;
+            var time = context.headerInt('time');
+            var op = ['ge', 'le'].indexOf(context.headerStr('op')) || 0;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, time, op] });
+        };
+        /**
+         * ○ 条件分岐（アクター）
+         */
+        Scenario_Converter.prototype.convertCommand_if_actor = function (context) {
+            this.indent++;
+            var ifnum = 4;
+            var id = context.headerInt('id');
+            var type = 0;
+            var value = 0;
+            switch (context.headerStr('type')) {
+                case 'party':
+                    type = 0;
+                    value = 0;
+                    break;
+                case 'name':
+                    type = 1;
+                    value = context.headerInt('value');
+                    break;
+                case 'class':
+                    type = 2;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                case 'skill':
+                    type = 3;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                case 'weapon':
+                    type = 4;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                case 'armor':
+                    type = 5;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                case 'state':
+                    type = 6;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                default:
+                    type = 0;
+                    value = 0;
+                    break;
+            }
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, value] });
+        };
+        /**
+         * ○ 条件分岐（敵キャラ）
+         */
+        Scenario_Converter.prototype.convertCommand_if_enemy = function (context) {
+            this.indent++;
+            var ifnum = 5;
+            var type = 0;
+            var value = 0;
+            var enemy = context.headerInt('enemy');
+            switch (context.headerStr('type')) {
+                case 'visible':
+                    type = 0;
+                    value = 0;
+                    break;
+                case 'state':
+                    type = 1;
+                    new SimpleScenario.NotEmptyValidator().validate(context, 'value', context.header['value']);
+                    new SimpleScenario.NumericValidator(1).validate(context, 'value', context.header['value']);
+                    value = context.headerInt('value');
+                    break;
+                default:
+                    type = 0;
+                    value = 0;
+                    break;
+            }
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, enemy, type, value] });
+        };
+        /**
+         * ○ 条件分岐（キャラクター）
+         */
+        Scenario_Converter.prototype.convertCommand_if_character = function (context) {
+            this.indent++;
+            var ifnum = 6;
+            var id = context.headerInt('id');
+            var direction = 0;
+            switch (context.headerStr('direction')) {
+                case '2':
+                case 'down':
+                    direction = 2;
+                    break;
+                case '4':
+                case 'left':
+                    direction = 4;
+                    break;
+                case '6':
+                case 'right':
+                    direction = 6;
+                    break;
+                case '8':
+                case 'up':
+                    direction = 8;
+                    break;
+            }
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, direction] });
+        };
+        /**
+         * ○ 条件分岐（乗り物）
+         */
+        Scenario_Converter.prototype.convertCommand_if_vehicle = function (context) {
+            this.indent++;
+            var ifnum = 13;
+            var vehicle = context.headerInt('vehicle');
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, vehicle] });
+        };
+        /**
+         * ○ 条件分岐（お金）
+         */
+        Scenario_Converter.prototype.convertCommand_if_money = function (context) {
+            this.indent++;
+            var ifnum = 7;
+            var money = context.headerInt('money');
+            var op = ['ge', 'le', 'lt'].indexOf(context.header['op']) || 0;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, money, op] });
+        };
+        /**
+         * ○ 条件分岐（アイテム）
+         */
+        Scenario_Converter.prototype.convertCommand_if_item = function (context) {
+            this.indent++;
+            var ifnum = 8;
+            var id = context.headerInt('id');
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id] });
+        };
+        /**
+         * ○ 条件分岐（武器）
+         */
+        Scenario_Converter.prototype.convertCommand_if_weapon = function (context) {
+            this.indent++;
+            var ifnum = 9;
+            var id = context.headerInt('id');
+            var equip = context.headerStr('equip', 'false') == 'true' ? true : false;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, equip] });
+        };
+        /**
+         * ○ 条件分岐（防具）
+         */
+        Scenario_Converter.prototype.convertCommand_if_armor = function (context) {
+            this.indent++;
+            var ifnum = 10;
+            var id = context.headerInt('id');
+            var equip = context.headerStr('equip', 'false') == 'true' ? true : false;
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, equip] });
+        };
+        /**
+         * ○ 条件分岐（ボタン）
+         */
+        Scenario_Converter.prototype.convertCommand_if_button = function (context) {
+            this.indent++;
+            var ifnum = 11;
+            var button = 0;
+            switch (context.headerStr('button')) {
+                case '2':
+                case 'down':
+                    button = 2;
+                    break;
+                case '4':
+                case 'left':
+                    button = 4;
+                    break;
+                case '6':
+                case 'right':
+                    button = 6;
+                    break;
+                case '8':
+                case 'up':
+                    button = 8;
+                    break;
+                case '11':
+                case 'A':
+                    button = 11;
+                    break;
+                case '12':
+                case 'B':
+                    button = 12;
+                    break;
+                case '13':
+                case 'C':
+                    button = 13;
+                    break;
+                case '14':
+                case 'X':
+                    button = 14;
+                    break;
+                case '15':
+                case 'Y':
+                    button = 15;
+                    break;
+                case '16':
+                case 'Z':
+                    button = 16;
+                    break;
+                case '17':
+                case 'L':
+                    button = 17;
+                    break;
+                case '18':
+                case 'R':
+                    button = 18;
+                    break;
+            }
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, button] });
+        };
+        /**
+         * ○ 条件分岐（スクリプト）
+         */
+        Scenario_Converter.prototype.convertCommand_if_script = function (context) {
+            this.indent++;
+            var ifnum = 12;
+            var script = context.headerStr('script');
+            script = script.replace(/<!!>/g, '=');
+            script = script.replace(/<ii>/g, ' ');
+            context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, script] });
+        };
+        /**
+         * ○ 条件分岐（それ以外）
+         */
+        Scenario_Converter.prototype.convertCommand_else = function (context) {
+            this.indent++;
+            context.push({ 'code': 411, 'indent': this.indent - 1, 'parameters': [] });
+        };
+        Scenario_Converter.prototype.convertCommand_end_else = function (context) {
+            this.indent--;
+            context.push({ 'code': 0, 'indent': this.indent + 1, 'parameters': [] });
+            this.indent++;
+            context.push({ 'code': 411, 'indent': this.indent - 1, 'parameters': [] });
+        };
+        /**
+         * ○ イベントの中断
+         */
+        Scenario_Converter.prototype.convertCommand_event_break = function (context) {
+            context.push({ 'code': 115, 'indent': this.indent, 'parameters': [] });
+        };
+        /**
+         * ○ イベントの中断（returnタグにて）
+         */
         Scenario_Converter.prototype.convertCommand_return = function (context) {
             context.push({ 'code': 115, 'indent': this.indent, 'parameters': [] });
         };
+        /**
+         * ○ コモンイベント
+         */
         Scenario_Converter.prototype.convertCommand_common = function (context) {
             var id = context.headerInt('id');
             context.push({ 'code': 117, 'indent': this.indent, 'parameters': [id] });
+        };
+        /**
+         * ○ ラベル
+         */
+        Scenario_Converter.prototype.convertCommand_label = function (context) {
+            var value = context.headerStr('value');
+            context.push({ 'code': 118, 'indent': this.indent, 'parameters': [value] });
+        };
+        /**
+         * ○ ラベルジャンプ
+         */
+        Scenario_Converter.prototype.convertCommand_label_jump = function (context) {
+            var value = context.headerStr('value');
+            context.push({ 'code': 119, 'indent': this.indent, 'parameters': [value] });
+        };
+        /**
+         * ○ 注釈
+         */
+        Scenario_Converter.prototype.convertCommand_comment = function (context) {
+            var value = context.headerStr('value');
+            context.push({ 'code': 108, 'indent': this.indent, 'parameters': [value] });
+        };
+        /**
+         * ○ 注釈（２行目以降）
+         */
+        Scenario_Converter.prototype.convertCommand_comment2 = function (context) {
+            var value = context.headerStr('value');
+            context.push({ 'code': 408, 'indent': this.indent, 'parameters': [value] });
         };
         Scenario_Converter.prototype.convertCommand_sw = function (context) {
             var id = context.headerInt('id');
@@ -674,7 +1111,20 @@ var SimpleScenario;
             var id = context.headerInt('id');
             var end = context.headerInt('end', id);
             var op = context.headerStr('op');
-            context.push({ 'code': 122, 'indent': this.indent, 'parameters': [id, end, op, 0] });
+            var opType = this.convertOperation(context, op);
+            var value = context.headerInt('value');
+            context.push({ 'code': 122, 'indent': this.indent, 'parameters': [id, end, opType, 0, value] });
+        };
+        Scenario_Converter.prototype.convertOperation = function (context, operation) {
+            switch (operation) {
+                case '=': return 0;
+                case '+': return 1;
+                case '-': return 2;
+                case '*': return 3;
+                case '/': return 4;
+                case '%': return 5;
+            }
+            context.error('illegal operation:' + operation);
         };
         Scenario_Converter.prototype.convertCommand_self_sw = function (context) {
             var id = context.headerInt('id');
@@ -824,6 +1274,7 @@ var SimpleScenario;
                 var line = _a[_i];
                 list.push(this.convertCommand_route(context, line));
             }
+            list.push({ 'code': 0 });
             var routes = { repeat: repeat, skippable: skip, wait: wait, list: list };
             context.push({ 'code': 205, 'indent': this.indent, 'parameters': [event, routes] });
         };
@@ -925,7 +1376,7 @@ var SimpleScenario;
                         code = 27;
                         new SimpleScenario.NotEmptyValidator().validate(context, 'id', header['id']);
                         new SimpleScenario.NumericValidator(1).validate(context, 'id', header['id']);
-                        parameters.push(header.headerInt('id'));
+                        parameters['id'] = header.headerInt('id');
                         break;
                     case 'switch_off':
                     case 'sw_off':
@@ -1001,7 +1452,12 @@ var SimpleScenario;
                         var volume = header.headerInt('volume', 100);
                         var pitch = header.headerInt('pitch', 100);
                         var pan = header.headerInt('pitch', 0);
-                        parameters.push({ file: file, volume: volume, pitch: pitch, pan: pan });
+                        var obj = {};
+                        obj['name'] = file;
+                        obj['volume'] = volume;
+                        obj['pitch'] = pitch;
+                        obj['pan'] = pan;
+                        parameters.push(obj);
                         break;
                     case 'script':
                         code = 45;
@@ -1016,7 +1472,7 @@ var SimpleScenario;
                         break;
                 }
             }
-            return { code: code, indent: null };
+            return { code: code, indent: null, parameters: parameters };
         };
         Scenario_Converter.prototype.convertCommand_vehicle = function (context) {
             context.push({ 'code': 206, 'indent': this.indent, 'parameters': [] });
@@ -1179,7 +1635,7 @@ var SimpleScenario;
         Scenario_Converter.prototype.convertCommand_stop_se = function (context) {
             context.push({ 'code': 251, 'indent': this.indent, 'parameters': [] });
         };
-        Scenario_Converter.prototype.convertCommand_stop_movie = function (context) {
+        Scenario_Converter.prototype.convertCommand_movie = function (context) {
             var file = context.headerStr('file');
             context.push({ 'code': 261, 'indent': this.indent, 'parameters': [file] });
         };
@@ -1221,6 +1677,7 @@ var SimpleScenario;
         };
         return Scenario_Converter;
     }());
+    SimpleScenario.Scenario_Converter = Scenario_Converter;
     var Block = (function () {
         function Block(lineNumber) {
             this.lineNumber = lineNumber;
@@ -1283,6 +1740,9 @@ var SimpleScenario;
         };
         Context.prototype.error = function (msg) {
             console.error("file: " + this.file + " line: " + this.lineNumber + " command: " + this.command + " " + msg);
+        };
+        Context.prototype.insertTop = function (command) {
+            this.list.splice(0, 0, command);
         };
         return Context;
     }());

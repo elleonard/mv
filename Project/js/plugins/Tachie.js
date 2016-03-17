@@ -81,6 +81,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * Tachie showName hoge                 # 名前欄に hoge を表示する
  * Tachie hideName                      # 名前欄を非表示にする
  * Tachie clear                         # 立ち絵を全て非表示にする
+ * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
  *
  * 画像のレイヤー解説
  *
@@ -91,7 +92,6 @@ var Tachie;
     Tachie.windowColors = {};
     Tachie.offsetX = {};
     Tachie.offsetY = {};
-    Tachie.RIGHT_POS_OFFSET_X = 400;
     for (var i = 1; i <= 10; i++) {
         var offset1 = String(parameters['actor' + i + 'offset']).split(',');
         Tachie.offsetX[i] = parseInt(offset1[0] || '0');
@@ -147,6 +147,15 @@ var Tachie;
                 case 'hideName':
                     $gameTemp.tachieName = null;
                     break;
+                case 'hideBalloon':
+                    $gameTemp.hideBalloon = true;
+                    break;
+                case 'preloadPicture':
+                    ImageManager.loadPicture(args[1]);
+                    break;
+                case 'clearWindowColor':
+                    $gameTemp.tachieActorId = 0;
+                    break;
                 case 'hide':
                     {
                         var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
@@ -187,6 +196,7 @@ var Tachie;
                     break;
                 case 'showLeft':
                 case 'showRight':
+                    $gameTemp.hideBalloon = false;
                     ImageManager.isReady();
                     var actorId = parseInt(args[1]);
                     var x = parseInt(args[2] || '0');
@@ -208,7 +218,7 @@ var Tachie;
                         if (args[2] == null) {
                             throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
                         }
-                        this.tachieActorCommnad(actor, args[0], args[2]);
+                        this.tachieActorCommnad(actor, args[0], args[2], args);
                     }
                     break;
                 case 'preload':
@@ -253,7 +263,7 @@ var Tachie;
                     if (picture && picture.tachieActorId === actorId) {
                         opacity = 255;
                     }
-                    var xx = x + Tachie.RIGHT_POS_OFFSET_X;
+                    var xx = x;
                     $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
                     if (opacity < 255) {
                         var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true] };
@@ -262,7 +272,7 @@ var Tachie;
                     break;
             }
         };
-        _Game_Interpreter.prototype.tachieActorCommnad = function (actor, command, arg2) {
+        _Game_Interpreter.prototype.tachieActorCommnad = function (actor, command, arg2, args) {
             switch (command) {
                 case 'face':
                     actor.setFaceId(parseInt(arg2));
@@ -274,15 +284,15 @@ var Tachie;
                     actor.setHoppeId(parseInt(arg2));
                     break;
                 case 'outer':
-                    this.validateCosId(arg2);
+                    this.validateCosId(args, arg2);
                     actor.setOuterId(arg2);
                     break;
                 case 'innerTop':
-                    this.validateCosId(arg2);
+                    this.validateCosId(args, arg2);
                     actor.setInnerTopId(arg2);
                     break;
                 case 'innerBottom':
-                    this.validateCosId(arg2);
+                    this.validateCosId(args, arg2);
                     actor.setInnerBottomId(arg2);
                     break;
                 case 'outerItem':
@@ -315,10 +325,10 @@ var Tachie;
                     break;
             }
         };
-        _Game_Interpreter.prototype.validateCosId = function (id) {
+        _Game_Interpreter.prototype.validateCosId = function (command, id) {
             var re = /[a-z]/;
             if (!re.exec(id)) {
-                throw new Error('コスチュームIDが不正です:' + id);
+                throw new Error('コスチュームIDが不正です:' + id + ' command:' + command);
             }
         };
         return _Game_Interpreter;
@@ -762,7 +772,7 @@ var Tachie;
         _Game_Temp.prototype.getActorBitmapBodyCache = function (actorId) {
             this.actorBitmapBodyCache = this.actorBitmapBodyCache || {};
             if (!this.actorBitmapBodyCache[actorId]) {
-                this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 100, Graphics.height);
+                this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 10, Graphics.height);
             }
             return this.actorBitmapBodyCache[actorId];
         };
@@ -973,6 +983,10 @@ var Tachie;
                 this.visible = false;
                 return;
             }
+            if ($gameTemp.hideBalloon) {
+                this.visible = false;
+                return;
+            }
             this.visible = true;
         };
         Sprite_WindowBalloon.prototype.updateBitmap = function () {
@@ -1152,7 +1166,7 @@ var Tachie;
                 BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
             }
             this._textState.y = this.standardPadding();
-            this._balloonSprite.visible = true;
+            this._balloonSprite.showBalloon();
             this._messageNameWindow.draw($gameTemp.tachieName);
         };
         Window_TachieMessage.prototype.updatePlacement = function () {
@@ -1170,6 +1184,7 @@ var Tachie;
         };
         return Window_TachieMessage;
     }(Window_Message));
+    Tachie.Window_TachieMessage = Window_TachieMessage;
     var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
     Scene_Map.prototype.createMessageWindow = function () {
         _Scene_Map_createMessageWindow.call(this);

@@ -149,28 +149,28 @@ export class VarValidator2 implements Validator {
     }
 }
 
-const isNumeric = (lowerLimit: number, upperLimit?: number, type?: string): Validator => {
+export const isNumeric = (lowerLimit: number, upperLimit?: number, type?: string): Validator => {
     return new NumericValidator(lowerLimit, upperLimit, type);
 };
-const isNumericParam = (paramName: string): Validator => {
+export const isNumericParam = (paramName: string): Validator => {
     return new NumericParamValidator(paramName);
 };
-const notEmpty = (): Validator => {
+export const notEmpty = (): Validator => {
     return new NotEmptyValidator();
 };
-const list = (...arg: string[]): Validator => {
+export const list = (...arg: string[]): Validator => {
     return new ListValidator(arg);
 };
-const isBool = (): Validator => {
+export const isBool = (): Validator => {
     return new ListValidator(['true', 'false']);
 };
-const regCheck = (reg: RegExp): Validator => {
+export const regCheck = (reg: RegExp): Validator => {
     return new RegExpValidator(reg);
 };
-const varCheck = (reg: RegExp): Validator => {
+export const varCheck = (reg: RegExp): Validator => {
     return new VarValidator(reg);
 };
-const varCheck2 = (str: string): Validator => {
+export const varCheck2 = (str: string): Validator => {
     return new VarValidator2(str);
 };
 
@@ -182,6 +182,15 @@ validates['n1'] = {
 };
 validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validates['n6'] = validates['n7'] = validates['n8'] = validates['n9'] = validates['n1'];
 
+validates['m1'] = {
+    'index':     isNumeric(0),
+};
+validates['m2'] = validates['m3'] = validates['m4'] = validates['m5'] = validates['m6'] = validates['m7'] = validates['m8'] = validates['m9'] = validates['m1'];
+validates['mob1'] = {
+    'name':     notEmpty()
+};
+validates['mob2'] = validates['mob3'] = validates['mob4'] = validates['mob5'] = validates['mob6'] = validates['mob7'] = validates['mob8'] = validates['mob9'] = validates['mob1'];
+
 validates['cos1'] = {
 };
 validates['cos2'] = validates['cos3'] = validates['cos4'] = validates['cos5'] = validates['cos6'] = validates['cos7'] = validates['cos8'] = validates['cos9'] = validates['cos1'];
@@ -191,6 +200,7 @@ validates['not_close'] = {
 };
 validates['start'] = {};
 validates['hide'] = {};
+validates['else'] = {};
 validates['return'] = {};
 validates['default_pos'] = {
     'actor': [
@@ -201,6 +211,7 @@ validates['default_pos'] = {
 };
 
 validates['end'] = {};
+validates['end_else'] = {};
 validates['vehicle'] = {};
 validates['choice_end'] = {};
 
@@ -332,6 +343,139 @@ validates['scroll'] = {
     'value' :   notEmpty()
 };
 
+validates['if_sw'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'flag':     list('on', 'off')
+};
+
+validates['if_var'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'value': [
+                notEmpty(),
+                regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+                varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
+    ],
+    'op':        list('eq', 'ge', 'le', 'gt', 'lt', 'ne')
+};
+
+validates['if_self_sw'] = {
+    'id': [
+                notEmpty(),
+                list('A', 'B', 'C', 'D')
+    ],
+    'flag':     list('on', 'off')
+};
+
+validates['if_timer'] = {
+    'time': [
+                notEmpty(),
+                isNumeric(0, 5999)
+    ],
+    'op':       list('ge', 'le')
+};
+  
+validates['if_actor'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'type':     list('party', 'name', 'class', 'skill', 'weapon',
+              'armor', 'state')
+};
+  
+validates['if_enemy'] = {
+    'enemy': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'type':     list('visible', 'state'),
+    'value':    isNumeric(1)
+};
+
+validates['if_character'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(-1)
+    ],
+    'direction': [
+                notEmpty(),
+                list('2', '4', '6', '8', 'left', 'right', 'up', 'down')
+    ],
+};
+
+validates['if_vehicle'] = {
+    'vehicle': [
+                notEmpty(),
+                isNumeric(0, 2)
+    ]
+};
+  
+validates['if_money'] = {
+    'money': [
+                notEmpty(),
+                isNumeric(0)
+    ],
+    'op':       list('ge', 'le', 'lt')
+};
+  
+validates['if_item'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ]
+};
+
+validates['if_weapon'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'equip':    isBool()
+};
+
+validates['if_armor'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ],
+    'equip':    isBool()
+};
+
+validates['if_button'] = {
+    'button': [
+                notEmpty(),
+                list('2', '4', '6', '8',
+                '11', '12', '13', '14', '15', '16', '17', '18',
+                'down', 'left', 'right',
+                'up', 'A', 'B', 'C', 'X', 'Y', 'Z', 'L', 'R')
+    ]
+};
+
+validates['if_script'] = {
+  'script':     notEmpty()
+};
+  
+validates['common'] = {
+    'id': [
+                notEmpty(),
+                isNumeric(1)
+    ]
+};
+
+validates['label'] = {
+    'value':    notEmpty()
+};
+
+validates['label_jump'] = {
+    'value':    notEmpty()
+};
+              
 validates['common'] = {
     'id': [
                 notEmpty(),
@@ -359,7 +503,7 @@ validates['var'] = {
     'end':      isNumericParam('id'),
     'op': [
                 notEmpty(),
-                list('eq', '+', '-', '*', '/', '%'),
+                list('=', '+', '-', '*', '/', '%'),
     ],
     'value': [
                 notEmpty(),

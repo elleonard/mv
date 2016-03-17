@@ -9,6 +9,14 @@
 @cos2 outer=b
 
 
+@if_sw flag=on id=1 // 一回会話をした
+    @n1
+    あ、V1回目ですね、ではもう一回説明しますね。
+    
+    @label_jump value=説明
+@end
+
+
 @n1
 リオさん、リオさん、聞いてください！
 
@@ -22,7 +30,7 @@
 私もツクールMVで新しくスクリプトを作り始めたのです！
 詳細を聞きたいですか？
 
-@choice_h label1=はい label2=いいえ default=1 cancel=2 position=2
+@choice_h label1=はい label2=いいえ default=0 cancel=2 position=2
 
 @choice_if index=1
     @n2 face=3
@@ -52,6 +60,8 @@
     @end
 
 @end
+
+@label value=説明
 
 @n2 face=2
 えっ？
@@ -294,5 +304,12 @@ Shiftキーでウィンドウ消去ができますよ！
 
 @n2 face=1
 みなさん、またね。
+
+@if_sw flag=on id=1 // 一回会話をした
+    @var id=1 op=+ value=1
+@end_else
+    @sw id=1 flag=on
+    @var id=1 op== value=2  // 初回は２
+@end
 
 @hide

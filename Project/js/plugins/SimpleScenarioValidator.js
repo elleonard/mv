@@ -159,508 +159,630 @@ var SimpleScenario;
         return VarValidator2;
     }());
     SimpleScenario.VarValidator2 = VarValidator2;
-    var isNumeric = function (lowerLimit, upperLimit, type) {
+    SimpleScenario.isNumeric = function (lowerLimit, upperLimit, type) {
         return new NumericValidator(lowerLimit, upperLimit, type);
     };
-    var isNumericParam = function (paramName) {
+    SimpleScenario.isNumericParam = function (paramName) {
         return new NumericParamValidator(paramName);
     };
-    var notEmpty = function () {
+    SimpleScenario.notEmpty = function () {
         return new NotEmptyValidator();
     };
-    var list = function () {
+    SimpleScenario.list = function () {
         var arg = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             arg[_i - 0] = arguments[_i];
         }
         return new ListValidator(arg);
     };
-    var isBool = function () {
+    SimpleScenario.isBool = function () {
         return new ListValidator(['true', 'false']);
     };
-    var regCheck = function (reg) {
+    SimpleScenario.regCheck = function (reg) {
         return new RegExpValidator(reg);
     };
-    var varCheck = function (reg) {
+    SimpleScenario.varCheck = function (reg) {
         return new VarValidator(reg);
     };
-    var varCheck2 = function (str) {
+    SimpleScenario.varCheck2 = function (str) {
         return new VarValidator2(str);
     };
     SimpleScenario.validates['n1'] = {
-        'face': isNumeric(0),
-        'pose': isNumeric(0),
-        'hoppe': isNumeric(0),
-        'position': list('right', 'left'),
+        'face': SimpleScenario.isNumeric(0),
+        'pose': SimpleScenario.isNumeric(0),
+        'hoppe': SimpleScenario.isNumeric(0),
+        'position': SimpleScenario.list('right', 'left'),
     };
     SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
+    SimpleScenario.validates['m1'] = {
+        'index': SimpleScenario.isNumeric(0),
+    };
+    SimpleScenario.validates['m2'] = SimpleScenario.validates['m3'] = SimpleScenario.validates['m4'] = SimpleScenario.validates['m5'] = SimpleScenario.validates['m6'] = SimpleScenario.validates['m7'] = SimpleScenario.validates['m8'] = SimpleScenario.validates['m9'] = SimpleScenario.validates['m1'];
+    SimpleScenario.validates['mob1'] = {
+        'name': SimpleScenario.notEmpty()
+    };
+    SimpleScenario.validates['mob2'] = SimpleScenario.validates['mob3'] = SimpleScenario.validates['mob4'] = SimpleScenario.validates['mob5'] = SimpleScenario.validates['mob6'] = SimpleScenario.validates['mob7'] = SimpleScenario.validates['mob8'] = SimpleScenario.validates['mob9'] = SimpleScenario.validates['mob1'];
     SimpleScenario.validates['cos1'] = {};
     SimpleScenario.validates['cos2'] = SimpleScenario.validates['cos3'] = SimpleScenario.validates['cos4'] = SimpleScenario.validates['cos5'] = SimpleScenario.validates['cos6'] = SimpleScenario.validates['cos7'] = SimpleScenario.validates['cos8'] = SimpleScenario.validates['cos9'] = SimpleScenario.validates['cos1'];
     SimpleScenario.validates['messages'] = {};
     SimpleScenario.validates['not_close'] = {
-        'flag': list('on', 'off')
+        'flag': SimpleScenario.list('on', 'off')
     };
     SimpleScenario.validates['start'] = {};
     SimpleScenario.validates['hide'] = {};
+    SimpleScenario.validates['else'] = {};
     SimpleScenario.validates['return'] = {};
     SimpleScenario.validates['default_pos'] = {
         'actor': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
-        'position': list('right', 'left'),
+        'position': SimpleScenario.list('right', 'left'),
     };
     SimpleScenario.validates['end'] = {};
+    SimpleScenario.validates['end_else'] = {};
     SimpleScenario.validates['vehicle'] = {};
     SimpleScenario.validates['choice_end'] = {};
     SimpleScenario.validates['message_h'] = {
-        'index': isNumeric(0, 7),
-        'back': isNumeric(0, 2),
-        'pos': isNumeric(0, 29)
+        'index': SimpleScenario.isNumeric(0, 7),
+        'back': SimpleScenario.isNumeric(0, 2),
+        'pos': SimpleScenario.isNumeric(0, 29)
     };
     SimpleScenario.validates['message'] = {
-        'value': notEmpty()
+        'value': SimpleScenario.notEmpty()
     };
     SimpleScenario.validates['choice_h'] = {
-        'cancel': isNumeric(0, 5)
+        'cancel': SimpleScenario.isNumeric(0, 5)
     };
     SimpleScenario.validates['choice_if'] = {
         'index': [
-            notEmpty(),
-            isNumeric(1, 4)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 4)
         ]
     };
     SimpleScenario.validates['input_num'] = {
         'var': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
         'num': [
-            notEmpty(),
-            isNumeric(1, 8),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 8),
         ]
     };
     SimpleScenario.validates['choice_item'] = {
         'var': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ]
     };
     SimpleScenario.validates['map_move'] = {
-        'type': list('const', 'var'),
+        'type': SimpleScenario.list('const', 'var'),
         'map': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
         'x': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ],
         'y': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ],
-        'direction': list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down'),
-        'fade': list('0', '1', '2', 'black', 'white', 'none'),
+        'direction': SimpleScenario.list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down'),
+        'fade': SimpleScenario.list('0', '1', '2', 'black', 'white', 'none'),
     };
     SimpleScenario.validates['vehicle_pos'] = {
         'vehicle': [
-            notEmpty(),
-            isNumeric(0, 2)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0, 2)
         ],
-        'type': list('const', 'var'),
+        'type': SimpleScenario.list('const', 'var'),
         'map': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
         'x': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ],
         'y': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ]
     };
     SimpleScenario.validates['event_pos'] = {
         'id': [
-            notEmpty(),
-            isNumeric(-1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-1)
         ],
-        'type': list('const', 'var', 'target'),
+        'type': SimpleScenario.list('const', 'var', 'target'),
         'x': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ],
         'y': [
-            notEmpty(),
-            isNumeric(0),
-            varCheck2('type')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
+            SimpleScenario.varCheck2('type')
         ],
-        'direction': list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down')
+        'direction': SimpleScenario.list('0', '2', '4', '6', '8', 'left', 'right', 'up', 'down')
     };
     SimpleScenario.validates['scroll_map'] = {
         'direction': [
-            notEmpty(),
-            list('2', '4', '6', '8', 'left', 'right', 'up', 'down')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('2', '4', '6', '8', 'left', 'right', 'up', 'down')
         ],
         'num': [
-            notEmpty(),
-            isNumeric(0, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0, 100)
         ],
         'speed': [
-            isNumeric(1, 6)
+            SimpleScenario.isNumeric(1, 6)
         ]
     };
     SimpleScenario.validates['scroll_h'] = {
         'speed': [
-            notEmpty(),
-            isNumeric(1, 8)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 8)
         ],
-        'noskip': isBool()
+        'noskip': SimpleScenario.isBool()
     };
     SimpleScenario.validates['scroll'] = {
-        'value': notEmpty()
+        'value': SimpleScenario.notEmpty()
+    };
+    SimpleScenario.validates['if_sw'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'flag': SimpleScenario.list('on', 'off')
+    };
+    SimpleScenario.validates['if_var'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'value': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
+        ],
+        'op': SimpleScenario.list('eq', 'ge', 'le', 'gt', 'lt', 'ne')
+    };
+    SimpleScenario.validates['if_self_sw'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('A', 'B', 'C', 'D')
+        ],
+        'flag': SimpleScenario.list('on', 'off')
+    };
+    SimpleScenario.validates['if_timer'] = {
+        'time': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0, 5999)
+        ],
+        'op': SimpleScenario.list('ge', 'le')
+    };
+    SimpleScenario.validates['if_actor'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'type': SimpleScenario.list('party', 'name', 'class', 'skill', 'weapon', 'armor', 'state')
+    };
+    SimpleScenario.validates['if_enemy'] = {
+        'enemy': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'type': SimpleScenario.list('visible', 'state'),
+        'value': SimpleScenario.isNumeric(1)
+    };
+    SimpleScenario.validates['if_character'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-1)
+        ],
+        'direction': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('2', '4', '6', '8', 'left', 'right', 'up', 'down')
+        ],
+    };
+    SimpleScenario.validates['if_vehicle'] = {
+        'vehicle': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0, 2)
+        ]
+    };
+    SimpleScenario.validates['if_money'] = {
+        'money': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0)
+        ],
+        'op': SimpleScenario.list('ge', 'le', 'lt')
+    };
+    SimpleScenario.validates['if_item'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ]
+    };
+    SimpleScenario.validates['if_weapon'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'equip': SimpleScenario.isBool()
+    };
+    SimpleScenario.validates['if_armor'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ],
+        'equip': SimpleScenario.isBool()
+    };
+    SimpleScenario.validates['if_button'] = {
+        'button': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('2', '4', '6', '8', '11', '12', '13', '14', '15', '16', '17', '18', 'down', 'left', 'right', 'up', 'A', 'B', 'C', 'X', 'Y', 'Z', 'L', 'R')
+        ]
+    };
+    SimpleScenario.validates['if_script'] = {
+        'script': SimpleScenario.notEmpty()
     };
     SimpleScenario.validates['common'] = {
         'id': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
+        ]
+    };
+    SimpleScenario.validates['label'] = {
+        'value': SimpleScenario.notEmpty()
+    };
+    SimpleScenario.validates['label_jump'] = {
+        'value': SimpleScenario.notEmpty()
+    };
+    SimpleScenario.validates['common'] = {
+        'id': [
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ]
     };
     SimpleScenario.validates['sw'] = {
         'id': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
-        'end': isNumericParam('id'),
+        'end': SimpleScenario.isNumericParam('id'),
         'flag': [
-            notEmpty(),
-            list('on', 'off')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('on', 'off')
         ],
     };
     SimpleScenario.validates['var'] = {
         'id': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
-        'end': isNumericParam('id'),
+        'end': SimpleScenario.isNumericParam('id'),
         'op': [
-            notEmpty(),
-            list('eq', '+', '-', '*', '/', '%'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('=', '+', '-', '*', '/', '%'),
         ],
         'value': [
-            notEmpty(),
-            regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
         ],
     };
     SimpleScenario.validates['self_sw'] = {
         'id': [
-            notEmpty(),
-            list('A', 'B', 'C', 'D')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('A', 'B', 'C', 'D')
         ],
         'flag': [
-            notEmpty(),
-            list('on', 'off')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('on', 'off')
         ]
     };
     SimpleScenario.validates['timer'] = {
         'flag': [
-            notEmpty(),
-            list('on', 'off')
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('on', 'off')
         ],
-        'time': isNumeric(1, 5999)
+        'time': SimpleScenario.isNumeric(1, 5999)
     };
     SimpleScenario.validates['save_disable'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['menu_disable'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['encount_disable'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['formation_disable'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['transparent'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['followers'] = {
-        'flag': isBool()
+        'flag': SimpleScenario.isBool()
     };
     SimpleScenario.validates['gather'] = {};
     SimpleScenario.validates['erace'] = {};
     SimpleScenario.validates['anime'] = {
         'target': [
-            notEmpty(),
-            isNumeric(-1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-1)
         ],
         'anime': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
-        'wait': isBool()
+        'wait': SimpleScenario.isBool()
     };
     SimpleScenario.validates['route_h'] = {
         'event': [
-            notEmpty(),
-            isNumeric(-1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-1)
         ],
-        'repeat': isBool(),
-        'skip': isBool(),
-        'wait': isBool()
+        'repeat': SimpleScenario.isBool(),
+        'skip': SimpleScenario.isBool(),
+        'wait': SimpleScenario.isBool()
     };
     SimpleScenario.validates['balloon'] = {
         'target': [
-            notEmpty(),
-            isNumeric(-1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-1)
         ],
         'balloon': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
         'wait': [
-            isBool()
+            SimpleScenario.isBool()
         ]
     };
     SimpleScenario.validates['tone'] = {
-        'red': isNumeric(-255, 255),
-        'green': isNumeric(-255, 255),
-        'blue': isNumeric(-255, 255),
-        'gray': isNumeric(0, 255),
-        'time': isNumeric(1, 600),
-        'wait': isBool()
+        'red': SimpleScenario.isNumeric(-255, 255),
+        'green': SimpleScenario.isNumeric(-255, 255),
+        'blue': SimpleScenario.isNumeric(-255, 255),
+        'gray': SimpleScenario.isNumeric(0, 255),
+        'time': SimpleScenario.isNumeric(1, 600),
+        'wait': SimpleScenario.isBool()
     };
     SimpleScenario.validates['flash'] = {
-        'red': isNumeric(0, 255),
-        'green': isNumeric(0, 255),
-        'blue': isNumeric(0, 255),
-        'strength': isNumeric(0, 255),
-        'time': isNumeric(1, 600),
-        'wait': isBool()
+        'red': SimpleScenario.isNumeric(0, 255),
+        'green': SimpleScenario.isNumeric(0, 255),
+        'blue': SimpleScenario.isNumeric(0, 255),
+        'strength': SimpleScenario.isNumeric(0, 255),
+        'time': SimpleScenario.isNumeric(1, 600),
+        'wait': SimpleScenario.isBool()
     };
     SimpleScenario.validates['shake'] = {
-        'strength': isNumeric(1, 9),
-        'speed': isNumeric(1, 9),
-        'time': isNumeric(1, 600),
-        'wait': isBool(),
+        'strength': SimpleScenario.isNumeric(1, 9),
+        'speed': SimpleScenario.isNumeric(1, 9),
+        'time': SimpleScenario.isNumeric(1, 600),
+        'wait': SimpleScenario.isBool(),
     };
     SimpleScenario.validates['wait'] = {
-        'time': isNumeric(1, 999)
+        'time': SimpleScenario.isNumeric(1, 999)
     };
     SimpleScenario.validates['picture'] = {
         'layer': [
-            notEmpty(),
-            isNumeric(1, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 100)
         ],
-        'file': notEmpty(),
-        'origin': list('ul', 'center'),
-        'type': list('const', 'var'),
+        'file': SimpleScenario.notEmpty(),
+        'origin': SimpleScenario.list('ul', 'center'),
+        'type': SimpleScenario.list('const', 'var'),
         'x': [
-            notEmpty(),
-            isNumeric(-9999, 9999, 'type'),
-            varCheck2('type'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-9999, 9999, 'type'),
+            SimpleScenario.varCheck2('type'),
         ],
         'y': [
-            notEmpty(),
-            isNumeric(-9999, 9999, 'type'),
-            varCheck2('type'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-9999, 9999, 'type'),
+            SimpleScenario.varCheck2('type'),
         ],
-        'zoom_x': isNumeric(0, 2000),
-        'zoom_y': isNumeric(0, 2000),
-        'transparent': isNumeric(0, 255),
-        'blend': isNumeric(0, 2),
+        'zoom_x': SimpleScenario.isNumeric(0, 2000),
+        'zoom_y': SimpleScenario.isNumeric(0, 2000),
+        'transparent': SimpleScenario.isNumeric(0, 255),
+        'blend': SimpleScenario.isNumeric(0, 2),
     };
     SimpleScenario.validates['picture_move'] = {
         'layer': [
-            notEmpty(),
-            isNumeric(1, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 100)
         ],
         'origin': [
-            list('ul', 'center')
+            SimpleScenario.list('ul', 'center')
         ],
         'type': [
-            list('const', 'var')
+            SimpleScenario.list('const', 'var')
         ],
         'x': [
-            notEmpty(),
-            isNumeric(-9999, 9999),
-            varCheck2('type'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-9999, 9999),
+            SimpleScenario.varCheck2('type'),
         ],
         'y': [
-            notEmpty(),
-            isNumeric(-9999, 9999),
-            varCheck2('type'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(-9999, 9999),
+            SimpleScenario.varCheck2('type'),
         ],
-        'zoom_x': isNumeric(0, 2000),
-        'zoom_y': isNumeric(0, 2000),
-        'transparent': isNumeric(0, 255),
-        'blend': isNumeric(0, 2),
-        'time': isNumeric(1, 600),
-        'wait': isBool()
+        'zoom_x': SimpleScenario.isNumeric(0, 2000),
+        'zoom_y': SimpleScenario.isNumeric(0, 2000),
+        'transparent': SimpleScenario.isNumeric(0, 255),
+        'blend': SimpleScenario.isNumeric(0, 2),
+        'time': SimpleScenario.isNumeric(1, 600),
+        'wait': SimpleScenario.isBool()
     };
     SimpleScenario.validates['picture_rotation'] = {
         'layer': [
-            notEmpty(),
-            isNumeric(1, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 100)
         ],
-        'speed': isNumeric(-90, 90),
+        'speed': SimpleScenario.isNumeric(-90, 90),
     };
     SimpleScenario.validates['picture_tone'] = {
         'layer': [
-            notEmpty(),
-            isNumeric(1, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 100)
         ],
-        'red': isNumeric(-255, 255),
-        'green': isNumeric(-255, 255),
-        'blue': isNumeric(-255, 255),
-        'gray': isNumeric(0, 255),
-        'time': isNumeric(1, 600),
-        'wait': isBool(),
+        'red': SimpleScenario.isNumeric(-255, 255),
+        'green': SimpleScenario.isNumeric(-255, 255),
+        'blue': SimpleScenario.isNumeric(-255, 255),
+        'gray': SimpleScenario.isNumeric(0, 255),
+        'time': SimpleScenario.isNumeric(1, 600),
+        'wait': SimpleScenario.isBool(),
     };
     SimpleScenario.validates['picture_erace'] = {
         'layer': [
-            notEmpty(),
-            isNumeric(1, 100)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1, 100)
         ],
     };
     SimpleScenario.validates['weather'] = {
-        'weather': list('none', 'rain', 'storm', 'snow'),
-        'strength': isNumeric(1, 9),
-        'time': isNumeric(0, 600),
-        'wait': isBool(),
+        'weather': SimpleScenario.list('none', 'rain', 'storm', 'snow'),
+        'strength': SimpleScenario.isNumeric(1, 9),
+        'time': SimpleScenario.isNumeric(0, 600),
+        'wait': SimpleScenario.isBool(),
     };
     SimpleScenario.validates['bgm'] = {
-        'volume': isNumeric(0, 100),
-        'pitch': isNumeric(50, 150),
-        'pan': isNumeric(-100, 100),
+        'volume': SimpleScenario.isNumeric(0, 100),
+        'pitch': SimpleScenario.isNumeric(50, 150),
+        'pan': SimpleScenario.isNumeric(-100, 100),
     };
     SimpleScenario.validates['fadeout_bg:'] = {
-        'time': isNumeric(1, 60)
+        'time': SimpleScenario.isNumeric(1, 60)
     };
     SimpleScenario.validates['bgs'] = {
-        'volume': isNumeric(0, 100),
-        'pitch': isNumeric(50, 150),
-        'pan': isNumeric(-100, 100),
+        'volume': SimpleScenario.isNumeric(0, 100),
+        'pitch': SimpleScenario.isNumeric(50, 150),
+        'pan': SimpleScenario.isNumeric(-100, 100),
     };
     SimpleScenario.validates['fadeout_bg:'] = {
-        'time': isNumeric(1, 60)
+        'time': SimpleScenario.isNumeric(1, 60)
     };
     SimpleScenario.validates['me'] = {
-        'volume': isNumeric(0, 100),
-        'pitch': isNumeric(50, 150),
-        'pan': isNumeric(-100, 100),
+        'volume': SimpleScenario.isNumeric(0, 100),
+        'pitch': SimpleScenario.isNumeric(50, 150),
+        'pan': SimpleScenario.isNumeric(-100, 100),
     };
     SimpleScenario.validates['se'] = {
-        'volume': isNumeric(0, 100),
-        'pitch': isNumeric(50, 150),
-        'pan': isNumeric(-100, 100),
+        'volume': SimpleScenario.isNumeric(0, 100),
+        'pitch': SimpleScenario.isNumeric(50, 150),
+        'pan': SimpleScenario.isNumeric(-100, 100),
     };
     SimpleScenario.validates['movie'] = {
-        'file': notEmpty()
+        'file': SimpleScenario.notEmpty()
     };
     SimpleScenario.validates['all_recovery'] = {
         'actor': [
-            notEmpty(),
-            regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
         ]
     };
     SimpleScenario.validates['exp'] = {
         'actor': [
-            notEmpty(),
-            regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
         ],
         'value': [
-            notEmpty(),
-            regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
         ],
-        'message': isBool()
+        'message': SimpleScenario.isBool()
     };
     SimpleScenario.validates['level'] = {
         'actor': [
-            notEmpty(),
-            regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
         ],
         'value': [
-            notEmpty(),
-            regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
         ],
-        'message': isBool()
+        'message': SimpleScenario.isBool()
     };
     SimpleScenario.validates['capability'] = {
         'actor': [
-            notEmpty(),
-            regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
         ],
         'capability': [
-            notEmpty(),
-            list('0', '1', '2', '3', '4', '5', '6', '7', 'maxhp', 'maxmp', 'atk', 'def', 'matk', 'mdef', 'agi', 'luk'),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.list('0', '1', '2', '3', '4', '5', '6', '7', 'maxhp', 'maxmp', 'atk', 'def', 'matk', 'mdef', 'agi', 'luk'),
         ],
         'value': [
-            notEmpty(),
-            regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
         ]
     };
     SimpleScenario.validates['skill'] = {
         'actor': [
-            notEmpty(),
-            regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
-            varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.regCheck(/^[+]{0,1}(var\.){0,1}\d+$/),
+            SimpleScenario.varCheck(/^[+]{0,1}(var\.){0,1}(\d+)$/)
         ],
         'value': [
-            notEmpty(),
-            isNumeric(0),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
         ]
     };
     SimpleScenario.validates['equip'] = {
         'actor': [
-            notEmpty(),
-            isNumeric(1),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1),
         ],
         'part': [
-            notEmpty(),
-            isNumeric(0, 4),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0, 4),
         ],
         'id': [
-            notEmpty(),
-            isNumeric(0),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(0),
         ]
     };
     SimpleScenario.validates['name'] = {
         'actor': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ],
-        'value': notEmpty()
+        'value': SimpleScenario.notEmpty()
     };
     SimpleScenario.validates['class'] = {
         'actor': [
-            notEmpty(),
-            isNumeric(1),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1),
         ],
         'value': [
-            notEmpty(),
-            isNumeric(1)
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1)
         ]
     };
     SimpleScenario.validates['nickname'] = {
         'actor': [
-            notEmpty(),
-            isNumeric(1),
+            SimpleScenario.notEmpty(),
+            SimpleScenario.isNumeric(1),
         ],
-        'value': notEmpty()
+        'value': SimpleScenario.notEmpty()
     };
 })(SimpleScenario || (SimpleScenario = {}));

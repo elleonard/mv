@@ -3,6 +3,9 @@
 // Definitions by: aaa<https://>, bbb<https://>
 // Definitions: https://
 
+/// <reference path="../pixi/pixi.d.ts"/>
+/// <reference path="../lz-string/lz-string.d.ts"/>
+/// <reference path="../fpsmeter/FPSMeter.d.ts"/>
 
 declare class Bitmap {
     /**
@@ -969,7 +972,7 @@ interface GraphicsStatic {
      * @return {Boolean}
      * @private
      */
-    _isVideoVisible(): void;
+    _isVideoVisible(): boolean;
 
     /**
      * @static
@@ -2812,14 +2815,14 @@ declare class ToneSprite extends PIXI.DisplayObject {
 
     /**
      * @method _renderCanvas
-     * @param {Object} renderSession
+     * @param {PIXI.CanvasRenderer} renderSession
      * @private
      */
     protected _renderCanvas(renderSession: PIXI.CanvasRenderer): void;
 
     /**
      * @method _renderWebGL
-     * @param {Object} renderSession
+     * @param {PIXI.WebGLRenderer} renderSession
      * @private
      */
     protected _renderWebGL(renderSession: PIXI.WebGLRenderer): void;
@@ -3955,8 +3958,8 @@ declare class _Window extends PIXI.DisplayObjectContainer {
      * Adds a child between the background and contents.
      *
      * @method addChildToBack
-     * @param {Object} child The child to add
-     * @return {Object} The child that was added
+     * @param {PIXI.DisplayObject} child The child to add
+     * @return {PIXI.DisplayObject} The child that was added
      */
     addChildToBack(child: PIXI.DisplayObject): PIXI.DisplayObject;
 
@@ -4261,7 +4264,7 @@ declare class WindowLayer extends PIXI.DisplayObjectContainer {
 
     /**
      * @method _webglMaskRect
-     * @param {Object} renderSession
+     * @param {PIXI.WebGLRenderer} renderSession
      * @param {Number} x
      * @param {Number} y
      * @param {Number} w
@@ -4271,10 +4274,22 @@ declare class WindowLayer extends PIXI.DisplayObjectContainer {
     protected _webglMaskRect(renderSession: PIXI.WebGLRenderer, x: number, y: number, w: number, h: number): void;
 }
 declare namespace RPG {
+    export interface MetaData {
+        /**
+         * The text of the note.
+         */
+        note: string;
+
+        /**
+         * The Meta.
+         */
+        meta: {[key: string]: any};
+    }
+
     /**
      * The data class for maps.
      */
-    export interface Map {
+    export interface Map extends MetaData {
         /**
          * The map's display name.
          */
@@ -4381,11 +4396,6 @@ declare namespace RPG {
         parallaxShow: boolean;
 
         /**
-         * The text of the note.
-         */
-        note: string;
-
-        /**
          * The map data. A 3-dimensional tile ID array (Table).
          */
         data: Array<number>;
@@ -4394,9 +4404,8 @@ declare namespace RPG {
          * The array of RPG.Event data.
          */
         events: Array<Event>;
-
-        meta: {[key: string]: any};
     }
+
     namespace Map {
         /**
          * The data class for the encounter settings.
@@ -4418,6 +4427,7 @@ declare namespace RPG {
             regionSet: Array<number>;
         }
     }
+
     /**
      * The data class for map information.
      */
@@ -4437,10 +4447,11 @@ declare namespace RPG {
          */
         order: number;
     }
+
     /**
      * The data class for map events.
      */
-    export interface Event {
+    export interface Event extends MetaData {
         /**
          * The event ID.
          */
@@ -4465,14 +4476,8 @@ declare namespace RPG {
          * The event pages. RPG.EventPage array.
          */
         pages: Array<EventPage>;
-
-        /**
-         * The text of the note.
-         */
-        note: string;
-
-        meta: {[key: string]: any};
     }
+
     /**
      * The data class for the event page.
      */
@@ -4542,6 +4547,7 @@ declare namespace RPG {
          */
         list: Array<EventCommand>;
     }
+
     namespace EventPage {
         /**
          * The data class for the event page conditions.
@@ -4612,6 +4618,7 @@ declare namespace RPG {
              */
             actorId: number;
         }
+
         /**
          * The data class for the Event page [Graphics].
          */
@@ -4642,6 +4649,7 @@ declare namespace RPG {
             pattern: number;
         }
     }
+
     /**
      * The data class for the Event command.
      */
@@ -4661,6 +4669,7 @@ declare namespace RPG {
          */
         parameters: Array<any>;
     }
+
     /**
      * The data class for the Move route.
      */
@@ -4685,6 +4694,7 @@ declare namespace RPG {
          */
         list: Array<MoveCommand>;
     }
+
     /**
      * The data class for the Move command.
      */
@@ -4699,31 +4709,11 @@ declare namespace RPG {
          */
         parameters: Array<any>;
     }
-    namespace Class {
-        /**
-         * The data class for a class's [Skills to Learn].
-         */
-        export interface Learning {
-            /**
-             * The data class for a class's [Skills to Learn].
-             */
-            level: number;
 
-            /**
-             * The ID of the skill to learn.
-             */
-            skillId: number;
-
-            /**
-             * The text of the note.
-             */
-            note: string;
-        }
-    }
     /**
      * The data class for actors.
      */
-    export interface Actor {
+    export interface Actor extends MetaData {
         /**
          * The ID.
          */
@@ -4785,20 +4775,15 @@ declare namespace RPG {
         profile: string;
 
         /**
-         * The text of the note.
-         */
-        note: string;
-
-        /**
          * The array of Trait data.
          */
         traits: Array<Trait>;
-        meta: {[key: string]: any};
     }
+
     /**
      * The data class for class.
      */
-    export interface Class {
+    export interface Class extends MetaData {
         /**
          * The ID.
          */
@@ -4841,22 +4826,34 @@ declare namespace RPG {
         learnings: Array<Class.Learning>;
 
         /**
-         * The text of the note.
-         */
-        note: string;
-
-        /**
          * The array of Trait data.
          */
         traits: Array<Trait>;
-        meta: {[key: string]: any};
     }
+
+    namespace Class {
+        /**
+         * The data class for a class's [Skills to Learn].
+         */
+        export interface Learning extends MetaData {
+            /**
+             * The data class for a class's [Skills to Learn].
+             */
+            level: number;
+
+            /**
+             * The ID of the skill to learn.
+             */
+            skillId: number;
+        }
+    }
+
     /**
      * A superclass of actor, class, skill, item, weapon, armor, enemy, and state.
      *
      * Some items are unnecessary depending on the type of data, but they are included for convenience sake.
      */
-    export interface BaseItem {
+    export interface BaseItem extends MetaData {
         /**
          * The item ID.
          */
@@ -4876,16 +4873,11 @@ declare namespace RPG {
          * The description text.
          */
         description: string;
-
-        /**
-         * The text of the note.
-         */
-        note: string;
-        meta: {[key: string]: any};
     }
     /**
      * The Superclass of Skill and Item.
      */
+
     export interface UsableItem extends BaseItem {
         /**
          * The scope of effects.
@@ -4962,6 +4954,7 @@ declare namespace RPG {
     /**
      * The data class for skills.
      */
+
     export interface Skill extends UsableItem {
         /**
          * Skill type ID.
@@ -5020,6 +5013,7 @@ declare namespace RPG {
          */
         consumable: boolean;
     }
+
     /**
      * A superclass of weapons and armor.
      */
@@ -5059,6 +5053,7 @@ declare namespace RPG {
          */
         traits: Array<Trait>;
     }
+
     /**
      * The data class for weapons.
      */
@@ -5073,6 +5068,7 @@ declare namespace RPG {
          */
         animationId: number;
     }
+
     /**
      * The data class for armor.
      */
@@ -5082,10 +5078,11 @@ declare namespace RPG {
          */
         atypeId: number;
     }
+
     /**
      * The data class for enemies.
      */
-    export interface Enemy {
+    export interface Enemy extends MetaData {
         /**
          * The file name of the enemy's battler graphic.
          */
@@ -5129,17 +5126,77 @@ declare namespace RPG {
          * The enemy's action pattern. An array of RPG.Enemy.Action.
          */
         actions: Array<Enemy.Action>;
+    }
+
+    namespace Enemy {
+        /**
+         * The data class for enemy [Drop Items].
+         */
+        export interface DropItem {
+            /**
+             * The type of dropped item.
+             *
+             * 0: None
+             * 1: Item
+             * 2: Weapon
+             * 3: Armor
+             */
+            kind: number;
+
+            /**
+             * The ID of the data depending on the type of dropped item (item, weapon, or armor).
+             */
+            dataId: number;
+
+            /**
+             * N of the probability that the item will be dropped, 1/N.
+             */
+            denominator: number;
+        }
 
         /**
-         * The text of the note.
+         * The data class for enemy [Actions].
          */
-        note: string;
-        meta: {[key: string]: any};
+        export interface Action {
+            /**
+             * The ID of skills to be employed as actions.
+             */
+            skillId: number;
+
+            /**
+             * The type of condition.
+             *
+             * 0: Always
+             * 1: Turn No.
+             * 2: HP
+             * 3: MP
+             * 4: State
+             * 5: Party Level
+             * 6: Switch
+             */
+            conditionType: number;
+
+            /**
+             * The first parameter of the condition.
+             */
+            conditionParam1: number;
+
+            /**
+             * The second parameter of the condition.
+             */
+            conditionParam2: number;
+
+            /**
+             * The action's priority rating (1..10).
+             */
+            rating: number;
+        }
     }
+
     /**
      * The data class for state.
      */
-    export interface State {
+    export interface State extends MetaData {
         /**
          * The ID.
          */
@@ -5251,18 +5308,13 @@ declare namespace RPG {
         overlay: number;
 
         /**
-         * The text of the note.
-         */
-        note: string;
-
-        /**
          * The array of Trait data.
          */
         traits: Array<Trait>;
         releaseByDamage?: boolean;
         description?: string;
-        meta: {[key: string]: any};
     }
+
     export interface Trait {
         /**
          * The trait code.
@@ -5294,6 +5346,7 @@ declare namespace RPG {
          */
         scrollY: number;
     }
+
     /**
      * The data class for damage.
      */
@@ -5331,6 +5384,7 @@ declare namespace RPG {
          */
         critical: boolean;
     }
+
     /**
      * The data class for use effects.
      */
@@ -5355,69 +5409,7 @@ declare namespace RPG {
          */
         value2: number;
     }
-    namespace Enemy {
-        /**
-         * The data class for enemy [Drop Items].
-         */
-        export interface DropItem {
-            /**
-             * The type of dropped item.
-             *
-             * 0: None
-             * 1: Item
-             * 2: Weapon
-             * 3: Armor
-             */
-            kind: number;
 
-            /**
-             * The ID of the data depending on the type of dropped item (item, weapon, or armor).
-             */
-            dataId: number;
-
-            /**
-             * N of the probability that the item will be dropped, 1/N.
-             */
-            denominator: number;
-        }
-        /**
-         * The data class for enemy [Actions].
-         */
-        export interface Action {
-            /**
-             * The ID of skills to be employed as actions.
-             */
-            skillId: number;
-
-            /**
-             * The type of condition.
-             *
-             * 0: Always
-             * 1: Turn No.
-             * 2: HP
-             * 3: MP
-             * 4: State
-             * 5: Party Level
-             * 6: Switch
-             */
-            conditionType: number;
-
-            /**
-             * The first parameter of the condition.
-             */
-            conditionParam1: number;
-
-            /**
-             * The second parameter of the condition.
-             */
-            conditionParam2: number;
-
-            /**
-             * The action's priority rating (1..10).
-             */
-            rating: number;
-        }
-    }
     /**
      * The data class for enemy troops.
      */
@@ -5442,6 +5434,7 @@ declare namespace RPG {
          */
         pages: Array<RPG.Troop.Page>;
     }
+
     namespace Troop {
         /**
          * The data class for enemy troop members.
@@ -5467,6 +5460,7 @@ declare namespace RPG {
              */
             hidden: boolean;
         }
+
         /**
          * The data class for battle events (pages).
          */
@@ -5486,6 +5480,7 @@ declare namespace RPG {
              */
             list: Array<EventCommand>;
         }
+
         namespace Page {
             /**
              * The data class of battle event [Conditions].
@@ -5553,6 +5548,7 @@ declare namespace RPG {
             }
         }
     }
+
     /**
      * The data class for animation.
      */
@@ -5607,6 +5603,7 @@ declare namespace RPG {
          */
         timings: Array<Animation.Timing>;
     }
+
     namespace Animation {
         /**
          * The data class for the timing of an animation's SE and flash effects.
@@ -5638,10 +5635,11 @@ declare namespace RPG {
             flashDuration: number;
         }
     }
+
     /**
      * The data class for tile sets.
      */
-    export interface Tileset {
+    export interface Tileset extends MetaData {
         /**
          * The ID of the tile set.
          */
@@ -5696,13 +5694,8 @@ declare namespace RPG {
          * We recommend an Internet search using keywords such as "hexadecimal bit operations" when necessary.
          */
         flags: Array<number>;
-
-        /**
-         * The text of the note.
-         */
-        note: string;
-        meta: {[key: string]: any};
     }
+
     /**
      * The data class for common events.
      */
@@ -5954,6 +5947,7 @@ declare namespace RPG {
          */
         editMapId: number;
     }
+
     namespace System {
         /**
          * The data class for vehicles.
@@ -5989,6 +5983,7 @@ declare namespace RPG {
              */
             startY: number;
         }
+
         /**
          * The data class for terminology.
          */
@@ -6060,6 +6055,7 @@ declare namespace RPG {
              */
             messages: {[key: string]: string};
         }
+
         /**
          * The data class for the actors used in battle tests.
          */
@@ -6085,6 +6081,7 @@ declare namespace RPG {
              */
             equips: Array<number>;
         }
+
         export interface AttackMotion {
             /**
              * The type of the motion.
@@ -6097,6 +6094,7 @@ declare namespace RPG {
             weaponImageId: number;
         }
     }
+
     /**
      * The data class for audio file.
      */
@@ -6121,9 +6119,6 @@ declare namespace RPG {
          */
         volume: number;
     }
-}
-declare module 'rpg_library' {
-    export = RPG;
 }
 declare namespace MV {
     interface Uniforms {
@@ -6179,10 +6174,6 @@ declare namespace MV {
         loop: boolean;
     }
 }
-
-
-
-
 /**
  * AudioManager
  *
@@ -6461,7 +6452,7 @@ interface DataManagerStatic {
     makeEmptyMap(): void;
     isMapLoaded(): boolean;
     onLoad(object: RPG.Map): void;
-    extractMetadata(data: any): void;// noteとmetaをもつDBオブジェクト
+    extractMetadata(data: RPG.MetaData): void;
     checkError(): void;
     isBattleTest(): boolean;
     isEventTest(): boolean;
@@ -6631,29 +6622,29 @@ interface SoundManagerStatic {
     loadSystemSound(n: number): void;
     playSystemSound(n: number): void;
     playCursor(): void;
-    playOk: void;
-    playCancel: void;
-    playBuzzer: void;
-    playEquip: void;
-    playSave: void;
-    playLoad: void;
-    playBattleStart: void;
-    playEscape: void;
-    playEnemyAttack: void;
-    playEnemyDamage: void;
-    playEnemyCollapse: void;
-    playBossCollapse1: void;
-    playBossCollapse2: void;
-    playActorDamage: void;
-    playActorCollapse: void;
-    playRecovery: void;
-    playMiss: void;
-    playEvasion: void;
-    playMagicEvasion: void;
-    playReflection: void;
-    playShop: void;
-    playUseItem: void;
-    playUseSkill: void;
+    playOk(): void;
+    playCancel(): void;
+    playBuzzer(): void;
+    playEquip(): void;
+    playSave(): void;
+    playLoad(): void;
+    playBattleStart(): void;
+    playEscape(): void;
+    playEnemyAttack(): void;
+    playEnemyDamage(): void;
+    playEnemyCollapse(): void;
+    playBossCollapse1(): void;
+    playBossCollapse2(): void;
+    playActorDamage(): void;
+    playActorCollapse(): void;
+    playRecovery(): void;
+    playMiss(): void;
+    playEvasion(): void;
+    playMagicEvasion(): void;
+    playReflection(): void;
+    playShop(): void;
+    playUseItem(): void;
+    playUseSkill(): void;
 }
 declare var SoundManager: SoundManagerStatic;
 
@@ -7266,7 +7257,7 @@ declare class Game_Action {
     itemTargetCandidates(): Array<Game_Battler>;
     evaluateWithTarget(target: Game_Battler): number;
     testApply(target: Game_Battler): boolean;
-    hasItemAnyValidEffects(target: Game_Battler): void;
+    hasItemAnyValidEffects(target: Game_Battler): boolean;
     testItemEffect(target: Game_Battler, effect: RPG.Effect): boolean;
     itemCnt(target: Game_Battler): number;
     itemMrf(target: Game_Battler): number;
@@ -7611,6 +7602,11 @@ declare class Game_Battler extends Game_BattlerBase {
     protected _motionRefresh: boolean;
     protected _selected: boolean;
 
+    name(): string;
+    battlerName(): string;
+    index(): number;
+    friendsUnit(): Game_Unit;
+    opponentsUnit(): Game_Unit;
     clearAnimations(): void;
     clearDamagePopup(): void;
     clearWeaponAnimation(): void;
@@ -7739,7 +7735,6 @@ declare class Game_Actor extends Game_Battler {
     setup(actorId: number): void;
     actorId(): number;
     actor(): RPG.Actor;
-    name(): string;
     setName(name: string): void;
     nickname(): string;
     setNickname(nickname: string): void;
@@ -7747,7 +7742,6 @@ declare class Game_Actor extends Game_Battler {
     setProfile(profile: string): void;
     faceName(): string;
     faceIndex(): number;
-    battlerName(): string;
     clearStates(): void;
     eraseState(stateId: number): void;
     resetStateCounts(stateId: number): void;
@@ -7785,7 +7779,6 @@ declare class Game_Actor extends Game_Battler {
     refresh(): void;
     friendsUnit(): Game_Party;
     opponentsUnit(): Game_Troop;
-    index(): number;
     isBattleMember(): boolean;
     isFormationChangeOk(): boolean;
     currentClass(): RPG.Class;
@@ -7823,7 +7816,6 @@ declare class Game_Actor extends Game_Battler {
     makeActionList(): Array<Game_Action>;
     makeAutoBattleActions(): void;
     makeConfusionActions(): void;
-    makeActions(): void;
     onPlayerWalk(): void;
     updateStateSteps(state: RPG.State): void;
     showAddedStates(): void;
@@ -7866,7 +7858,6 @@ declare class Game_Enemy extends Game_Battler {
     setup(enemyId: number, x: number, y: number): void;
     friendsUnit(): Game_Troop;
     opponentsUnit(): Game_Party;
-    index(): number;
     isBattleMember(): boolean;
     enemyId(): number;
     enemy(): RPG.Enemy;
@@ -7878,10 +7869,8 @@ declare class Game_Enemy extends Game_Battler {
     isSpriteVisible(): boolean;
     screenX(): number;
     screenY(): number;
-    battlerName(): string;
     battlerHue(): number;
     originalName(): string;
-    name(): string;
     isLetterEmpty(): boolean;
     setLetter(letter: string): void;
     setPlural(plural: boolean): void;
@@ -7896,7 +7885,6 @@ declare class Game_Enemy extends Game_Battler {
     isActionValid(action: RPG.Enemy.Action): boolean;
     selectAction(actionList: Array<RPG.Enemy.Action>, ratingZero: number): RPG.Enemy.Action;
     selectAllActions(actionList: Array<RPG.Enemy.Action>): void;
-    makeActions(): void;
 }
 
 /**
@@ -7971,6 +7959,7 @@ declare class Game_Party extends Game_Unit {
     aliveMembers(): Array<Game_Actor>;
     deadMembers(): Array<Game_Actor>;
     movableMembers(): Array<Game_Actor>;
+    battleMembers(): Array<Game_Actor>;
     initAllItems(): void;
     exists(): boolean;
     size(): number;
@@ -8149,7 +8138,7 @@ declare class Game_Map {
     data(): Array<number>;
     isLoopHorizontal(): boolean;
     isLoopVertical(): boolean;
-    isDashDisabled(): void;
+    isDashDisabled(): boolean;
     encounterList(): Array<RPG.Map.Encounter>;
     encounterStep(): number;
     isOverworld(): boolean;
@@ -8319,7 +8308,7 @@ declare class Game_CharacterBase {
     direction(): number;
     setDirection(d: number): void;
     isTile(): boolean;
-    isObjectCharacter(): number;
+    isObjectCharacter(): boolean;
     shiftY(): number;
     scrolledX(): number;
     scrolledY(): number;
@@ -8530,7 +8519,7 @@ declare class Game_Player extends Game_Character {
     startMapEvent(x: number, y: number, triggers: Array<number>, normal: boolean): void;
     moveByInput(): void;
     canMove(): boolean;
-    getInputDirection(): void;
+    getInputDirection(): number;
     executeMove(direction: number): void;
     update(sceneActive?: boolean): void;
     updateDashing(): void;
@@ -9620,7 +9609,7 @@ declare class Sprite_Animation extends Sprite {
     protected _duplicated: boolean;
 
     initMembers(): void;
-    setup(target: Sprite_Battler, animation: RPG.Animation, mirror: boolean, delay: number): void;
+    setup(target: Sprite_Base, animation: RPG.Animation, mirror: boolean, delay: number): void;
     remove(): void;
     setupRate(): void;
     setupDuration(): void;

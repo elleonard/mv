@@ -76,6 +76,7 @@
  * Tachie showName hoge                 # 名前欄に hoge を表示する
  * Tachie hideName                      # 名前欄を非表示にする
  * Tachie clear                         # 立ち絵を全て非表示にする
+ * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
  *
  * 画像のレイヤー解説
  *
@@ -86,7 +87,6 @@ const parameters = PluginManager.parameters('Tachie');
 export const windowColors = {};
 export const offsetX = {};
 export const offsetY = {};
-export const RIGHT_POS_OFFSET_X = 400;
 
 for (let i = 1; i <= 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
@@ -138,7 +138,6 @@ class _Game_Interpreter extends Game_Interpreter {
         if (command !== 'Tachie' && command !== '立ち絵') {
             return;
         }
-
         switch (args[0]) {
         case 'notClose':
             $gameTemp.tachieAvairable = args[1] === 'on';
@@ -148,6 +147,15 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         case 'hideName':
             $gameTemp.tachieName = null;
+            break;
+        case 'hideBalloon':
+            $gameTemp.hideBalloon = true;
+            break;
+        case 'preloadPicture':
+            ImageManager.loadPicture(args[1]);
+            break;
+        case 'clearWindowColor':
+            $gameTemp.tachieActorId = 0;
             break;
         case 'hide':
             {
@@ -188,6 +196,7 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         case 'showLeft':
         case 'showRight':
+            $gameTemp.hideBalloon = false;
             ImageManager.isReady();
             var actorId: number = parseInt(args[1]);
             var x: number = parseInt(args[2] || '0');
@@ -209,7 +218,7 @@ class _Game_Interpreter extends Game_Interpreter {
             if (args[2] == null) {
                 throw new Error('立ち絵コマンド: ' + args[0] + ' の第二引数が存在しません');
             }
-            this.tachieActorCommnad(actor, args[0], args[2]);
+            this.tachieActorCommnad(actor, args[0], args[2], args);
             }
             break;
         case 'preload':
@@ -254,7 +263,7 @@ class _Game_Interpreter extends Game_Interpreter {
             if (picture && picture.tachieActorId === actorId) {
                 opacity = 255;
             }
-            const xx = x + RIGHT_POS_OFFSET_X;
+            const xx = x;
             $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
             if (opacity < 255) {
                 var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true]};
@@ -263,7 +272,7 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         }
     }
-    tachieActorCommnad(actor: Game_Actor, command: string, arg2: string): void {
+    tachieActorCommnad(actor: Game_Actor, command: string, arg2: string, args): void {
         switch (command) {
         case 'face':
             actor.setFaceId(parseInt(arg2));
@@ -275,15 +284,15 @@ class _Game_Interpreter extends Game_Interpreter {
             actor.setHoppeId(parseInt(arg2));
             break;
         case 'outer':
-            this.validateCosId(arg2);
+            this.validateCosId(args, arg2);
             actor.setOuterId(arg2);
             break;
         case 'innerTop':
-            this.validateCosId(arg2);
+            this.validateCosId(args, arg2);
             actor.setInnerTopId(arg2);
             break;
         case 'innerBottom':
-            this.validateCosId(arg2);
+            this.validateCosId(args, arg2);
             actor.setInnerBottomId(arg2);
             break;
         case 'outerItem':
@@ -316,10 +325,10 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         }
     }
-    validateCosId(id: string) {
+    validateCosId(command: any, id: string) {
         var re = /[a-z]/;
         if (! re.exec(id)) {
-            throw new Error('コスチュームIDが不正です:' + id);
+            throw new Error('コスチュームIDが不正です:' + id + ' command:' + command);
         }
     }
 }
@@ -722,7 +731,7 @@ class _Game_Temp extends Game_Temp {
     getActorBitmapBodyCache(actorId: number): Bitmap {
         this.actorBitmapBodyCache = this.actorBitmapBodyCache || {};
         if (! this.actorBitmapBodyCache[actorId]) {
-            this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 100, Graphics.height);
+            this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 10, Graphics.height);
         }
         return this.actorBitmapBodyCache[actorId];
     }
@@ -927,6 +936,10 @@ class Sprite_WindowBalloon extends Sprite_Base {
             this.visible = false;
             return;
         }
+        if ($gameTemp.hideBalloon) {
+            this.visible = false;
+            return;
+        }
         this.visible = true;
     }
     updateBitmap(): void {
@@ -971,7 +984,7 @@ class Sprite_WindowBalloon extends Sprite_Base {
 }
 
 
-class Window_TachieMessage extends Window_Message {
+export class Window_TachieMessage extends Window_Message {
     protected _messageNameWindow: Window_MessageName;
     protected _balloonSprite: Sprite_WindowBalloon;
     protected _windowSkinId: number;
@@ -1098,7 +1111,7 @@ class Window_TachieMessage extends Window_Message {
             BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
         }
         this._textState.y = this.standardPadding();
-        this._balloonSprite.visible = true;
+        this._balloonSprite.showBalloon();
         this._messageNameWindow.draw($gameTemp.tachieName);
     }
     updatePlacement(): void {
@@ -1158,6 +1171,7 @@ interface Game_Temp {
     tachieActorId: number;
     tachieActorPos: number;
     tachieAvairable: boolean;   // これが true の時はメッセージウィンドウを閉じません
+    hideBalloon: boolean;   // これが true の時は吹き出しを表示しません
 }
 interface Game_Item {
     isOuter(): boolean;
@@ -1237,6 +1251,6 @@ interface Game_Actor {
     faceFile(): string;
     preloadFaces(faceIds: Array<string>): void;
 }
-interface ImageManager {
+interface ImageManagerStatic {
     loadTachie(file: string, hue?: number): Bitmap;
 }

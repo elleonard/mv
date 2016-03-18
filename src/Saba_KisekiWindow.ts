@@ -1,5 +1,5 @@
 //=============================================================================
-// KisekiWindow.js
+// Saba_KisekiWindow.js
 //=============================================================================
 /*:ja
  * @plugindesc 画面下にアクターの情報を表示します
@@ -36,9 +36,10 @@
  */
 
 
-module KisekiWindow {
+module Saba {
+export module KisekiWindow {
 
-var parameters = PluginManager.parameters('KisekiWindow');
+var parameters = PluginManager.parameters('Saba_KisekiWindow');
 var useSmallFaceImage = String(parameters['UseSmallFaceImage?'] === 'true');
 var areaWidth = parseInt(String(parameters['AreaWidth'] || 120));
 var showTp = String(parameters['ShowTp?'] === 'true');
@@ -293,4 +294,4 @@ class _Scene_Map extends Scene_Map {
 
 Saba.applyMyMethods(_Scene_Map, Scene_Map, false);
 
-}
+}}

@@ -1,5 +1,5 @@
 //=============================================================================
-// BackLog.js
+// Saba_BackLog.js
 //=============================================================================
 /*:ja
  * @author Sabakan
@@ -28,11 +28,11 @@
  *
  * @param scrollSpeed
  * @desc カーソルキーでスクロールするときの速度です
- * @default 4
+ * @default 5
  *
  * @param windowHeight
  * @desc ウィンドウの高さです。大きいほど多く表示できます。
- * @default 1800
+ * @default 2000
  *
  * @param maxLogCount
  * @desc ログを保存しておく最大数です
@@ -46,6 +46,15 @@
  * @desc ログとログの間の隙間です
  * @default 44
  *
+ * @param windowSkin
+ * @desc バックログ表示に使うウィンドウです
+ * @default WindowBacklog
+ *
+ * @param backOpacity
+ * @desc 背景の透明度です
+ * @default 230
+ *
+ *
  * @help
  * Ver0.1
  *
@@ -56,9 +65,10 @@
  * を呼ぶ必要があります。
  *
  */
-module BackLog {
+module Saba {
+export module BackLog {
 
-const parameters = PluginManager.parameters('BackLog');
+const parameters = PluginManager.parameters('Saba_BackLog');
 
 
 const backLogButton = parameters['backLogButton'];
@@ -71,8 +81,10 @@ const logMargin = parseInt(parameters['logMargin']);
 const marginLeft = parseInt(parameters['marginLeft']);
 const marginRight = parseInt(parameters['marginRight']);
 const nameLeft = parseInt(parameters['nameLeft']);
+const windowSkin = parameters['windowSkin'];
+const backOpacity = parseInt(parameters['backOpacity']);
 
-console.log(parameters)
+
 class Game_BackLog {
     logList: Array<Game_TalkLog> = [];
     addLog(name: string, message: string) {
@@ -86,7 +98,6 @@ class Game_BackLog {
 class Game_TalkLog {
     y: number;
     constructor(public name: string, public message: string) {
-        console.log(message)
     }
 }
 
@@ -100,11 +111,14 @@ class Window_BackLog extends Window_Base {
         super(0, 0, Graphics.width, windowHeight);
         this._margin = 0;
         this._windowFrameSprite.visible = false;
-        this.backOpacity = 255;
+        this.backOpacity = backOpacity;
         this.opacity = 255;
         this.contentsOpacity = 255;
         this._refreshBack();
         this.drawLogs();
+    }
+    loadWindowskin(): void {
+        this.windowskin = ImageManager.loadSystem(windowSkin);
     }
     drawLogs(): void {
         let y = 0;
@@ -133,10 +147,17 @@ class Window_BackLog extends Window_Base {
                 y += this.logMargin();
             }
 
+            this._maxHeight = y + bottmMargin;
+            if (this._maxHeight > windowHeight) {
+                this._maxHeight = windowHeight;
+            }
             // 一番下までスクロールさせる
-            this.y = Graphics.height - windowHeight;
+            this.y = Graphics.height - this._maxHeight;
         } else {
             this._maxHeight = y + bottmMargin;
+            if (this._maxHeight > windowHeight) {
+                this._maxHeight = windowHeight;
+            }
             if (this._maxHeight < Graphics.height) {
                 this._maxHeight = Graphics.height;
             }
@@ -167,7 +188,6 @@ class Window_BackLog extends Window_Base {
         this.drawTextEx(message, marginLeft, y);
         height += this._lineCount * (this.standardFontSize() + 8);
         log.y = y + height;
-        console.log(height)
         return height;
     }
     processNewLine(textState: MV.TextState): void {
@@ -227,6 +247,15 @@ Scene_Map.prototype.update = function() {
 };
 
 
+const Scene_Boot_loadSystemImages = Scene_Boot.prototype.loadSystemImages;
+Scene_Boot.prototype.loadSystemImages = function() {
+    Scene_Boot_loadSystemImages.call(this);
+    if (windowSkin.length > 0) {
+        ImageManager.loadSystem(windowSkin);
+    }
+};
+
+
 export const $gameBackLog = new Game_BackLog();
 
-}
+}}

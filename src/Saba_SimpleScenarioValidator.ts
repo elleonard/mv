@@ -1,5 +1,5 @@
-module SimpleScenario {
-
+module Saba {
+export module SimpleScenario {
 
 
 
@@ -195,6 +195,7 @@ validates['cos1'] = {
 };
 validates['cos2'] = validates['cos3'] = validates['cos4'] = validates['cos5'] = validates['cos6'] = validates['cos7'] = validates['cos8'] = validates['cos9'] = validates['cos1'];
 validates['messages'] = {};
+validates['normal_messages'] = {};
 validates['not_close'] = {
     'flag':     list('on', 'off')
 };
@@ -361,7 +362,7 @@ validates['if_var'] = {
                 regCheck(/^[-+]{0,1}(var\.){0,1}\d+$/),
                 varCheck(/^[-+]{0,1}(var\.){0,1}(\d+)$/)
     ],
-    'op':        list('eq', 'ge', 'le', 'gt', 'lt', 'ne')
+    'op':        list('=', '>=', '<=', '>', '<', '><')
 };
 
 validates['if_self_sw'] = {
@@ -377,7 +378,7 @@ validates['if_timer'] = {
                 notEmpty(),
                 isNumeric(0, 5999)
     ],
-    'op':       list('ge', 'le')
+    'op':       list('>=', '<=')
 };
   
 validates['if_actor'] = {
@@ -421,7 +422,7 @@ validates['if_money'] = {
                 notEmpty(),
                 isNumeric(0)
     ],
-    'op':       list('ge', 'le', 'lt')
+    'op':       list('>=', '<=', '<')
 };
   
 validates['if_item'] = {
@@ -852,4 +853,4 @@ validates['nickname'] = {
 };
 
 
-}
+}}

@@ -1,21 +1,18 @@
 //=============================================================================
-// SimpleScenario.js
+// Saba_SimpleScenario.js
 //=============================================================================
 /*:ja
  * @author Sabakan
  * @plugindesc テキストファイルからツクールのイベントを書き出すプラグインです。
  *
  * @param autoWordWrap
- * @desc Word Wrap のプラグインの機能の自動改行用の文字列(<wrap> <br>)を自動で埋め込みます。
+ * @desc YED_WordWrap のプラグインの機能の自動改行用の文字列(<wrap> <br>)を自動で埋め込みます。
  * @default false
  *
  * @param scenarioFolder
  * @desc シナリオファイルがある場所を設定します
  * @default /../scenario/
  *
- * @param rightPosX
- * @desc 右側に立つ場合のx座標です
- * @default 400
  * 
  * @help
  * Ver0.1
@@ -142,28 +139,28 @@
 //**************************************************************************
 //　フロー制御系
 //**************************************************************************
- *　　if_sw
- *　　if_var
- *　　if_self_sw
- *　　if_timer
- *　　if_enemy
- *　　if_character
- *　　if_vehicle
- *　　if_money
- *　　if_item
- *　　if_weapon
- *　　if_armor
- *　　if_button
- *　　if_script
- *　　else
+ *○　if_sw
+ *○　if_var
+ *○　if_self_sw
+ *○　if_timer
+ *○　if_enemy
+ *○　if_character
+ *○　if_vehicle
+ *○　if_money
+ *○　if_item
+ *○　if_weapon
+ *○　if_armor
+ *○　if_button
+ *○　if_script
+ *○　else
  *　　loop
  *　　loop_end
  *　　loop_break
- *　　event_break
- *　　return
+ *○　event_break
+ *○　return
  *○　common
- *　　label
- *　　label_jump
+ *○　label
+ *○　label_jump
  *　　comment
  *　　comment2
 //**************************************************************************
@@ -303,9 +300,10 @@
 //**************************************************************************
  *○　end
  */
-module SimpleScenario {
+module Saba {
+export module SimpleScenario {
 
-const parameters = PluginManager.parameters('SimpleScenario');
+const parameters = PluginManager.parameters('Saba_SimpleScenario');
 const AUTO_WARD_WRAP = parameters['autoWordWrap'] === 'true';
 
 if (Utils.isNwjs()) {
@@ -314,7 +312,6 @@ if (Utils.isNwjs()) {
 }
 
 const pathParam = parameters['scenarioFolder'];
-const rightPosX = parseInt(parameters['rightPosX']);
 const SCENARIO_FILE_NAME = 'Scenario.json';
 const SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
 const DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
@@ -474,9 +471,11 @@ export class Scenario_Converter {
                     continue;
                 }
                 let offset = 1;
+                lines[i + offset] = this.removeWS(lines[i + offset]);
                 while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
                     offset++;
+                    lines[i + offset] = this.removeWS(lines[i + offset]);
                 }
                 i += offset - 1;
             } else {
@@ -645,7 +644,6 @@ export class Scenario_Converter {
         if (position === Tachie.LEFT_POS) {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
         } else {
-            x = rightPosX;
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
         }
         this.convertCommand_messages(context);
@@ -782,11 +780,12 @@ export class Scenario_Converter {
         const value = context.headerStr('value');
         var reg = /(var\.)/;
         const type  = reg.exec(value) ? 1 : 0;	//0:数値 1:変数
-        let op    = ['eq', 'ge', 'le', 'gt', 'lt', 'ne'].indexOf(context.headerStr('op')) || 0
+        let op    = ['=', '>=', '<=', '>', '<', '><'].indexOf(context.headerStr('op')) || 0
         if (type === 1 && parseInt(value) <= 0) {
             throw new Error('変数指定時に「0」以下が使われました。');
         }
-        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, parseInt(value), op]});
+        const valueNum = /(\d+)/.exec(value);
+        context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, type, parseInt(valueNum[0]), op]});
     }
     /**
      * ○ 条件分岐（セルフスイッチ）
@@ -805,7 +804,7 @@ export class Scenario_Converter {
         this.indent++;
         const ifnum = 3
         const time = context.headerInt('time');
-        const op    = ['ge', 'le'].indexOf(context.headerStr('op')) || 0
+        const op    = ['>=', '<=', '<'].indexOf(context.headerStr('op')) || 0
         context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, time, op]});
     }
     /**
@@ -1105,21 +1104,9 @@ export class Scenario_Converter {
     convertCommand_var(context: Context): void {
         const id = context.headerInt('id');
         const end = context.headerInt('end', id);
-        const op = context.headerStr('op');
-        const opType = this.convertOperation(context, op);
+        const op    = ['=', '+', '-', '*', '/', '%'].indexOf(context.headerStr('op')) || 0
         const value = context.headerInt('value');
-        context.push({'code': 122, 'indent': this.indent, 'parameters': [id, end, opType, 0, value]});
-    }
-    convertOperation(context: Context, operation: string): number {
-        switch(operation) {
-        case '=': return 0;
-        case '+': return 1;
-        case '-': return 2;
-        case '*': return 3;
-        case '/': return 4;
-        case '%': return 5;
-        }
-        context.error('illegal operation:' + operation);
+        context.push({'code': 122, 'indent': this.indent, 'parameters': [id, end, op, 0, value]});
     }
     convertCommand_self_sw(context: Context): void {
         const id = context.headerInt('id');
@@ -1800,4 +1787,4 @@ class Header {
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
 Saba.applyMyMethods(_Scene_Map, Scene_Map);
 
-}
+}}

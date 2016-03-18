@@ -10,8 +10,5 @@ export var applyMyMethods = (myClass: any, presetClass: any, applyConstructor?: 
     }
 };
 
-class A {
-     a;
-}
 
 }

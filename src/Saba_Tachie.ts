@@ -1,13 +1,14 @@
 //=============================================================================
-// Tachie.js
+// Saba_Tachie.js
 //=============================================================================
 /*:ja
  * @author Sabakan
  * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
- * @param useTextureAtlas
- * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？ TexturePackerを使い、actor01.png actor01.json などが必要です
- * @default false
+ *
+ * @param rightPosX
+ * @desc 右側に立つ場合のx座標です
+ * @default 400
  *
  * @param actor1offset
  * @desc アクター１のキャラのx座標，y座標の補正値です
@@ -57,6 +58,18 @@
  * @desc 各キャラのウィンドウカラーの配列です(0だとデフォルト色)
  * @default 3, 0, 1, 2, 1
  *
+ * @param useTextureAtlas
+ * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？ TexturePackerを使い、actor01.png actor01.json などが必要です
+ * @default false
+ *
+ * @param skipKey
+ * @desc メッセージスキップに使うボタンです
+ * @default control
+ *
+ * @param windowHideKey
+ * @desc ウィンドウ消去に使うボタンです
+ * @default shift
+ * 
  * @help
  * Ver0.1
  *
@@ -81,10 +94,12 @@
  * 画像のレイヤー解説
  *
  */
-module Tachie {
+module Saba {
+export module Tachie {
 
-const parameters = PluginManager.parameters('Tachie');
-export const windowColors = {};
+const parameters = PluginManager.parameters('Saba_Tachie');
+const rightPosX = parseInt(parameters['rightPosX']);
+export const windowColors: {[actorId: number]: number} = {};
 export const offsetX = {};
 export const offsetY = {};
 
@@ -121,8 +136,8 @@ const ACTOR_PREFIX: string = '___actor';
 export const LEFT_POS = 1;
 export const RIGHT_POS = 2;
 
-export const MESSAGE_SKIP_KEY: string = 'control';
-export const WINDOW_HIDE_KEY: string = 'shift';
+export const MESSAGE_SKIP_KEY: string = parameters['skipKey'];
+export const WINDOW_HIDE_KEY: string = parameters['windowHideKey'];
 
 var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
@@ -263,7 +278,7 @@ class _Game_Interpreter extends Game_Interpreter {
             if (picture && picture.tachieActorId === actorId) {
                 opacity = 255;
             }
-            const xx = x;
+            const xx = x + rightPosX;
             $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
             if (opacity < 255) {
                 var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true]};
@@ -731,14 +746,14 @@ class _Game_Temp extends Game_Temp {
     getActorBitmapBodyCache(actorId: number): Bitmap {
         this.actorBitmapBodyCache = this.actorBitmapBodyCache || {};
         if (! this.actorBitmapBodyCache[actorId]) {
-            this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width / 2 + 10, Graphics.height);
+            this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width, Graphics.height);
         }
         return this.actorBitmapBodyCache[actorId];
     }
     getPictureBitmapCache(actorId: number): Bitmap {
         this.actorBitmapCache = this.actorBitmapCache || {};
         if (! this.actorBitmapCache[actorId]) {
-            this.actorBitmapCache[actorId] = new Bitmap(Graphics.width / 2 + 100, Graphics.height);
+            this.actorBitmapCache[actorId] = new Bitmap(Graphics.width, Graphics.height);
         }
         return this.actorBitmapCache[actorId];
     }
@@ -1033,7 +1048,7 @@ export class Window_TachieMessage extends Window_Message {
                 if (color > 0) {
                     this.windowskin = ImageManager.loadSystem('Window' + color);
                 } else {
-                    this.windowskin = ImageManager.loadSystem('window');
+                    this.windowskin = ImageManager.loadSystem('Window');
                 }
             } else {
                 this._windowSkinId = 0;
@@ -1144,6 +1159,16 @@ Scene_Map.prototype.createMessageWindow = function() {
 };
 
 
+const Scene_Boot_loadSystemImages = Scene_Boot.prototype.loadSystemImages;
+Scene_Boot.prototype.loadSystemImages = function() {
+    Scene_Boot_loadSystemImages.call(this);
+    for (const i in windowColors) {
+        const colot = windowColors[i];
+        ImageManager.loadSystem('Window' + color);
+    }
+};
+
+
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
 Saba.applyMyMethods(_Sprite_Picture, Sprite_Picture);
 Saba.applyMyMethods(_Game_Item, Game_Item);
@@ -1152,7 +1177,7 @@ Saba.applyMyMethods(_Game_Screen, Game_Screen);
 Saba.applyMyMethods(_Game_Picture, Game_Picture);
 Saba.applyMyMethods(_Game_Temp, Game_Temp);
 
-}
+}}
 
 
 interface Scene_Map {

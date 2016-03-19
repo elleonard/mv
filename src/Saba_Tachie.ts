@@ -69,6 +69,19 @@
  * @param windowHideKey
  * @desc ウィンドウ消去に使うボタンです
  * @default shift
+ *
+ * @requiredAssets img/system/Tachie_Window1
+ * @requiredAssets img/system/Tachie_Window2
+ * @requiredAssets img/system/Tachie_Window3
+ * @requiredAssets img/system/Tachie_Window4
+ * @requiredAssets img/system/Tachie_Window5
+ * @requiredAssets img/system/Tachie_Window6
+ * @requiredAssets img/system/Tachie_Balloon1
+ * @requiredAssets img/system/Tachie_Balloon2
+ * @requiredAssets img/system/Tachie_Balloon3
+ * @requiredAssets img/system/Tachie_Balloon4
+ * @requiredAssets img/system/Tachie_Balloon5
+ * @requiredAssets img/system/Tachie_Balloon6
  * 
  * @help
  * Ver0.1
@@ -626,7 +639,7 @@ class _Game_Actor extends Game_Actor {
             }
         } else {
             this.doPreloadTachie(this.outerBackFile());
-            this.doPreloadTachie(this.outerShadowFile());
+            //this.doPreloadTachie(this.outerShadowFile());
             this.doPreloadTachie(this.outerMainFile());
             this.doPreloadTachie(this.outerFrontFile());
             this.doPreloadTachie(this.bodyBackFile());
@@ -931,6 +944,7 @@ class Window_MessageName extends Window_Base {
         this.contents.clear();
         this.drawTextEx(name, 10, 0);
         this.open();
+        this.visible = true;
     }
 }
 
@@ -977,9 +991,9 @@ class Sprite_WindowBalloon extends Sprite_Base {
             this._windowAcrotId = $gameTemp.tachieActorId;
             const color = windowColors[this._windowAcrotId];
             if (color > 0) {
-                this.bitmap = ImageManager.loadSystem('WindowBalloon' + color);
+                this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color);
             } else {
-                this.bitmap = ImageManager.loadSystem('WindowBalloon');
+                this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
             }
             this.visible = true;
         } else {
@@ -1046,7 +1060,7 @@ export class Window_TachieMessage extends Window_Message {
                 this._windowSkinId = $gameTemp.tachieActorId;
                 var color = windowColors[this._windowSkinId];
                 if (color > 0) {
-                    this.windowskin = ImageManager.loadSystem('Window' + color);
+                    this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
                 } else {
                     this.windowskin = ImageManager.loadSystem('Window');
                 }
@@ -1164,7 +1178,7 @@ Scene_Boot.prototype.loadSystemImages = function() {
     Scene_Boot_loadSystemImages.call(this);
     for (const i in windowColors) {
         const colot = windowColors[i];
-        ImageManager.loadSystem('Window' + color);
+        ImageManager.loadTachie('Window' + color);
     }
 };
 

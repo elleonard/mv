@@ -1,3 +1,17 @@
+var Saba;
+(function (Saba) {
+    Saba.applyMyMethods = function (myClass, presetClass, applyConstructor) {
+        for (var p in myClass.prototype) {
+            if (myClass.prototype.hasOwnProperty(p)) {
+                if (p === 'constructor' && !applyConstructor) {
+                    continue;
+                }
+                Object.defineProperty(presetClass.prototype, p, Object.getOwnPropertyDescriptor(myClass.prototype, p));
+            }
+        }
+    };
+})(Saba || (Saba = {}));
+
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -74,19 +88,6 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @param windowHideKey
  * @desc ウィンドウ消去に使うボタンです
  * @default shift
- *
- * @requiredAssets img/system/Tachie_Window1
- * @requiredAssets img/system/Tachie_Window2
- * @requiredAssets img/system/Tachie_Window3
- * @requiredAssets img/system/Tachie_Window4
- * @requiredAssets img/system/Tachie_Window5
- * @requiredAssets img/system/Tachie_Window6
- * @requiredAssets img/system/Tachie_Balloon1
- * @requiredAssets img/system/Tachie_Balloon2
- * @requiredAssets img/system/Tachie_Balloon3
- * @requiredAssets img/system/Tachie_Balloon4
- * @requiredAssets img/system/Tachie_Balloon5
- * @requiredAssets img/system/Tachie_Balloon6
  *
  * @help
  * Ver0.1
@@ -676,7 +677,7 @@ var Saba;
                 }
                 else {
                     this.doPreloadTachie(this.outerBackFile());
-                    //this.doPreloadTachie(this.outerShadowFile());
+                    this.doPreloadTachie(this.outerShadowFile());
                     this.doPreloadTachie(this.outerMainFile());
                     this.doPreloadTachie(this.outerFrontFile());
                     this.doPreloadTachie(this.bodyBackFile());
@@ -1039,10 +1040,10 @@ var Saba;
                     this._windowAcrotId = $gameTemp.tachieActorId;
                     var color_1 = Tachie.windowColors[this._windowAcrotId];
                     if (color_1 > 0) {
-                        this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color_1);
+                        this.bitmap = ImageManager.loadSystem('WindowBalloon' + color_1);
                     }
                     else {
-                        this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
+                        this.bitmap = ImageManager.loadSystem('WindowBalloon');
                     }
                     this.visible = true;
                 }
@@ -1109,7 +1110,7 @@ var Saba;
                         this._windowSkinId = $gameTemp.tachieActorId;
                         var color = Tachie.windowColors[this._windowSkinId];
                         if (color > 0) {
-                            this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
+                            this.windowskin = ImageManager.loadSystem('Window' + color);
                         }
                         else {
                             this.windowskin = ImageManager.loadSystem('Window');
@@ -1232,7 +1233,7 @@ var Saba;
             Scene_Boot_loadSystemImages.call(this);
             for (var i in Tachie.windowColors) {
                 var colot = Tachie.windowColors[i];
-                ImageManager.loadTachie('Window' + color);
+                ImageManager.loadSystem('Window' + color);
             }
         };
         Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);

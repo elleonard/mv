@@ -313,8 +313,20 @@ if (Utils.isNwjs()) {
 
 const pathParam = parameters['scenarioFolder'];
 const SCENARIO_FILE_NAME = 'Scenario.json';
-const SCENARIO_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
-const DATA_PATH = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
+const SCENARIO_PATH = function() {
+    var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
+    if (p.match(/^\/([A-Z]\:)/)) {
+        p = p.slice(1);
+    }
+    return decodeURIComponent(p);
+}();
+const DATA_PATH = function() {
+    var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
+    if (p.match(/^\/([A-Z]\:)/)) {
+        p = p.slice(1);
+    }
+    return decodeURIComponent(p);
+}();
 DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
 
 declare var $dataScenraio: {[id: string]: Array<RPG.EventCommand>};
@@ -397,21 +409,19 @@ export class Scenario_Converter {
                 if (stat.isDirectory()) {
                     const files2 = fs.readdirSync(filePath);
                     for (const file2 of files2) {
-                        const index = file2.indexOf('.txt');
-                        if (index === -1) {
+                        const name = self.parseValidFileName(file2);
+                        if (! name) {
                             continue;
                         }
-                        const name = file2.substr(0, index);
                         const text = fs.readFileSync(filePath + '/' + file2, 'utf8');
                         scenario[name] = self.convert(file2, text);
                     }
                     continue;
                 }
-                const index = file.indexOf('.txt');
-                if (index === -1) {
+                const name = self.parseValidFileName(file);
+                if (! name) {
                     continue;
                 }
-                const name = file.substr(0, index);
                 const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
                 scenario[name] = self.convert(file, text);
             }
@@ -420,6 +430,20 @@ export class Scenario_Converter {
             DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
             console.log('シナリオの変換が終わりました');
         });
+    }
+    parseValidFileName(file): string {
+        if (file.indexOf('replace.txt') === 0) {
+            return;
+        }
+        let index = file.indexOf('.txt');
+        if (index === -1) {
+            index = file.indexOf('.sce');
+        }
+        if (index === -1) {
+            return null;
+        }
+        const name = file.substr(0, index);
+        return name;
     }
     convertReplace(files): void {
         for (const file of files) {

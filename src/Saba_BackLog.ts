@@ -49,6 +49,9 @@
  * @param windowSkin
  * @desc バックログ表示に使うウィンドウです
  * @default WindowBacklog
+ * @require 1
+ * @dir img/system/
+ * @type file
  *
  * @param backOpacity
  * @desc 背景の透明度です

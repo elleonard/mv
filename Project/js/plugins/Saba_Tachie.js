@@ -840,12 +840,13 @@ var Saba;
                 if (y === void 0) { y = 0; }
                 if (faceId === void 0) { faceId = 0; }
                 if (!rect) {
-                    rect = Rectangle.emptyRectangle;
+                    rect = new Rectangle(0, 0, 0, 0);
                 }
                 var actor = $gameActors.actor(actorId);
-                var point = this.calcTachieActorPos(actor, x, y);
+                var point = this.calcTachieActorPos(actor);
+                rect.x -= point.x;
+                rect.y -= point.y;
                 var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
-                bitmap.clear();
                 actor.clearDirty();
                 if (actor.isCacheChanged()) {
                     cache.clear();
@@ -859,11 +860,11 @@ var Saba;
                     this.drawTachieOuterFront(actor, cache);
                     console.log('createCache:' + actor.actorId());
                 }
-                this.drawTachieCache(actor, cache, bitmap, point.x, point.y, rect);
-                this.drawTachieHoppe(actor, bitmap, point.x, point.y, rect);
-                this.drawTachieFace(actor, bitmap, point.x, point.y, rect, faceId);
+                this.drawTachieCache(actor, cache, bitmap, x, y, rect);
+                this.drawTachieHoppe(actor, bitmap, x, y, rect);
+                this.drawTachieFace(actor, bitmap, x, y, rect, faceId);
             };
-            this.calcTachieActorPos = function (actor, x, y) {
+            this.calcTachieActorPos = function (actor) {
                 var dx = actor.tachieOffsetX;
                 var dy = actor.tachieOffsetY;
                 if (isNaN(dx)) {
@@ -872,20 +873,21 @@ var Saba;
                 if (isNaN(dy)) {
                     dy = 0;
                 }
-                x += dx;
-                y += dy;
-                return new Point(x, y);
+                return new Point(dx, dy);
             };
             this.drawTachieCache = function (actor, cache, bitmap, x, y, rect) {
+                var xx = -rect.x < 0 ? 0 : -rect.x;
+                var yy = -rect.y < 0 ? 0 : -rect.y;
                 var w = rect.width;
-                if (w <= 0 || w > cache.width) {
-                    w = cache.width;
+                if (w <= 0 || w + xx > cache.width) {
+                    w = cache.width - xx;
                 }
-                var h = rect.width;
-                if (h <= 0 || h > cache.height) {
-                    h = cache.height;
+                var h = rect.height;
+                if (h <= 0 || h + yy > cache.height) {
+                    h = cache.height - yy;
                 }
-                bitmap.blt(cache, rect.x, rect.y, w, h, x + rect.x, y + rect.y);
+                console.log(xx, yy, w, h, x, y);
+                bitmap.blt(cache, xx, yy, w, h, x, y);
                 //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
             };
             this.drawTachieFile = function (file, bitmap, actor, x, y, rect) {
@@ -932,15 +934,17 @@ var Saba;
                     actor.setDirty();
                     return;
                 }
+                var xx = -rect.x < 0 ? 0 : -rect.x;
+                var yy = -rect.y < 0 ? 0 : -rect.y;
                 var w = rect.width;
-                if (w <= 0 || w > img.width) {
-                    w = img.width;
+                if (w <= 0 || w + xx > img.width) {
+                    w = img.width - xx;
                 }
-                var h = rect.width;
-                if (h <= 0 || h > img.height) {
-                    h = img.height;
+                var h = rect.height;
+                if (h <= 0 || h + yy > img.height) {
+                    h = img.height - yy;
                 }
-                bitmap.blt(img, 0, 0, w + rect.x, h + rect.y, x, y);
+                bitmap.blt(img, xx, yy, w, h, x, y);
             };
             this.drawTachieOuterBack = function (actor, bitmap) {
                 this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
@@ -1014,6 +1018,7 @@ var Saba;
                 }
                 this.bitmap.clear();
                 //var bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
+                this.bitmap.clear();
                 this.drawTachie(actorId, this.bitmap);
             };
             return _Sprite_Picture;

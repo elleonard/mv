@@ -313,7 +313,7 @@ if (Utils.isNwjs()) {
 
 const pathParam = parameters['scenarioFolder'];
 const SCENARIO_FILE_NAME = 'Scenario.json';
-const SCENARIO_PATH = function() {
+export const SCENARIO_PATH = function() {
     var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
     if (p.match(/^\/([A-Z]\:)/)) {
         p = p.slice(1);
@@ -454,6 +454,7 @@ export class Scenario_Converter {
             const name = file.substr(0, index);
             const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
             this.parseReplace(text);
+            return;
         }
     }
     parseReplace(text: string): void {
@@ -740,8 +741,8 @@ export class Scenario_Converter {
                 continue;
             }
             const value = this._replaceMap[key];
-            var regExp = new RegExp(value, 'g') ;
-            text = text.replace(regExp , value) ;
+            var regExp = new RegExp(key, 'g');
+            text = text.replace(regExp , value);
         }
         return text;
     }

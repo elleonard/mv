@@ -317,7 +317,7 @@ var Saba;
         }
         var pathParam = parameters['scenarioFolder'];
         var SCENARIO_FILE_NAME = 'Scenario.json';
-        var SCENARIO_PATH = function () {
+        SimpleScenario.SCENARIO_PATH = function () {
             var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
             if (p.match(/^\/([A-Z]\:)/)) {
                 p = p.slice(1);
@@ -395,7 +395,7 @@ var Saba;
                 var self = this;
                 this._replaceMap = {};
                 var scenario = {};
-                fs.readdir(SCENARIO_PATH, function (err, files) {
+                fs.readdir(SimpleScenario.SCENARIO_PATH, function (err, files) {
                     if (err) {
                         console.error(err.message);
                         return;
@@ -406,7 +406,7 @@ var Saba;
                     self.convertReplace(files);
                     for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
                         var file = files_1[_i];
-                        var filePath = path.resolve(SCENARIO_PATH, file);
+                        var filePath = path.resolve(SimpleScenario.SCENARIO_PATH, file);
                         var stat = fs.statSync(filePath);
                         if (stat.isDirectory()) {
                             var files2 = fs.readdirSync(filePath);
@@ -425,7 +425,7 @@ var Saba;
                         if (!name_2) {
                             continue;
                         }
-                        var text = fs.readFileSync(SCENARIO_PATH + file, 'utf8');
+                        var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
                         scenario[name_2] = self.convert(file, text);
                     }
                     console.log(scenario);
@@ -456,8 +456,9 @@ var Saba;
                         continue;
                     }
                     var name_3 = file.substr(0, index);
-                    var text = fs.readFileSync(SCENARIO_PATH + file, 'utf8');
+                    var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
                     this.parseReplace(text);
+                    return;
                 }
             };
             Scenario_Converter.prototype.parseReplace = function (text) {
@@ -746,7 +747,7 @@ var Saba;
                         continue;
                     }
                     var value = this._replaceMap[key];
-                    var regExp = new RegExp(value, 'g');
+                    var regExp = new RegExp(key, 'g');
                     text = text.replace(regExp, value);
                 }
                 return text;

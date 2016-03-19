@@ -29,7 +29,6 @@ var _Window_Base_needWrap = Window_Base.prototype.needWrap;
 Window_Base.prototype.needWrap = function(textState) {
     let text = textState.text;
     const c = text.substr(textState.index, 1);
-    console.log(c)
     if (notWrapCharList.indexOf(c) >= 0) {
         return false;
     }

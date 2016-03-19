@@ -87,6 +87,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/system/Tachie_Balloon4
  * @requiredAssets img/system/Tachie_Balloon5
  * @requiredAssets img/system/Tachie_Balloon6
+ * @requiredAssets img/tachie/
  *
  * @help
  * Ver0.1
@@ -423,9 +424,9 @@ var Saba;
             Object.defineProperty(_Game_Actor.prototype, "faceId", {
                 get: function () {
                     if (!this._faceId) {
-                        return '';
+                        return 0;
                     }
-                    return this._faceId.padZero(2);
+                    return this._faceId;
                 },
                 enumerable: true,
                 configurable: true
@@ -833,6 +834,149 @@ var Saba;
             };
             return _Game_Screen;
         }(Game_Screen));
+        var TachieDrawerMixin = function () {
+            this.drawTachie = function (actorId, bitmap, x, y, rect, faceId) {
+                if (x === void 0) { x = 0; }
+                if (y === void 0) { y = 0; }
+                if (faceId === void 0) { faceId = 0; }
+                if (!rect) {
+                    rect = Rectangle.emptyRectangle;
+                }
+                var actor = $gameActors.actor(actorId);
+                var point = this.calcTachieActorPos(actor, x, y);
+                var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
+                bitmap.clear();
+                actor.clearDirty();
+                if (actor.isCacheChanged()) {
+                    cache.clear();
+                    actor.clearCacheChanged();
+                    this.drawTachieOuterBack(actor, cache);
+                    this.drawTachieBodyBack(actor, cache);
+                    this.drawTachieInnerBottom(actor, cache);
+                    this.drawTachieInnerTop(actor, cache);
+                    this.drawTachieOuterMain(actor, cache);
+                    this.drawTachieBodyFront(actor, cache);
+                    this.drawTachieOuterFront(actor, cache);
+                    console.log('createCache:' + actor.actorId());
+                }
+                this.drawTachieCache(actor, cache, bitmap, point.x, point.y, rect);
+                this.drawTachieHoppe(actor, bitmap, point.x, point.y, rect);
+                this.drawTachieFace(actor, bitmap, point.x, point.y, rect, faceId);
+            };
+            this.calcTachieActorPos = function (actor, x, y) {
+                var dx = actor.tachieOffsetX;
+                var dy = actor.tachieOffsetY;
+                if (isNaN(dx)) {
+                    dx = 0;
+                }
+                if (isNaN(dy)) {
+                    dy = 0;
+                }
+                x += dx;
+                y += dy;
+                return new Point(x, y);
+            };
+            this.drawTachieCache = function (actor, cache, bitmap, x, y, rect) {
+                var w = rect.width;
+                if (w <= 0 || w > cache.width) {
+                    w = cache.width;
+                }
+                var h = rect.width;
+                if (h <= 0 || h > cache.height) {
+                    h = cache.height;
+                }
+                bitmap.blt(cache, rect.x, rect.y, w, h, x + rect.x, y + rect.y);
+                //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
+            };
+            this.drawTachieFile = function (file, bitmap, actor, x, y, rect) {
+                if (x === void 0) { x = 0; }
+                if (y === void 0) { y = 0; }
+                if (!file) {
+                    return;
+                }
+                if (!rect) {
+                    rect = Rectangle.emptyRectangle;
+                }
+                if (useTextureAtlas) {
+                    this.drawTachieTextureAtlas(file, bitmap, actor, x, y, rect);
+                }
+                else {
+                    this.drawTachieImage(file, bitmap, actor, x, y, rect);
+                }
+            };
+            this.drawTachieTextureAtlas = function (file, bitmap, actor, x, y, rect) {
+                var texture = PIXI.TextureCache[file + '.png'];
+                if (!texture) {
+                    return;
+                }
+                var img = texture.baseTexture.source;
+                var frame = texture.frame;
+                var trim = texture.trim;
+                var crop = texture.crop;
+                var w = crop.width;
+                if (w < rect.width) {
+                    w = rect.width;
+                }
+                var h = crop.height;
+                if (h < rect.height) {
+                    h = rect.height;
+                }
+                var dx = trim.x + actor.tachieOffsetX + x;
+                var dy = trim.y + actor.tachieOffsetY + y;
+                bitmap.context.drawImage(img, frame.x + rect.x, frame.y + rect.y, crop.width, crop.height, dx, dy, w, h);
+            };
+            this.drawTachieImage = function (file, bitmap, actor, x, y, rect) {
+                var img = ImageManager.loadTachie(file);
+                if (!img.isReady()) {
+                    console.log('draw' + file);
+                    actor.setDirty();
+                    return;
+                }
+                var w = rect.width;
+                if (w <= 0 || w > img.width) {
+                    w = img.width;
+                }
+                var h = rect.width;
+                if (h <= 0 || h > img.height) {
+                    h = img.height;
+                }
+                bitmap.blt(img, 0, 0, w + rect.x, h + rect.y, x, y);
+            };
+            this.drawTachieOuterBack = function (actor, bitmap) {
+                this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
+            };
+            this.drawTachieOuterShadow = function (actor, bitmap) {
+                this.drawTachieFile(actor.outerShadowFile(), bitmap, actor);
+            };
+            this.drawTachieOuterMain = function (actor, bitmap) {
+                this.drawTachieFile(actor.outerMainFile(), bitmap, actor);
+            };
+            this.drawTachieOuterFront = function (actor, bitmap) {
+                this.drawTachieFile(actor.outerFrontFile(), bitmap, actor);
+            };
+            this.drawTachieBodyBack = function (actor, bitmap) {
+                this.drawTachieFile(actor.bodyBackFile(), bitmap, actor);
+            };
+            this.drawTachieBodyFront = function (actor, bitmap) {
+                this.drawTachieFile(actor.bodyFrontFile(), bitmap, actor);
+            };
+            this.drawTachieInnerBottom = function (actor, bitmap) {
+                this.drawTachieFile(actor.innerBottomFile(), bitmap, actor);
+            };
+            this.drawTachieInnerTop = function (actor, bitmap) {
+                this.drawTachieFile(actor.innerTopFile(), bitmap, actor);
+            };
+            this.drawTachieHoppe = function (actor, bitmap, x, y, rect) {
+                this.drawTachieFile(actor.hoppeFile(), bitmap, actor, x, y, rect);
+            };
+            this.drawTachieFace = function (actor, bitmap, x, y, rect, faceId) {
+                if (faceId === 0) {
+                    faceId = actor.faceId;
+                }
+                var file = actor.baseId + faceId.padZero(2);
+                this.drawTachieFile(file, bitmap, actor, x, y, rect);
+            };
+        };
         var _Sprite_Picture = (function (_super) {
             __extends(_Sprite_Picture, _super);
             function _Sprite_Picture() {
@@ -869,107 +1013,13 @@ var Saba;
                     return;
                 }
                 this.bitmap.clear();
-                var actor = $gameActors.actor(actorId);
-                var bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
-                this.drawActorImage(actor, bitmap);
-            };
-            _Sprite_Picture.prototype.drawActorImage = function (actor, bitmap) {
-                var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
-                this.bitmap.clear();
-                if (actor.isCacheChanged()) {
-                    cache.clear();
-                    actor.clearCacheChanged();
-                    this.drawOuterBack(actor, cache);
-                    this.drawBodyBack(actor, cache);
-                    this.drawInnerBottom(actor, cache);
-                    this.drawInnerTop(actor, cache);
-                    this.drawOuterMain(actor, cache);
-                    this.drawBodyFront(actor, cache);
-                    this.drawOuterFront(actor, cache);
-                    console.log('createCache:' + actor.actorId());
-                }
-                this.drawCache(cache);
-                this.drawHoppe(actor, this.bitmap);
-                this.drawFace(actor, this.bitmap);
-            };
-            _Sprite_Picture.prototype.drawCache = function (cache) {
-                this.bitmap.blt(cache, 0, 0, cache.width, cache.height, 0, 0);
-                //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
-            };
-            _Sprite_Picture.prototype.drawTachieFile = function (file, bitmap, actor) {
-                if (!file) {
-                    return;
-                }
-                if (useTextureAtlas) {
-                    this.drawTachieTextureAtlas(file, bitmap, actor);
-                }
-                else {
-                    this.drawTachieImage(file, bitmap, actor);
-                }
-            };
-            _Sprite_Picture.prototype.drawTachieTextureAtlas = function (file, bitmap, actor) {
-                var texture = PIXI.TextureCache[file + '.png'];
-                if (!texture) {
-                    return;
-                }
-                var img = texture.baseTexture.source;
-                var rect = texture.frame;
-                var trim = texture.trim;
-                var crop = texture.crop;
-                var dx = trim.x + actor.tachieOffsetX;
-                var dy = trim.y + actor.tachieOffsetY;
-                bitmap.context.drawImage(img, rect.x, rect.y, crop.width, crop.height, dx, dy, crop.width, crop.height);
-            };
-            _Sprite_Picture.prototype.drawTachieImage = function (file, bitmap, actor) {
-                var img = ImageManager.loadTachie(file);
-                if (!img.isReady()) {
-                    console.log('draw' + file);
-                    actor.setDirty();
-                    return;
-                }
-                var dx = actor.tachieOffsetX;
-                var dy = actor.tachieOffsetY;
-                if (isNaN(dx)) {
-                    dx = 0;
-                }
-                if (isNaN(dy)) {
-                    dy = 0;
-                }
-                bitmap.blt(img, 0, 0, img.width, img.height, dx, dy);
-            };
-            _Sprite_Picture.prototype.drawOuterBack = function (actor, bitmap) {
-                this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawOuterShadow = function (actor, bitmap) {
-                this.drawTachieFile(actor.outerShadowFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawOuterMain = function (actor, bitmap) {
-                this.drawTachieFile(actor.outerMainFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawOuterFront = function (actor, bitmap) {
-                this.drawTachieFile(actor.outerFrontFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawBodyBack = function (actor, bitmap) {
-                this.drawTachieFile(actor.bodyBackFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawBodyFront = function (actor, bitmap) {
-                this.drawTachieFile(actor.bodyFrontFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawInnerBottom = function (actor, bitmap) {
-                this.drawTachieFile(actor.innerBottomFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawInnerTop = function (actor, bitmap) {
-                this.drawTachieFile(actor.innerTopFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawHoppe = function (actor, bitmap) {
-                this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
-            };
-            _Sprite_Picture.prototype.drawFace = function (actor, bitmap) {
-                var file = actor.baseId + actor.faceId;
-                this.drawTachieFile(file, bitmap, actor);
+                //var bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
+                this.drawTachie(actorId, this.bitmap);
             };
             return _Sprite_Picture;
         }(Sprite_Picture));
+        TachieDrawerMixin.call(Sprite_Picture.prototype);
+        TachieDrawerMixin.call(Window_Base.prototype);
         var Window_MessageName = (function (_super) {
             __extends(Window_MessageName, _super);
             function Window_MessageName() {
@@ -1232,7 +1282,7 @@ var Saba;
             Scene_Boot_loadSystemImages.call(this);
             for (var i in Tachie.windowColors) {
                 var colot = Tachie.windowColors[i];
-                ImageManager.loadTachie('Window' + color);
+                ImageManager.loadSystem('Tachie_Window' + color);
             }
         };
         Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);

@@ -28,7 +28,6 @@ var Saba;
         Window_Base.prototype.needWrap = function (textState) {
             var text = textState.text;
             var c = text.substr(textState.index, 1);
-            console.log(c);
             if (notWrapCharList.indexOf(c) >= 0) {
                 return false;
             }

@@ -7,11 +7,11 @@
  *
  * @param actor1offset
  * @desc アクター１のキャラの顔グラのx座標，y座標の補正値です
- * @default 120, 120
+ * @default 0, 0
  *
  * @param actor2offset
  * @desc アクター２のキャラの顔グラのx座標，y座標の補正値です
- * @default 100, 30
+ * @default 0, 0
  * 
  * @help
  * Ver0.1
@@ -47,14 +47,12 @@ const _Window_Base_drawFace = Window_Base.prototype.drawFace;
 Window_Base.prototype.drawFace = function(faceName: string, faceIndex, x, y, width, height) {
     const reg = /tachie_Actor(\d+)/;
     var result = reg.exec(faceName);
-    console.log(result);
     
     if (! result) {
         _Window_Base_drawFace.call(this, faceName, faceIndex, x, y, width, height);
         return;
     }
     const actorId = parseInt(result[1]);
-    console.log(result);
     width = width || Window_Base._faceWidth;
     height = height || Window_Base._faceHeight;
     var pw = Window_Base._faceWidth;

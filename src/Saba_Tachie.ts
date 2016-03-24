@@ -82,14 +82,22 @@
  * @requiredAssets img/system/Tachie_Balloon4
  * @requiredAssets img/system/Tachie_Balloon5
  * @requiredAssets img/system/Tachie_Balloon6
- * @requiredAssets img/tachie/
+ * @requiredAssets img/tachie/actor01_01
+ * @requiredAssets img/tachie/*
  * 
  * @help
  * Ver0.1
  *
+ * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
+ * イベントコマンドで pictureId 11 を対象とすることで操作できます。
+ *
+ * 同様に、右側に立つキャラは、pictureId 12 のピクチャで表示しています。
+ *
  * プラグインコマンド
  * Tachie showLeft  actorId x y opacity # 立ち絵を左側に表示する
  * Tachie showRight actorId x y opacity # 立ち絵を右側に表示する
+ * Tachie hideLeft                      # 左側の立ち絵を非表示にする
+ * Tachie hideRight                     # 右側の立ち絵を非表示にする
  * Tachie face      actorId faceId      # アクターの表情を変更する
  * Tachie pose      actorId poseId      # アクターのポーズを変更する
  * Tachie hoppe     actorId hoppeId     # アクターのほっぺを変更する
@@ -143,8 +151,8 @@ for (let i = 0; i < colors.length; i++) {
 const balloonEnabled = parameters['balloonEnabled'] === 'true';
 
 var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-export const DEFAULT_PICTURE_ID1: number = 12;
-export const DEFAULT_PICTURE_ID2: number = 11;
+export const DEFAULT_PICTURE_ID1: number = 11;
+export const DEFAULT_PICTURE_ID2: number = 12;
 const ACTOR_PREFIX: string = '___actor';
 
 export const LEFT_POS = 1;
@@ -186,6 +194,41 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'clearWindowColor':
             $gameTemp.tachieActorId = 0;
             break;
+        case 'windowColor':
+            $gameTemp.tachieActorId = parseInt(args[1]);
+            break;
+        case 'hideLeft':
+        {
+            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
+            let commands: Array<RPG.EventCommand> = [];
+            if (picture1 && picture1.opacity() > 0) {
+                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1,
+                                            0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, true]};
+                commands.push(c);
+            }
+            const c: RPG.EventCommand = {'code': 235, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1]};
+            commands.push(c);
+            for (const c of commands) {
+                this._list.splice(this._index + 1, 0, c);
+            }
+            break;
+        }
+        case 'hideRight':
+        {
+            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+            let commands: Array<RPG.EventCommand> = [];
+            if (picture2 && picture2.opacity() > 0) {
+                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1,
+                                            0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 30, true]};
+                commands.push(c);
+            }
+            const c: RPG.EventCommand = {'code': 235, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2]};
+            commands.push(c);
+            for (const c of commands) {
+                this._list.splice(this._index + 1, 0, c);
+            }
+            break;
+        }
         case 'hide':
             {
             const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
@@ -797,8 +840,8 @@ var TachieDrawerMixin = function() {
         }
         var actor = $gameActors.actor(actorId);
         var point = this.calcTachieActorPos(actor);
-        rect.x -= point.x;
-        rect.y -= point.y;
+        rect.x += point.x;
+        rect.y += point.y;
         var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
         actor.clearDirty();
         if (actor.isCacheChanged()) {
@@ -839,7 +882,6 @@ var TachieDrawerMixin = function() {
         if (h <= 0 || h + yy > cache.height) {
             h = cache.height - yy;
         }
-        console.log( xx, yy, w, h, x, y)
         bitmap.blt(cache, xx, yy, w, h, x, y);
         //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
     };
@@ -1031,6 +1073,10 @@ class Sprite_WindowBalloon extends Sprite_Base {
             return;
         }
         if (! $gameTemp.tachieName) {
+            this.visible = false;
+            return;
+        }
+        if ($gameTemp.hideBalloon) {
             this.visible = false;
             return;
         }

@@ -82,8 +82,23 @@
  * 　　　flag: string
  * 　　　　→on: 閉じなくする  off: 解除する
  *
+ * 　hide_left
+ * 　＞左のキャラを非表示にします
+ *
+ * 　hide_right
+ * 　＞右のキャラを非表示にします
+ *
+ * 　color
+ * 　＞ウィンドウカラーを設定します。
+ * 　　キャラの会話では自動で設定されますが、
+ * 　　通常の地の文などでは前回の色を引き継いでしまうため、
+ * 　　このコマンドで指定し直すことができます。
+ * 　　■パラメータ
+ * 　　　color: number
+ * 　　　　→ウィンドウ色ID
+ * 
  * 　hide
- * 　＞キャラクターを非表示にし、ウィンドウが閉じなくなるモードを
+ * 　＞全てのキャラクターを非表示にし、ウィンドウが閉じなくなるモードを
  * 　　合わせて解除します。
  *
  * 　default_pos
@@ -497,7 +512,7 @@ export class Scenario_Converter {
                 }
                 let offset = 1;
                 lines[i + offset] = this.removeWS(lines[i + offset]);
-                while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
+                while (i + offset < lines.length && (lines[i + offset].indexOf('@') !== 0 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
                     offset++;
                     lines[i + offset] = this.removeWS(lines[i + offset]);
@@ -506,11 +521,13 @@ export class Scenario_Converter {
             } else {
                 block.header = '@normal_messages';
                 let offset = 0;
-                while (i + offset < lines.length && lines[i + offset].indexOf('@') === -1 && lines[i + offset].length > 0) {
+                while (i + offset < lines.length && lines[i + offset].indexOf('@') !== 0 && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
                     offset++;
                 }
-                i += offset - 1;
+                if (offset >= 1) {
+                    i += offset - 1;
+                }
             }
         }
 
@@ -618,11 +635,20 @@ export class Scenario_Converter {
     convertCommand_start(context: Context): void {
         this.defaultPosMap = {};
         this._defaultMobNameMap = {};
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose on`]});
     }
     convertCommand_hide(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose off`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hide`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideBalloon`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+    }
+    convertCommand_hide_left(context: Context): void {
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideLeft`]});
+    }
+    convertCommand_hide_right(context: Context): void {
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideRight`]});
     }
     convertCommand_default_pos(context: Context): void {
         var actorId = parseInt(context.header['actor']);
@@ -673,6 +699,17 @@ export class Scenario_Converter {
         }
         this.convertCommand_messages(context);
     }
+    convertCommand_color(context: Context): void {
+        let color = 0;
+        if (context.header['color']) {
+            color = context.headerInt('color');
+        }
+        if (color > 0) {
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie windowColor ` + color]});
+        } else {
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+        }
+    }
     convertCommand_m(mobId: number, context: Context): void {
         let name = this._defaultMobNameMap[mobId] || '';
         if (context.header['name']) {
@@ -689,9 +726,18 @@ export class Scenario_Converter {
         if (context.header['index']) {
             index = context.headerInt('index');
         }
+        
+        let color = 0;
+        if (context.header['color']) {
+            color = context.headerInt('color');
+        }
 
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideBalloon`]});
-        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+        if (color > 0) {
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie windowColor ` + color]});
+        } else {
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+        }
         context.push({'code': 101, 'indent': this.indent, 'parameters': [face, index, 0, 2]});
         for (const msg of context.data) {
             context.push({'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)]});

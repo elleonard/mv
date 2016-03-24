@@ -203,6 +203,9 @@ validates['start'] = {};
 validates['hide'] = {};
 validates['else'] = {};
 validates['return'] = {};
+validates['hide_left'] = {};
+validates['hide_right'] = {};
+validates['color'] = {};
 validates['default_pos'] = {
     'actor': [
                 notEmpty(),

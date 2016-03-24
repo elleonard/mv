@@ -132,6 +132,11 @@
 @hide_left
 @hide_right
 @color
+@start
+@hide
+@mob
+@route
+@end
 
 #Word Color=3, WholeWord=True, RightSide=False, MatchCase=True, InsideTag=False, RegEx=False
 value

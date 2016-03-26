@@ -1022,7 +1022,7 @@ class Window_MessageName extends Window_Base {
         var width = 180;
         var height = super.fittingHeight(1) + 14;
         var x = 30;
-        var y = 430;
+        var y = Graphics.boxHeight - 193;
         super(x, y, width, height);
 
         this.padding = 8;
@@ -1104,10 +1104,10 @@ class Sprite_WindowBalloon extends Sprite_Base {
     updatePosition(): void {
         if ($gameTemp.tachieActorPos === LEFT_POS) {
             this.scale.x = 1;
-            this.x = 300;
+            this.x = Graphics.boxWidth / 2 - 140;
         } else if ($gameTemp.tachieActorPos === RIGHT_POS) {
             this.scale.x = -1;
-            this.x = 500;
+            this.x = Graphics.boxWidth / 2 + 140;
         }
     }
 }

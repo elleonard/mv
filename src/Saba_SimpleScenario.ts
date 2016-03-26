@@ -556,6 +556,7 @@ export class Scenario_Converter {
         const header = this.parseHeader(headerList);
         var context = new Context(file, block.lineNumber, command, list, header, block.data);
         var n = /n(\d+)/.exec(command);
+        var a = /a(\d+)/.exec(command);
         var cos = /cos(\d+)/.exec(command);
         var m = /m(\d+)/.exec(command);
         var mob = /mob(\d+)/.exec(command);
@@ -563,6 +564,8 @@ export class Scenario_Converter {
             this.validate(context);
             if (n) {
                 this['convertCommand_n'](parseInt(n[1]), context);
+            } else if (a) {
+                this['convertCommand_n'](parseInt(a[1]), context);
             } else if (cos) {
                 this['convertCommand_cos'](parseInt(cos[1]), context);
             } else if (m) {
@@ -1180,7 +1183,7 @@ export class Scenario_Converter {
         context.push({'code': 122, 'indent': this.indent, 'parameters': [id, end, op, 0, value]});
     }
     convertCommand_self_sw(context: Context): void {
-        const id = context.headerInt('id');
+        const id = context.headerStr('id');
         const flag = context.headerStr('flag') === 'on' ? 0 : 1;
         context.push({'code': 123, 'indent': this.indent, 'parameters': [id, flag]});
     }
@@ -1503,7 +1506,7 @@ export class Scenario_Converter {
                 const file = header.headerStr('file', '');
                 const volume = header.headerInt('volume', 100);
                 const pitch = header.headerInt('pitch', 100);
-                const pan = header.headerInt('pitch', 0);
+                const pan = header.headerInt('pan', 0);
                 let obj = {};
                 obj['name'] = file;
                 obj['volume'] = volume;
@@ -1642,7 +1645,7 @@ export class Scenario_Converter {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
-        var pan = context.headerInt('pan', 100);
+        var pan = context.headerInt('pan', 0);
         const bgm: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
 
         context.push({'code': 241, 'indent': this.indent, 'parameters': [bgm]});
@@ -1661,7 +1664,7 @@ export class Scenario_Converter {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
-        var pan = context.headerInt('pan', 100);
+        var pan = context.headerInt('pan', 0);
         const bgs: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
 
         context.push({'code': 245, 'indent': this.indent, 'parameters': [bgs]});
@@ -1674,7 +1677,7 @@ export class Scenario_Converter {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
-        var pan = context.headerInt('pan', 100);
+        var pan = context.headerInt('pan', 0);
         const me: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
 
         context.push({'code': 249, 'indent': this.indent, 'parameters': [me]});
@@ -1683,7 +1686,7 @@ export class Scenario_Converter {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
         var pitch = context.headerInt('pitch', 100);
-        var pan = context.headerInt('pan', 100);
+        var pan = context.headerInt('pan', 0);
         const se: RPG.AudioFile = {name: name, volume: volume, pitch: pitch, pan: pan};
 
         context.push({'code': 250, 'indent': this.indent, 'parameters': [se]});

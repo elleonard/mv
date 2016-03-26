@@ -91,7 +91,37 @@
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
  *
- * 同様に、右側に立つキャラは、pictureId 12 のピクチャで表示しています。
+ * 同様に、右側に立つキャラは、pictureId 12 
+ *
+ * ■画像の設定方法
+ * img/tachie フォルダを使います。
+ * ここに、全キャラ分の立ち絵画像を入れてください。
+ * ※「未使用ファイルを含まない」には非対応なので、
+ * 　手動でコピーしてください。
+ *
+ * 以下、アクター１の場合の例です。
+ * 
+ * actor01_<<表情ID>>.png
+ * 　→表情
+ * actor01_body_<<ポーズID>>.png
+ * 　→体
+ * actor01_face_<<ポーズID>>.png
+ * 　→頭
+ * actor01_hoppe.png
+ * 　→ほっぺ
+ * actor01_in_<<衣装ID>>_bottom.png
+ * 　→パンツ
+ * actor01_in_<<衣装ID>>_top.png
+ * 　→ブラ
+ * actor01_out_<<衣装ID>>_front_<<ポーズID>>.png
+ * actor01_out_<<衣装ID>>_main_<<ポーズID>>.png
+ * actor01_out_<<衣装ID>>_back_<<ポーズID>>.png
+ * 　→上着
+ *
+ * 必要ない場合でも、画像をよみに行ってエラーになる場合があります。
+ * その場合、透明な画像を入れておいてください。
+ *
+ * 
  *
  * プラグインコマンド
  * Tachie showLeft  actorId x y opacity # 立ち絵を左側に表示する
@@ -113,7 +143,6 @@
  * Tachie clear                         # 立ち絵を全て非表示にする
  * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
  *
- * 画像のレイヤー解説
  *
  */
 module Saba {
@@ -270,6 +299,10 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'showRight':
             $gameTemp.hideBalloon = false;
             ImageManager.isReady();
+            if (! args[1]) {
+                console.error(`プラグインコマンド${command}の${args[0]}の引数が足りません。actorId が必要です`);
+                return;
+            }
             var actorId: number = parseInt(args[1]);
             var x: number = parseInt(args[2] || '0');
             var y: number = parseInt(args[3] || '0');
@@ -283,6 +316,10 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'innerTop':
         case 'innerBottom':
             {
+            if (! args[1]) {
+                console.error(`プラグインコマンド${command}の${args[0]}の引数が足りません。actorId が必要です`);
+                return;
+            }
             const actor = $gameActors.actor(parseInt(args[1]));
             if (! actor) {
                 throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');

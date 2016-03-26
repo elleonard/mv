@@ -867,7 +867,7 @@ export class Scenario_Converter {
     convertCommand_if_self_sw(context: Context): void {
         this.indent++;
         const ifnum = 2
-        const id = context.headerInt('id');
+        const id = context.headerStr('id');
         const flag  = context.headerStr('flag', 'on') === 'on' ? 0 : 1
         context.push({'code':111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag]});
     }

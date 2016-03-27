@@ -15,7 +15,7 @@
  *
  * 
  * @help
- * Ver0.14
+ * Ver0.141
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -1616,7 +1616,7 @@ export class Scenario_Converter {
         const blend = context.headerInt('blend', 0);
         const time = context.headerInt('time', 0);
         const wait = context.headerBool('wait', true);
-        context.push({'code': 232, 'indent': this.indent, 'parameters': [layer, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait]});
+        context.push({'code': 232, 'indent': this.indent, 'parameters': [layer, 0, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait]});
     }
     convertCommand_picture_rotation(context: Context): void  {
         const layer = context.headerInt('layer');

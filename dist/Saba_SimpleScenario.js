@@ -34,7 +34,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver0.14
+ * Ver0.141
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -1639,7 +1639,7 @@ var Saba;
                 var blend = context.headerInt('blend', 0);
                 var time = context.headerInt('time', 0);
                 var wait = context.headerBool('wait', true);
-                context.push({ 'code': 232, 'indent': this.indent, 'parameters': [layer, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait] });
+                context.push({ 'code': 232, 'indent': this.indent, 'parameters': [layer, 0, origin, type, x, y, zoomX, zoomy, opacity, blend, time, wait] });
             };
             Scenario_Converter.prototype.convertCommand_picture_rotation = function (context) {
                 var layer = context.headerInt('layer');

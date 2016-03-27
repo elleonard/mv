@@ -923,7 +923,6 @@ var TachieDrawerMixin = function() {
             h = cache.height - yy;
         }
         bitmap.blt(cache, xx, yy, w, h, x, y);
-        //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
     };
     this.drawTachieFile = function(file: string, bitmap: Bitmap, actor: Game_Actor, x = 0, y = 0, rect: Rectangle): void {
         if (! file) {
@@ -948,16 +947,10 @@ var TachieDrawerMixin = function() {
         var trim = texture.trim;
         var crop = texture.crop;
         var w = crop.width;
-        if (w < rect.width) {
-            w = rect.width;
-        }
         var h = crop.height;
-        if (h < rect.height) {
-            h = rect.height;
-        }
-        var dx = trim.x + actor.tachieOffsetX + x;
-        var dy = trim.y + actor.tachieOffsetY + y;
-        bitmap.context.drawImage(img, frame.x + rect.x, frame.y + rect.y, crop.width, crop.height, dx, dy, w, h);
+        var dx = trim.x + rect.x;
+        var dy = trim.y + rect.y;
+        bitmap.context.drawImage(img, frame.x, frame.y, crop.width, crop.height, dx, dy, w, h);
     };
     this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle): void {
         var img: Bitmap = ImageManager.loadTachie(file);

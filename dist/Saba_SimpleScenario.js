@@ -34,7 +34,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver0.1
+ * Ver0.14
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -101,8 +101,23 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　　　flag: string
  * 　　　　→on: 閉じなくする  off: 解除する
  *
+ * 　hide_left
+ * 　＞左のキャラを非表示にします
+ *
+ * 　hide_right
+ * 　＞右のキャラを非表示にします
+ *
+ * 　color
+ * 　＞ウィンドウカラーを設定します。
+ * 　　キャラの会話では自動で設定されますが、
+ * 　　通常の地の文などでは前回の色を引き継いでしまうため、
+ * 　　このコマンドで指定し直すことができます。
+ * 　　■パラメータ
+ * 　　　color: number
+ * 　　　　→ウィンドウ色ID
+ *
  * 　hide
- * 　＞キャラクターを非表示にし、ウィンドウが閉じなくなるモードを
+ * 　＞全てのキャラクターを非表示にし、ウィンドウが閉じなくなるモードを
  * 　　合わせて解除します。
  *
  * 　default_pos
@@ -331,20 +346,20 @@ var Saba;
         }
         var pathParam = parameters['scenarioFolder'];
         var SCENARIO_FILE_NAME = 'Scenario.json';
-        var SCENARIO_PATH = function () {
-            var path = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
-            if (path.match(/^\/([A-Z]\:)/)) {
-                path = path.slice(1);
+        SimpleScenario.SCENARIO_PATH = function () {
+            var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, pathParam);
+            if (p.match(/^\/([A-Z]\:)/)) {
+                p = p.slice(1);
             }
-            return decodeURIComponent(path);
-        };
+            return decodeURIComponent(p);
+        }();
         var DATA_PATH = function () {
-            var path = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
-            if (path.match(/^\/([A-Z]\:)/)) {
-                path = path.slice(1);
+            var p = window.location.pathname.replace(/(\/www|)\/[^\/]*$/, '/data/');
+            if (p.match(/^\/([A-Z]\:)/)) {
+                p = p.slice(1);
             }
-            return decodeURIComponent(path);
-        };
+            return decodeURIComponent(p);
+        }();
         DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
         // 変換ボタン。F7
         Input.keyMapper[118] = 'debug2';
@@ -409,7 +424,7 @@ var Saba;
                 var self = this;
                 this._replaceMap = {};
                 var scenario = {};
-                fs.readdir(SCENARIO_PATH, function (err, files) {
+                fs.readdir(SimpleScenario.SCENARIO_PATH, function (err, files) {
                     if (err) {
                         console.error(err.message);
                         return;
@@ -420,28 +435,26 @@ var Saba;
                     self.convertReplace(files);
                     for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
                         var file = files_1[_i];
-                        var filePath = path.resolve(SCENARIO_PATH, file);
+                        var filePath = path.resolve(SimpleScenario.SCENARIO_PATH, file);
                         var stat = fs.statSync(filePath);
                         if (stat.isDirectory()) {
                             var files2 = fs.readdirSync(filePath);
                             for (var _a = 0, files2_1 = files2; _a < files2_1.length; _a++) {
                                 var file2 = files2_1[_a];
-                                var index_1 = file2.indexOf('.txt');
-                                if (index_1 === -1) {
+                                var name_1 = self.parseValidFileName(file2);
+                                if (!name_1) {
                                     continue;
                                 }
-                                var name_1 = file2.substr(0, index_1);
                                 var text_1 = fs.readFileSync(filePath + '/' + file2, 'utf8');
                                 scenario[name_1] = self.convert(file2, text_1);
                             }
                             continue;
                         }
-                        var index = file.indexOf('.txt');
-                        if (index === -1) {
+                        var name_2 = self.parseValidFileName(file);
+                        if (!name_2) {
                             continue;
                         }
-                        var name_2 = file.substr(0, index);
-                        var text = fs.readFileSync(SCENARIO_PATH + file, 'utf8');
+                        var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
                         scenario[name_2] = self.convert(file, text);
                     }
                     console.log(scenario);
@@ -449,6 +462,20 @@ var Saba;
                     DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
                     console.log('シナリオの変換が終わりました');
                 });
+            };
+            Scenario_Converter.prototype.parseValidFileName = function (file) {
+                if (file.indexOf('replace.txt') === 0) {
+                    return;
+                }
+                var index = file.indexOf('.txt');
+                if (index === -1) {
+                    index = file.indexOf('.sce');
+                }
+                if (index === -1) {
+                    return null;
+                }
+                var name = file.substr(0, index);
+                return name;
             };
             Scenario_Converter.prototype.convertReplace = function (files) {
                 for (var _i = 0, files_2 = files; _i < files_2.length; _i++) {
@@ -458,8 +485,9 @@ var Saba;
                         continue;
                     }
                     var name_3 = file.substr(0, index);
-                    var text = fs.readFileSync(SCENARIO_PATH + file, 'utf8');
+                    var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
                     this.parseReplace(text);
+                    return;
                 }
             };
             Scenario_Converter.prototype.parseReplace = function (text) {
@@ -500,7 +528,7 @@ var Saba;
                         }
                         var offset = 1;
                         lines[i + offset] = this.removeWS(lines[i + offset]);
-                        while (i + offset < lines.length && (lines[i + offset].indexOf('@') === -1 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
+                        while (i + offset < lines.length && (lines[i + offset].indexOf('@') !== 0 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                             block.pushMsg(this.removeWS(lines[i + offset]));
                             offset++;
                             lines[i + offset] = this.removeWS(lines[i + offset]);
@@ -510,11 +538,13 @@ var Saba;
                     else {
                         block.header = '@normal_messages';
                         var offset = 0;
-                        while (i + offset < lines.length && lines[i + offset].indexOf('@') === -1 && lines[i + offset].length > 0) {
+                        while (i + offset < lines.length && lines[i + offset].indexOf('@') !== 0 && lines[i + offset].length > 0) {
                             block.pushMsg(this.removeWS(lines[i + offset]));
                             offset++;
                         }
-                        i += offset - 1;
+                        if (offset >= 1) {
+                            i += offset - 1;
+                        }
                     }
                 }
                 for (var _i = 0, blocks_1 = blocks; _i < blocks_1.length; _i++) {
@@ -544,6 +574,7 @@ var Saba;
                 var header = this.parseHeader(headerList);
                 var context = new Context(file, block.lineNumber, command, list, header, block.data);
                 var n = /n(\d+)/.exec(command);
+                var a = /a(\d+)/.exec(command);
                 var cos = /cos(\d+)/.exec(command);
                 var m = /m(\d+)/.exec(command);
                 var mob = /mob(\d+)/.exec(command);
@@ -551,6 +582,9 @@ var Saba;
                     this.validate(context);
                     if (n) {
                         this['convertCommand_n'](parseInt(n[1]), context);
+                    }
+                    else if (a) {
+                        this['convertCommand_n'](parseInt(a[1]), context);
                     }
                     else if (cos) {
                         this['convertCommand_cos'](parseInt(cos[1]), context);
@@ -629,11 +663,20 @@ var Saba;
             Scenario_Converter.prototype.convertCommand_start = function (context) {
                 this.defaultPosMap = {};
                 this._defaultMobNameMap = {};
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie notClose on"] });
             };
             Scenario_Converter.prototype.convertCommand_hide = function (context) {
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie notClose off"] });
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hide"] });
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideBalloon"] });
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+            };
+            Scenario_Converter.prototype.convertCommand_hide_left = function (context) {
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideLeft"] });
+            };
+            Scenario_Converter.prototype.convertCommand_hide_right = function (context) {
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideRight"] });
             };
             Scenario_Converter.prototype.convertCommand_default_pos = function (context) {
                 var actorId = parseInt(context.header['actor']);
@@ -680,6 +723,18 @@ var Saba;
                 }
                 this.convertCommand_messages(context);
             };
+            Scenario_Converter.prototype.convertCommand_color = function (context) {
+                var color = 0;
+                if (context.header['color']) {
+                    color = context.headerInt('color');
+                }
+                if (color > 0) {
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie windowColor " + color] });
+                }
+                else {
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+                }
+            };
             Scenario_Converter.prototype.convertCommand_m = function (mobId, context) {
                 var name = this._defaultMobNameMap[mobId] || '';
                 if (context.header['name']) {
@@ -694,8 +749,17 @@ var Saba;
                 if (context.header['index']) {
                     index = context.headerInt('index');
                 }
+                var color = 0;
+                if (context.header['color']) {
+                    color = context.headerInt('color');
+                }
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideBalloon"] });
-                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+                if (color > 0) {
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie windowColor " + color] });
+                }
+                else {
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+                }
                 context.push({ 'code': 101, 'indent': this.indent, 'parameters': [face, index, 0, 2] });
                 for (var _i = 0, _a = context.data; _i < _a.length; _i++) {
                     var msg = _a[_i];
@@ -748,7 +812,7 @@ var Saba;
                         continue;
                     }
                     var value = this._replaceMap[key];
-                    var regExp = new RegExp(value, 'g');
+                    var regExp = new RegExp(key, 'g');
                     text = text.replace(regExp, value);
                 }
                 return text;
@@ -825,7 +889,7 @@ var Saba;
             Scenario_Converter.prototype.convertCommand_if_self_sw = function (context) {
                 this.indent++;
                 var ifnum = 2;
-                var id = context.headerInt('id');
+                var id = context.headerStr('id');
                 var flag = context.headerStr('flag', 'on') === 'on' ? 0 : 1;
                 context.push({ 'code': 111, 'indent': this.indent - 1, 'parameters': [ifnum, id, flag] });
             };
@@ -1141,7 +1205,7 @@ var Saba;
                 context.push({ 'code': 122, 'indent': this.indent, 'parameters': [id, end, op, 0, value] });
             };
             Scenario_Converter.prototype.convertCommand_self_sw = function (context) {
-                var id = context.headerInt('id');
+                var id = context.headerStr('id');
                 var flag = context.headerStr('flag') === 'on' ? 0 : 1;
                 context.push({ 'code': 123, 'indent': this.indent, 'parameters': [id, flag] });
             };
@@ -1465,7 +1529,7 @@ var Saba;
                             var file = header.headerStr('file', '');
                             var volume = header.headerInt('volume', 100);
                             var pitch = header.headerInt('pitch', 100);
-                            var pan = header.headerInt('pitch', 0);
+                            var pan = header.headerInt('pan', 0);
                             var obj = {};
                             obj['name'] = file;
                             obj['volume'] = volume;
@@ -1604,7 +1668,7 @@ var Saba;
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
                 var pitch = context.headerInt('pitch', 100);
-                var pan = context.headerInt('pan', 100);
+                var pan = context.headerInt('pan', 0);
                 var bgm = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 241, 'indent': this.indent, 'parameters': [bgm] });
             };
@@ -1622,7 +1686,7 @@ var Saba;
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
                 var pitch = context.headerInt('pitch', 100);
-                var pan = context.headerInt('pan', 100);
+                var pan = context.headerInt('pan', 0);
                 var bgs = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 245, 'indent': this.indent, 'parameters': [bgs] });
             };
@@ -1634,7 +1698,7 @@ var Saba;
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
                 var pitch = context.headerInt('pitch', 100);
-                var pan = context.headerInt('pan', 100);
+                var pan = context.headerInt('pan', 0);
                 var me = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 249, 'indent': this.indent, 'parameters': [me] });
             };
@@ -1642,7 +1706,7 @@ var Saba;
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
                 var pitch = context.headerInt('pitch', 100);
-                var pan = context.headerInt('pan', 100);
+                var pan = context.headerInt('pan', 0);
                 var se = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 250, 'indent': this.indent, 'parameters': [se] });
             };
@@ -2034,6 +2098,7 @@ var Saba;
             'position': SimpleScenario.list('right', 'left'),
         };
         SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
+        SimpleScenario.validates['a1'] = SimpleScenario.validates['a2'] = SimpleScenario.validates['a3'] = SimpleScenario.validates['a4'] = SimpleScenario.validates['a5'] = SimpleScenario.validates['a6'] = SimpleScenario.validates['a7'] = SimpleScenario.validates['a8'] = SimpleScenario.validates['a9'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['m1'] = {
             'index': SimpleScenario.isNumeric(0),
         };
@@ -2053,6 +2118,9 @@ var Saba;
         SimpleScenario.validates['hide'] = {};
         SimpleScenario.validates['else'] = {};
         SimpleScenario.validates['return'] = {};
+        SimpleScenario.validates['hide_left'] = {};
+        SimpleScenario.validates['hide_right'] = {};
+        SimpleScenario.validates['color'] = {};
         SimpleScenario.validates['default_pos'] = {
             'actor': [
                 SimpleScenario.notEmpty(),

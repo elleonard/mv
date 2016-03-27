@@ -15,7 +15,7 @@
  *
  * 
  * @help
- * Ver0.1
+ * Ver0.14
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html

@@ -872,13 +872,15 @@ class _Game_Screen extends Game_Screen {
 
 var TachieDrawerMixin = function() {
     this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0): void {
-        if (! rect) {
-            rect = new Rectangle(0, 0, 0, 0);
-        }
         var actor = $gameActors.actor(actorId);
         var point = this.calcTachieActorPos(actor);
-        rect.x += point.x;
-        rect.y += point.y;
+        if (! rect) {
+            rect = new Rectangle(0, 0, 0, 0);
+            x += point.x;
+            y += point.y;
+        }
+        //rect.x += point.x;
+        //rect.y += point.y;
         var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
         actor.clearDirty();
         if (actor.isCacheChanged()) {
@@ -893,6 +895,7 @@ var TachieDrawerMixin = function() {
             this.drawTachieOuterFront(actor, cache);
             console.log('createCache:' + actor.actorId());
         }
+        
         this.drawTachieCache(actor, cache, bitmap, x, y, rect);
         this.drawTachieHoppe(actor, bitmap, x, y, rect);
         this.drawTachieFace(actor, bitmap, x, y, rect, faceId);

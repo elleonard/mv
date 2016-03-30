@@ -13,7 +13,7 @@
         "noLib": false,
         "preserveConstEnums": true,
         "suppressImplicitAnyIndexErrors": true,
-        "outDir": "../Project/js/plugins"
+        "outDir": "../js/"
     },
     "exclude": [
         "node_modules",

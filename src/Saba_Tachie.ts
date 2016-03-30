@@ -58,6 +58,30 @@
  * @desc 各キャラのウィンドウカラーの配列です(0だとデフォルト色)
  * @default 3, 0, 1, 2, 1
  *
+ * @param enableFaceLayer
+ * @desc actor01_face_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableBodyLayer
+ * @desc actor01_body_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableHairLayer
+ * @desc actor01_hair_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterBackLayer
+ * @desc actor01_out_b_back_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterMainLayer
+ * @desc actor01_out_b_main_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterFrontLayer
+ * @desc actor01_out_b_front_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ * 
  * @param useTextureAtlas
  * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？ TexturePackerを使い、actor01.png actor01.json などが必要です
  * @default false
@@ -69,6 +93,26 @@
  * @param windowHideKey
  * @desc ウィンドウ消去に使うボタンです
  * @default shift
+ *
+ * @param inactiveActorTone
+ * @desc 喋っていない方のキャラの Tone です
+ * @default -60, -60, -60, 0
+ * 
+ * @param nameLeft
+ * @desc 名前の表示ウィンドウの左の領域です
+ * @default 30
+ *
+ * @param fontSize
+ * @desc メッセージウィンドウのフォントサイズです
+ * @default 28
+ *
+ * @param windowMargin
+ * @desc メッセージウィンドウの表示位置の空きです。上、右、下、左の順です
+ * @default 0, 0, 0, 0
+ *
+ * @param windowPadding
+ * @desc メッセージウィンドウの文字と枠の空きです。上、右、下、左の順です
+ * @default 0, 0, 0, 0
  *
  * @requiredAssets img/system/Tachie_Window1
  * @requiredAssets img/system/Tachie_Window2
@@ -106,6 +150,8 @@
  * actor01_body_<<ポーズID>>.png
  * 　→体
  * actor01_face_<<ポーズID>>.png
+ * 　→後ろ髪
+ * actor01_hair_<<ポーズID>>.png
  * 　→頭
  * actor01_hoppe.png
  * 　→ほっぺ
@@ -150,6 +196,33 @@ export module Tachie {
 
 const parameters = PluginManager.parameters('Saba_Tachie');
 const rightPosX = parseInt(parameters['rightPosX']);
+const nameLeft = parseInt(parameters['nameLeft']);
+const fontSize = parseInt(parameters['fontSize']);
+const windowMarginParam = parameters['windowMargin'].split(',');
+const windowMargin = [0, 0, 0, 0];
+for (let i = 0; i < windowMarginParam.length; i++) {
+    windowMargin[i] = parseInt(windowMarginParam[i]);
+    if (isNaN(windowMargin[i])) {
+        windowMargin[i] = 0;
+    }
+}
+const windowPaddingParam = parameters['windowPadding'].split(',');
+const windowPadding = [0, 0, 0, 0];
+for (let i = 0; i < windowPaddingParam.length; i++) {
+    windowPadding[i] = parseInt(windowPaddingParam[i]);
+    if (isNaN(windowPadding[i])) {
+        windowPadding[i] = 0;
+    }
+}
+const inactiveActorToneStr = parameters['inactiveActorTone'].split(',');
+const inactiveActorTone = [0, 0, 0, 0];
+for (let i = 0; i < inactiveActorToneStr.length; i++) {
+    inactiveActorTone[i] = parseInt(inactiveActorToneStr[i]);
+    if (isNaN(inactiveActorTone[i])) {
+        inactiveActorTone[i] = 0;
+    }
+}
+const toneChangeDuration = 30;
 export const windowColors: {[actorId: number]: number} = {};
 export const offsetX = {};
 export const offsetY = {};
@@ -178,8 +251,13 @@ for (let i = 0; i < colors.length; i++) {
 }
 
 const balloonEnabled = parameters['balloonEnabled'] === 'true';
-
-var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
+const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
+const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
+const enableHairLayer = parameters['enableHairLayer'] === 'true';
+const enableOuterBackLayer = parameters['enableOuterBackLayer'] === 'true';
+const enableOuterMainLayer = parameters['enableOuterMainLayer'] === 'true';
+const enableOuterFrontLayer = parameters['enableOuterFrontLayer'] === 'true';
+const useTextureAtlas = parameters['useTextureAtlas'] === 'true';
 export const DEFAULT_PICTURE_ID1: number = 11;
 export const DEFAULT_PICTURE_ID2: number = 12;
 const ACTOR_PREFIX: string = '___actor';
@@ -350,35 +428,69 @@ class _Game_Interpreter extends Game_Interpreter {
     tachiePictureCommnad(command: string, actorId: number, x: number, y: number, opacity: number): void {
         switch (command) {
         case 'showLeft':
+        {
             $gameTemp.tachieActorId = actorId;
             $gameTemp.tachieActorPos = LEFT_POS;
+            var lastTone = [0, 0, 0, 0];
             if (opacity < 255) {
                 const picture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
                 if (picture && picture.tachieActorId === actorId) {
                     opacity = 255;
+                    lastTone = picture.tone();
                 }
             }
+            
             $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
+            const picture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
+            picture.tint(lastTone, 0);
+            
+            var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, [0, 0, 0, 0], toneChangeDuration, false]};
+            this._list.splice(this._index + 1, 0, c);
+            
             if (opacity < 255) {
                 var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true]};
                 this._list.splice(this._index + 1, 0, c);
             }
+            const rightPicture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+            if (rightPicture && rightPicture.name() != '') {
+                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false]};
+                this._list.splice(this._index + 1, 0, c);
+            }
             break;
+        }
         case 'showRight':
+        {
             $gameTemp.tachieActorId = actorId;
             $gameTemp.tachieActorPos = RIGHT_POS;
+            var lastTone = [0, 0, 0, 0];
             const picId = DEFAULT_PICTURE_ID2;
-            const picture = $gameScreen.picture(picId);
-            if (picture && picture.tachieActorId === actorId) {
-                opacity = 255;
+            if (opacity < 255) {
+                const picture = $gameScreen.picture(picId);
+                if (picture && picture.tachieActorId === actorId) {
+                    opacity = 255;
+                    lastTone = picture.tone();
+                }
             }
+            
             const xx = x + rightPosX;
             $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
+            const picture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+            picture.tint(lastTone, 0);
+            
+            var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false]};
+            this._list.splice(this._index + 1, 0, c);
+            
             if (opacity < 255) {
                 var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true]};
                 this._list.splice(this._index + 1, 0, c);
             }
+            const leftPicture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
+            if (leftPicture && leftPicture.name() != '') {
+                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false]};
+                this._list.splice(this._index + 1, 0, c);
+            }
             break;
+        }
         }
     }
     tachieActorCommnad(actor: Game_Actor, command: string, arg2: string, args): void {
@@ -727,6 +839,7 @@ class _Game_Actor extends Game_Actor {
             this.doPreloadTachie(this.bodyFrontFile());
             this.doPreloadTachie(this.innerBottomFile());
             this.doPreloadTachie(this.innerTopFile());
+            this.doPreloadTachie(this.hairFile());
             this.doPreloadTachie(this.hoppeFile());
             this.doPreloadTachie(this.faceFile());
         }
@@ -746,6 +859,9 @@ class _Game_Actor extends Game_Actor {
         ImageManager.loadTachie(file);
     }
     outerBackFile(): string {
+        if (! enableOuterBackLayer) {
+            return null;
+        }
         return this.baseId + 'out_' + this.outerId + '_back_' + this.poseId;
     }
     outerShadowFile(): string {
@@ -755,21 +871,33 @@ class _Game_Actor extends Game_Actor {
         return this.baseId + 'out_' + this.outerId + '_shadow_' + this.poseId;
     }
     outerMainFile(): string {
+        if (! enableOuterMainLayer) {
+            return null;
+        }
         if (! this.hasOuter()) {
             return null;
         }
         return this.baseId + 'out_' + this.outerId + '_main_' + this.poseId;
     }
     outerFrontFile(): string {
+        if (! enableOuterFrontLayer) {
+            return null;
+        }
         if (! this.hasOuter()) {
             return null;
         }
         return this.baseId + 'out_' + this.outerId + '_front_' + this.poseId;
     }
     bodyBackFile(): string {
+        if (! enableBodyLayer) {
+            return null;
+        }
         return this.baseId + 'body_' + this.poseId;
     }
     bodyFrontFile(): string {
+        if (! enableFaceLayer) {
+            return null;
+        }
         return this.baseId + 'face_' + this.poseId;
     }
     innerBottomFile(): string {
@@ -783,6 +911,12 @@ class _Game_Actor extends Game_Actor {
             return null;
         }
         return this.baseId + 'in_' + this.innerTopId + '_top';
+    }
+    hairFile(): string {
+        if (! enableHairLayer) {
+            return null;
+        }
+        return this.baseId + 'hair_' + this.poseId;
     }
     hoppeFile(): string {
         if (this.hoppeId === 0) {
@@ -871,7 +1005,7 @@ class _Game_Screen extends Game_Screen {
 }
 
 var TachieDrawerMixin = function() {
-    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0): void {
+    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1): void {
         var actor = $gameActors.actor(actorId);
         var point = this.calcTachieActorPos(actor);
         if (! rect) {
@@ -886,6 +1020,7 @@ var TachieDrawerMixin = function() {
         if (actor.isCacheChanged()) {
             cache.clear();
             actor.clearCacheChanged();
+            this.drawTachieHair(actor, cache);
             this.drawTachieOuterBack(actor, cache);
             this.drawTachieBodyBack(actor, cache);
             this.drawTachieInnerBottom(actor, cache);
@@ -896,9 +1031,9 @@ var TachieDrawerMixin = function() {
             console.log('createCache:' + actor.actorId());
         }
         
-        this.drawTachieCache(actor, cache, bitmap, x, y, rect);
-        this.drawTachieHoppe(actor, bitmap, x, y, rect);
-        this.drawTachieFace(actor, bitmap, x, y, rect, faceId);
+        this.drawTachieCache(actor, cache, bitmap, x, y, rect, scale);
+        this.drawTachieHoppe(actor, bitmap, x, y, rect, scale);
+        this.drawTachieFace(actor, bitmap, x, y, rect, faceId, scale);
     };
     this.calcTachieActorPos = function(actor: Game_Actor): Point {
         var dx = actor.tachieOffsetX;
@@ -911,20 +1046,24 @@ var TachieDrawerMixin = function() {
         }
         return new Point(dx, dy);
     };
-    this.drawTachieCache = function(actor: Game_Actor, cache: Bitmap, bitmap: Bitmap, x: number, y: number, rect: Rectangle): void {
+    this.drawTachieCache = function(actor: Game_Actor, cache: Bitmap, bitmap: Bitmap, x: number, y: number, rect: Rectangle, scale: number): void {
         var xx = -rect.x < 0 ? 0 : -rect.x;
         var yy = -rect.y < 0 ? 0 : -rect.y;
+        var ww = rect.width / scale; 
         var w = rect.width;
         if (w <= 0 || w + xx > cache.width) {
             w = cache.width - xx;
+            ww = w;
         }
+        var hh = rect.height / scale;
         var h = rect.height;
         if (h <= 0 || h + yy > cache.height) {
             h = cache.height - yy;
+            hh = h;
         }
-        bitmap.blt(cache, xx, yy, w, h, x, y);
+        bitmap.blt(cache, xx, yy, ww, hh, x, y, w, h);
     };
-    this.drawTachieFile = function(file: string, bitmap: Bitmap, actor: Game_Actor, x = 0, y = 0, rect: Rectangle): void {
+    this.drawTachieFile = function(file: string, bitmap: Bitmap, actor: Game_Actor, x = 0, y = 0, rect: Rectangle, scale = 1): void {
         if (! file) {
             return;
         }
@@ -932,12 +1071,12 @@ var TachieDrawerMixin = function() {
             rect = Rectangle.emptyRectangle;
         }
         if (useTextureAtlas) {
-            this.drawTachieTextureAtlas(file, bitmap, actor, x, y, rect);
+            this.drawTachieTextureAtlas(file, bitmap, actor, x, y, rect, scale);
         } else {
-            this.drawTachieImage(file, bitmap, actor, x, y, rect);
+            this.drawTachieImage(file, bitmap, actor, x, y, rect, scale);
         }
     };
-    this.drawTachieTextureAtlas = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle): void {
+    this.drawTachieTextureAtlas = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
         var texture = PIXI.TextureCache[file + '.png'];
         if (! texture) {
             return;
@@ -950,9 +1089,10 @@ var TachieDrawerMixin = function() {
         var h = crop.height;
         var dx = trim.x + rect.x;
         var dy = trim.y + rect.y;
-        bitmap.context.drawImage(img, frame.x, frame.y, crop.width, crop.height, dx, dy, w, h);
+
+        bitmap.context.drawImage(img, frame.x, frame.y, w, h, dx * scale + x, dy * scale + y, w * scale, h * scale);
     };
-    this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle): void {
+    this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
         var img: Bitmap = ImageManager.loadTachie(file);
         if (! img.isReady()) {
             console.log('draw' + file);
@@ -961,15 +1101,22 @@ var TachieDrawerMixin = function() {
         }
         var xx = -rect.x < 0 ? 0 : -rect.x;
         var yy = -rect.y < 0 ? 0 : -rect.y;
-        var w = rect.width;
+        var ww = rect.width; 
+        var w = ww; 
         if (w <= 0 || w + xx > img.width) {
             w = img.width - xx;
+            ww = w;
         }
         var h = rect.height;
+        var hh = h;
         if (h <= 0 || h + yy > img.height) {
             h = img.height - yy;
+            hh = h;
         }
-        bitmap.blt(img, xx, yy, w, h, x, y);
+        bitmap.blt(img, xx, yy, ww, hh, x, y, w * scale, h * scale);
+    };
+    this.drawTachieHair = function(actor: Game_Actor, bitmap: Bitmap): void {
+        this.drawTachieFile(actor.hairFile(), bitmap, actor);
     };
     this.drawTachieOuterBack = function(actor: Game_Actor, bitmap: Bitmap): void {
         this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
@@ -998,17 +1145,20 @@ var TachieDrawerMixin = function() {
     this.drawTachieHoppe = function(actor: Game_Actor, bitmap: Bitmap, x: number, y: number, rect: Rectangle): void {
         this.drawTachieFile(actor.hoppeFile(), bitmap, actor, x, y, rect);
     };
-    this.drawTachieFace = function(actor: Game_Actor, bitmap: Bitmap, x: number, y: number, rect: Rectangle, faceId: number): void {
+    this.drawTachieFace = function(actor: Game_Actor, bitmap: Bitmap, x: number, y: number, rect: Rectangle, faceId: number, scale: number): void {
         if (faceId === 0) {
             faceId = actor.faceId;
         }
         var file = actor.baseId + faceId.padZero(2);
-        this.drawTachieFile(file, bitmap, actor, x, y, rect);
+        this.drawTachieFile(file, bitmap, actor, x, y, rect, scale);
     };
 
 };
 
-
+TachieDrawerMixin.call(Sprite_Base.prototype);
+TachieDrawerMixin.call(Sprite_Picture.prototype);
+TachieDrawerMixin.call(Window_Base.prototype);
+ 
 class _Sprite_Picture extends Sprite_Picture {
     updateBitmap(): void {
         _Sprite_Picture_updateBitmap.call(this);
@@ -1046,16 +1196,14 @@ class _Sprite_Picture extends Sprite_Picture {
     }
 }
 
-TachieDrawerMixin.call(Sprite_Picture.prototype)    
-TachieDrawerMixin.call(Window_Base.prototype)    
- 
+
 
 class Window_MessageName extends Window_Base {
-    constructor() {
+    constructor(windowHeight) {
         var width = 180;
         var height = super.fittingHeight(1) + 14;
-        var x = 30;
-        var y = Graphics.boxHeight - 193;
+        var x = nameLeft;
+        var y = Graphics.boxHeight - windowHeight - windowMargin[0] - windowMargin[2] - height;
         super(x, y, width, height);
 
         this.padding = 8;
@@ -1137,10 +1285,10 @@ class Sprite_WindowBalloon extends Sprite_Base {
     updatePosition(): void {
         if ($gameTemp.tachieActorPos === LEFT_POS) {
             this.scale.x = 1;
-            this.x = Graphics.boxWidth / 2 - 140;
+            this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 - 140;
         } else if ($gameTemp.tachieActorPos === RIGHT_POS) {
             this.scale.x = -1;
-            this.x = Graphics.boxWidth / 2 + 140;
+            this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 + 140;
         }
     }
 }
@@ -1155,15 +1303,24 @@ export class Window_TachieMessage extends Window_Message {
     constructor() {
         super();
     }
-    contentsHeight() {
-        return this.height ;
+    windowHeight() {
+        return super.windowHeight();
+    };
+    windowWidth(): number {
+        return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
     };
     numVisibleRows(): number {
         return 3;
     }
+    fittingHeight(numLines): number {
+        return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+    }
     _refreshContents(): void {
         this._windowContentsSprite.move(this.padding + 6, 0);
     };
+    contentsHeight() {
+        return this.windowHeight() - this.standardPadding() * 2 + 20;
+    }
     _updateContents(): void {
         var w = this._width - this._padding * 2;
         var h = this._height - 0 * 2;
@@ -1181,7 +1338,8 @@ export class Window_TachieMessage extends Window_Message {
     }
     createSubWindows(): void {
         super.createSubWindows();
-        this._messageNameWindow = new Window_MessageName();
+        console.log(this.windowHeight())
+        this._messageNameWindow = new Window_MessageName(this.windowHeight());
         this._balloonSprite = new Sprite_WindowBalloon(this);
         this._balloonSprite.y = -39;
         this.addChild(this._balloonSprite);
@@ -1272,12 +1430,12 @@ export class Window_TachieMessage extends Window_Message {
         if (BackLog) {
             BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
         }
-        this._textState.y = this.standardPadding();
+        this._textState.y = this.standardPadding() + windowPadding[0];
         this._balloonSprite.showBalloon();
         this._messageNameWindow.draw($gameTemp.tachieName);
     }
     updatePlacement(): void {
-        this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
+        this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
     }
     terminateMessage(): void {
         $gameMessage.clear();
@@ -1288,6 +1446,19 @@ export class Window_TachieMessage extends Window_Message {
     }
     textAreaWidth(): number {
         return this.contentsWidth() + 20;
+    }
+    standardFontSize() {
+        return fontSize;
+    }
+    lineHeight() {
+        return this.standardFontSize() + 8;
+    }
+    newLineX() {
+        var x = super.newLineX();
+        return x + windowPadding[3];
+    }
+    drawMessageFace(): void {
+        this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
     }
 }
 
@@ -1419,6 +1590,7 @@ interface Game_Actor {
     bodyFrontFile(): string;
     innerBottomFile(): string;
     innerTopFile(): string;
+    hairFile(): string;
     hoppeFile(): string;
     faceFile(): string;
     preloadFaces(faceIds: Array<string>): void;
@@ -1429,6 +1601,6 @@ interface ImageManagerStatic {
 interface Window_Base {
     drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number): void;
 }
-interface Sprite_Picture {
+interface Sprite_Base {
     drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number): void;
 }

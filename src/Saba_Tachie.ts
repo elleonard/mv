@@ -96,7 +96,12 @@
  *
  * @param inactiveActorTone
  * @desc 喋っていない方のキャラの Tone です
- * @default -60, -60, -60, 0
+ * @default -80, -80, -80, 0
+ *
+ * @param toneChangeDuration
+ * @desc 喋っていない方のキャラの Tone を変える時の時間です
+ * @default 25
+ * 
  * 
  * @param nameLeft
  * @desc 名前の表示ウィンドウの左の領域です
@@ -222,7 +227,7 @@ for (let i = 0; i < inactiveActorToneStr.length; i++) {
         inactiveActorTone[i] = 0;
     }
 }
-const toneChangeDuration = 30;
+const toneChangeDuration = parseInt(parameters['toneChangeDuration']);
 export const windowColors: {[actorId: number]: number} = {};
 export const offsetX = {};
 export const offsetY = {};
@@ -304,6 +309,20 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'windowColor':
             $gameTemp.tachieActorId = parseInt(args[1]);
             break;
+        case 'inactiveAll':
+        {
+            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
+            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+            if (picture1 && picture1.name() != '') {
+                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false]};
+                this._list.splice(this._index + 1, 0, c);
+            }
+            if (picture2 && picture2.name() != '') {
+                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false]};
+                this._list.splice(this._index + 1, 0, c);
+            }
+            break;
+        }
         case 'hideLeft':
         {
             const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);

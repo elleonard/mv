@@ -115,7 +115,12 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  * @param inactiveActorTone
  * @desc 喋っていない方のキャラの Tone です
- * @default -60, -60, -60, 0
+ * @default -80, -80, -80, 0
+ *
+ * @param toneChangeDuration
+ * @desc 喋っていない方のキャラの Tone を変える時の時間です
+ * @default 25
+ *
  *
  * @param nameLeft
  * @desc 名前の表示ウィンドウの左の領域です
@@ -149,7 +154,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-03-30 21:38:24
+ * Ver 2016-03-30 22:52:17
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -242,7 +247,7 @@ var Saba;
                 inactiveActorTone[i] = 0;
             }
         }
-        var toneChangeDuration = 30;
+        var toneChangeDuration = parseInt(parameters['toneChangeDuration']);
         Tachie.windowColors = {};
         Tachie.offsetX = {};
         Tachie.offsetY = {};
@@ -319,6 +324,20 @@ var Saba;
                     case 'windowColor':
                         $gameTemp.tachieActorId = parseInt(args[1]);
                         break;
+                    case 'inactiveAll':
+                        {
+                            var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                            var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                            if (picture1 && picture1.name() != '') {
+                                var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            if (picture2 && picture2.name() != '') {
+                                var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            break;
+                        }
                     case 'hideLeft':
                         {
                             var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
@@ -328,11 +347,11 @@ var Saba;
                                         0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, true] };
                                 commands.push(c_1);
                             }
-                            var c = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1] };
-                            commands.push(c);
+                            var c_2 = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1] };
+                            commands.push(c_2);
                             for (var _i = 0, commands_1 = commands; _i < commands_1.length; _i++) {
-                                var c_2 = commands_1[_i];
-                                this._list.splice(this._index + 1, 0, c_2);
+                                var c_3 = commands_1[_i];
+                                this._list.splice(this._index + 1, 0, c_3);
                             }
                             break;
                         }
@@ -341,15 +360,15 @@ var Saba;
                             var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
                             var commands = [];
                             if (picture2 && picture2.opacity() > 0) {
-                                var c_3 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
+                                var c_4 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
                                         0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 30, true] };
-                                commands.push(c_3);
+                                commands.push(c_4);
                             }
-                            var c = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2] };
-                            commands.push(c);
+                            var c_5 = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2] };
+                            commands.push(c_5);
                             for (var _a = 0, commands_2 = commands; _a < commands_2.length; _a++) {
-                                var c_4 = commands_2[_a];
-                                this._list.splice(this._index + 1, 0, c_4);
+                                var c_6 = commands_2[_a];
+                                this._list.splice(this._index + 1, 0, c_6);
                             }
                             break;
                         }
@@ -359,21 +378,21 @@ var Saba;
                             var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
                             var commands = [];
                             if (picture1 && picture1.opacity() > 0) {
-                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
+                                var c_7 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
                                         0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, false] };
-                                commands.push(c);
+                                commands.push(c_7);
                             }
                             if (picture2 && picture2.opacity() > 0) {
-                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2,
+                                var c_8 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2,
                                         0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 20, false] };
-                                commands.push(c);
+                                commands.push(c_8);
                             }
                             if (commands.length > 0) {
                                 commands[0]['parameters'][11] = true;
                             }
                             for (var _b = 0, commands_3 = commands; _b < commands_3.length; _b++) {
-                                var c = commands_3[_b];
-                                this._list.splice(this._index + 1, 0, c);
+                                var c_9 = commands_3[_b];
+                                this._list.splice(this._index + 1, 0, c_9);
                             }
                             var c2 = { 'code': 356, 'indent': this._indent, 'parameters': ["Tachie clear"] };
                             this._list.splice(this._index + 1 + commands.length, 0, c2);

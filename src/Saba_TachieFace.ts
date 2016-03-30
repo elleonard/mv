@@ -12,6 +12,38 @@
  * @param actor2offset
  * @desc アクター２のキャラの顔グラのx座標，y座標の補正値です
  * @default 0, 0
+ *
+ * @param actor3offset
+ * @desc アクター３のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor4offset
+ * @desc アクター４のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor5offset
+ * @desc アクター５のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor6offset
+ * @desc アクター６のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor7offset
+ * @desc アクター７のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor8offset
+ * @desc アクター８のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor9offset
+ * @desc アクター９のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
+ *
+ * @param actor10offset
+ * @desc アクター１０のキャラの顔グラのx座標，y座標の補正値です
+ * @default 0, 0
  * 
  * @help
  * Ver

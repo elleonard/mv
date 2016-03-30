@@ -511,11 +511,16 @@ export class Scenario_Converter {
                     continue;
                 }
                 let offset = 1;
+                if (i + offset === lines.length) {
+                    break;
+                }
                 lines[i + offset] = this.removeWS(lines[i + offset]);
                 while (i + offset < lines.length && (lines[i + offset].indexOf('@') !== 0 || lines[i + offset].indexOf('@route') !== -1) && lines[i + offset].length > 0) {
                     block.pushMsg(this.removeWS(lines[i + offset]));
                     offset++;
-                    lines[i + offset] = this.removeWS(lines[i + offset]);
+                    if (i + offset < lines.length) {
+                        lines[i + offset] = this.removeWS(lines[i + offset]);
+                    }
                 }
                 i += offset - 1;
             } else {
@@ -573,8 +578,11 @@ export class Scenario_Converter {
             } else if (mob) {
                 this['convertCommand_mob'](parseInt(mob[1]), context);
             } else {
-                if (! this['convertCommand_' + command]) {
-                    console.error(command + 'のコマンドが存在しません');
+                if (command === 'n' || command === 'a' || command === 'm' || command === 'mob') {
+                    context.error('のコマンドが存在しません');
+                }
+                else if (! this['convertCommand_' + command]) {
+                    context.error(command + 'のコマンドが存在しません');
                 } else {
                     this['convertCommand_' + command](context);
                 }
@@ -718,6 +726,7 @@ export class Scenario_Converter {
         if (context.header['name']) {
             name = context.headerStr('name');
         }
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie inactiveAll`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
 
         let face = '';

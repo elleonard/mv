@@ -154,7 +154,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-03-30 22:52:17
+ * Ver 2016-03-30 23:03:08
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1419,7 +1419,6 @@ var Saba;
             };
             Window_TachieMessage.prototype.createSubWindows = function () {
                 _super.prototype.createSubWindows.call(this);
-                console.log(this.windowHeight());
                 this._messageNameWindow = new Window_MessageName(this.windowHeight());
                 this._balloonSprite = new Sprite_WindowBalloon(this);
                 this._balloonSprite.y = -39;

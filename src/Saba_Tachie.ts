@@ -1357,7 +1357,6 @@ export class Window_TachieMessage extends Window_Message {
     }
     createSubWindows(): void {
         super.createSubWindows();
-        console.log(this.windowHeight())
         this._messageNameWindow = new Window_MessageName(this.windowHeight());
         this._balloonSprite = new Sprite_WindowBalloon(this);
         this._balloonSprite.y = -39;

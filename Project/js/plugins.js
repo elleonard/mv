@@ -3,13 +3,13 @@
 var $plugins =
 [
 {"name":"YED_WordWrap","status":true,"description":"文章の改行機能を提供します。長文を適切な位置で改行します。","parameters":{"Break Word":"true"}},
-{"name":"Saba_Lib","status":true,"description":"","parameters":{}},
-{"name":"Saba_KisekiWindow","status":true,"description":"画面下にアクターの情報を表示します","parameters":{"UseSmallFaceImage?":"false","HideSwitchId":"2","ShowTp?":"true","AreaWidth":"120"}},
-{"name":"Saba_Tachie","status":true,"description":"立ち絵を簡単に表示するプラグインです。別途画像が必要です","parameters":{"rightPosX":"400","actor1offset":"-50, 0","actor2offset":"0, 0","actor3offset":"0, 0","actor4offset":"0, 0","actor5offset":"0, 0","actor6offset":"0, 0","actor7offset":"0, 0","actor8offset":"0, 0","actor9offset":"0, 0","actor10offset":"0, 0","balloonEnabled":"true","windowColor":"3, 0, 1, 2, 1","useTextureAtlas":"false","skipKey":"control","windowHideKey":"shift"}},
-{"name":"Saba_SimpleScenario","status":true,"description":"テキストファイルからツクールのイベントを書き出すプラグインです。","parameters":{"autoWordWrap":"true","scenarioFolder":"/../scenario/"}},
-{"name":"Saba_SimpleScenarioValidator","status":true,"description":"","parameters":{}},
+{"name":"Saba_KisekiWindow","status":false,"description":"画面下にアクターの情報を表示します","parameters":{"UseSmallFaceImage?":"false","HideSwitchId":"2","ShowTp?":"true","AreaWidth":"120"}},
+{"name":"Saba_Tachie","status":true,"description":"立ち絵を簡単に表示するプラグインです。別途画像が必要です","parameters":{"rightPosX":"400","actor1offset":"-50, 0","actor2offset":"0, 10","actor3offset":"0, 0","actor4offset":"0, 0","actor5offset":"0, 0","actor6offset":"0, 0","actor7offset":"0, 0","actor8offset":"0, 0","actor9offset":"0, 0","actor10offset":"0, 0","balloonEnabled":"true","windowColor":"1, 2, 0, 2, 1","enableFaceLayer":"true","enableBodyLayer":"true","enableHairLayer":"true","enableOuterBackLayer":"true","enableOuterMainLayer":"true","enableOuterFrontLayer":"true","useTextureAtlas":"false","skipKey":"control","windowHideKey":"shift","inactiveActorTone":"-60, -60, -60, 0","nameLeft":"80","fontSize":"28","windowMargin":"0, 60, 0, 60","windowPadding":"0, 0, 0, 0"}},
+{"name":"Saba_SimpleScenario","status":true,"description":"テキストファイルからツクールのイベントを書き出すプラグインです。","parameters":{"autoWordWrap":"false","scenarioFolder":"/../scenario/"}},
 {"name":"Saba_WardWrap","status":true,"description":"YED_WordWrap を使った時、句読点が先頭にこないようにするプラグインです","parameters":{"charList":"。、」"}},
 {"name":"Saba_BackLog","status":true,"description":"バックログを表示するプラグインです。","parameters":{"backLogButton":"pageup","marginLeft":"70","marginRight":"30","nameLeft":"20","fontSize":"24","scrollSpeed":"5","windowHeight":"2000","maxLogCount":"50","bottmMargin":"50","logMargin":"44","windowSkin":"WindowBacklog","backOpacity":"230"}},
 {"name":"Sample_Status","status":true,"description":"","parameters":{}},
-{"name":"Saba_TachieFace","status":true,"description":"顔グラに立ち絵の画像を表示するプラグインです。","parameters":{"actor1offset":"-230, -120","actor2offset":"-190, -100"}}
+{"name":"Saba_TachieFace","status":true,"description":"顔グラに立ち絵の画像を表示するプラグインです。","parameters":{"actor1offset":"-190, -120","actor2offset":"-190, -100"}},
+{"name":"TMScreenSize","status":false,"description":"ゲーム画面の解像度を変更します。","parameters":{"graphicsWidth":"1024","graphicsHeight":"743","windowResize":"1","battleBackWidth":"0","battleBackHeight":"0"}},
+{"name":"Saba_BattleTachie","status":true,"description":"","parameters":{}}
 ];

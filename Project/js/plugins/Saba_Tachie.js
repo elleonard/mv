@@ -1,3 +1,17 @@
+var Saba;
+(function (Saba) {
+    Saba.applyMyMethods = function (myClass, presetClass, applyConstructor) {
+        for (var p in myClass.prototype) {
+            if (myClass.prototype.hasOwnProperty(p)) {
+                if (p === 'constructor' && !applyConstructor) {
+                    continue;
+                }
+                Object.defineProperty(presetClass.prototype, p, Object.getOwnPropertyDescriptor(myClass.prototype, p));
+            }
+        }
+    };
+})(Saba || (Saba = {}));
+
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -63,6 +77,30 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc 各キャラのウィンドウカラーの配列です(0だとデフォルト色)
  * @default 3, 0, 1, 2, 1
  *
+ * @param enableFaceLayer
+ * @desc actor01_face_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableBodyLayer
+ * @desc actor01_body_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableHairLayer
+ * @desc actor01_hair_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterBackLayer
+ * @desc actor01_out_b_back_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterMainLayer
+ * @desc actor01_out_b_main_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
+ * @param enableOuterFrontLayer
+ * @desc actor01_out_b_front_1.png などのレイヤーを使う場合 trueにします
+ * @default true
+ *
  * @param useTextureAtlas
  * @desc バラバラの画像でなく、一枚のアトラス画像を使うか？ TexturePackerを使い、actor01.png actor01.json などが必要です
  * @default false
@@ -74,6 +112,26 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @param windowHideKey
  * @desc ウィンドウ消去に使うボタンです
  * @default shift
+ *
+ * @param inactiveActorTone
+ * @desc 喋っていない方のキャラの Tone です
+ * @default -60, -60, -60, 0
+ *
+ * @param nameLeft
+ * @desc 名前の表示ウィンドウの左の領域です
+ * @default 30
+ *
+ * @param fontSize
+ * @desc メッセージウィンドウのフォントサイズです
+ * @default 28
+ *
+ * @param windowMargin
+ * @desc メッセージウィンドウの表示位置の空きです。上、右、下、左の順です
+ * @default 0, 0, 0, 0
+ *
+ * @param windowPadding
+ * @desc メッセージウィンドウの文字と枠の空きです。上、右、下、左の順です
+ * @default 0, 0, 0, 0
  *
  * @requiredAssets img/system/Tachie_Window1
  * @requiredAssets img/system/Tachie_Window2
@@ -87,14 +145,54 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/system/Tachie_Balloon4
  * @requiredAssets img/system/Tachie_Balloon5
  * @requiredAssets img/system/Tachie_Balloon6
- * @requiredAssets img/tachie/
+ * @requiredAssets img/tachie/actor01_01
+ * @requiredAssets img/tachie/*
  *
  * @help
- * Ver0.1
+ * Ver 2016-03-30 21:38:24
+ *
+ * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
+ * イベントコマンドで pictureId 11 を対象とすることで操作できます。
+ *
+ * 同様に、右側に立つキャラは、pictureId 12
+ *
+ * ■画像の設定方法
+ * img/tachie フォルダを使います。
+ * ここに、全キャラ分の立ち絵画像を入れてください。
+ * ※「未使用ファイルを含まない」には非対応なので、
+ * 　手動でコピーしてください。
+ *
+ * 以下、アクター１の場合の例です。
+ *
+ * actor01_<<表情ID>>.png
+ * 　→表情
+ * actor01_body_<<ポーズID>>.png
+ * 　→体
+ * actor01_face_<<ポーズID>>.png
+ * 　→後ろ髪
+ * actor01_hair_<<ポーズID>>.png
+ * 　→頭
+ * actor01_hoppe.png
+ * 　→ほっぺ
+ * actor01_in_<<衣装ID>>_bottom.png
+ * 　→パンツ
+ * actor01_in_<<衣装ID>>_top.png
+ * 　→ブラ
+ * actor01_out_<<衣装ID>>_front_<<ポーズID>>.png
+ * actor01_out_<<衣装ID>>_main_<<ポーズID>>.png
+ * actor01_out_<<衣装ID>>_back_<<ポーズID>>.png
+ * 　→上着
+ *
+ * 必要ない場合でも、画像をよみに行ってエラーになる場合があります。
+ * その場合、透明な画像を入れておいてください。
+ *
+ *
  *
  * プラグインコマンド
  * Tachie showLeft  actorId x y opacity # 立ち絵を左側に表示する
  * Tachie showRight actorId x y opacity # 立ち絵を右側に表示する
+ * Tachie hideLeft                      # 左側の立ち絵を非表示にする
+ * Tachie hideRight                     # 右側の立ち絵を非表示にする
  * Tachie face      actorId faceId      # アクターの表情を変更する
  * Tachie pose      actorId poseId      # アクターのポーズを変更する
  * Tachie hoppe     actorId hoppeId     # アクターのほっぺを変更する
@@ -110,7 +208,6 @@ var __extends = (this && this.__extends) || function (d, b) {
  * Tachie clear                         # 立ち絵を全て非表示にする
  * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
  *
- * 画像のレイヤー解説
  *
  */
 var Saba;
@@ -119,6 +216,33 @@ var Saba;
     (function (Tachie) {
         var parameters = PluginManager.parameters('Saba_Tachie');
         var rightPosX = parseInt(parameters['rightPosX']);
+        var nameLeft = parseInt(parameters['nameLeft']);
+        var fontSize = parseInt(parameters['fontSize']);
+        var windowMarginParam = parameters['windowMargin'].split(',');
+        var windowMargin = [0, 0, 0, 0];
+        for (var i = 0; i < windowMarginParam.length; i++) {
+            windowMargin[i] = parseInt(windowMarginParam[i]);
+            if (isNaN(windowMargin[i])) {
+                windowMargin[i] = 0;
+            }
+        }
+        var windowPaddingParam = parameters['windowPadding'].split(',');
+        var windowPadding = [0, 0, 0, 0];
+        for (var i = 0; i < windowPaddingParam.length; i++) {
+            windowPadding[i] = parseInt(windowPaddingParam[i]);
+            if (isNaN(windowPadding[i])) {
+                windowPadding[i] = 0;
+            }
+        }
+        var inactiveActorToneStr = parameters['inactiveActorTone'].split(',');
+        var inactiveActorTone = [0, 0, 0, 0];
+        for (var i = 0; i < inactiveActorToneStr.length; i++) {
+            inactiveActorTone[i] = parseInt(inactiveActorToneStr[i]);
+            if (isNaN(inactiveActorTone[i])) {
+                inactiveActorTone[i] = 0;
+            }
+        }
+        var toneChangeDuration = 30;
         Tachie.windowColors = {};
         Tachie.offsetX = {};
         Tachie.offsetY = {};
@@ -144,9 +268,15 @@ var Saba;
             }
         }
         var balloonEnabled = parameters['balloonEnabled'] === 'true';
+        var enableFaceLayer = parameters['enableFaceLayer'] === 'true';
+        var enableBodyLayer = parameters['enableBodyLayer'] === 'true';
+        var enableHairLayer = parameters['enableHairLayer'] === 'true';
+        var enableOuterBackLayer = parameters['enableOuterBackLayer'] === 'true';
+        var enableOuterMainLayer = parameters['enableOuterMainLayer'] === 'true';
+        var enableOuterFrontLayer = parameters['enableOuterFrontLayer'] === 'true';
         var useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-        Tachie.DEFAULT_PICTURE_ID1 = 12;
-        Tachie.DEFAULT_PICTURE_ID2 = 11;
+        Tachie.DEFAULT_PICTURE_ID1 = 11;
+        Tachie.DEFAULT_PICTURE_ID2 = 12;
         var ACTOR_PREFIX = '___actor';
         Tachie.LEFT_POS = 1;
         Tachie.RIGHT_POS = 2;
@@ -186,6 +316,43 @@ var Saba;
                     case 'clearWindowColor':
                         $gameTemp.tachieActorId = 0;
                         break;
+                    case 'windowColor':
+                        $gameTemp.tachieActorId = parseInt(args[1]);
+                        break;
+                    case 'hideLeft':
+                        {
+                            var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                            var commands = [];
+                            if (picture1 && picture1.opacity() > 0) {
+                                var c_1 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
+                                        0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, true] };
+                                commands.push(c_1);
+                            }
+                            var c = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1] };
+                            commands.push(c);
+                            for (var _i = 0, commands_1 = commands; _i < commands_1.length; _i++) {
+                                var c_2 = commands_1[_i];
+                                this._list.splice(this._index + 1, 0, c_2);
+                            }
+                            break;
+                        }
+                    case 'hideRight':
+                        {
+                            var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                            var commands = [];
+                            if (picture2 && picture2.opacity() > 0) {
+                                var c_3 = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1,
+                                        0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 30, true] };
+                                commands.push(c_3);
+                            }
+                            var c = { 'code': 235, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2] };
+                            commands.push(c);
+                            for (var _a = 0, commands_2 = commands; _a < commands_2.length; _a++) {
+                                var c_4 = commands_2[_a];
+                                this._list.splice(this._index + 1, 0, c_4);
+                            }
+                            break;
+                        }
                     case 'hide':
                         {
                             var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
@@ -204,8 +371,8 @@ var Saba;
                             if (commands.length > 0) {
                                 commands[0]['parameters'][11] = true;
                             }
-                            for (var _i = 0, commands_1 = commands; _i < commands_1.length; _i++) {
-                                var c = commands_1[_i];
+                            for (var _b = 0, commands_3 = commands; _b < commands_3.length; _b++) {
+                                var c = commands_3[_b];
                                 this._list.splice(this._index + 1, 0, c);
                             }
                             var c2 = { 'code': 356, 'indent': this._indent, 'parameters': ["Tachie clear"] };
@@ -228,6 +395,10 @@ var Saba;
                     case 'showRight':
                         $gameTemp.hideBalloon = false;
                         ImageManager.isReady();
+                        if (!args[1]) {
+                            console.error("\u30D7\u30E9\u30B0\u30A4\u30F3\u30B3\u30DE\u30F3\u30C9" + command + "\u306E" + args[0] + "\u306E\u5F15\u6570\u304C\u8DB3\u308A\u307E\u305B\u3093\u3002actorId \u304C\u5FC5\u8981\u3067\u3059");
+                            return;
+                        }
                         var actorId = parseInt(args[1]);
                         var x = parseInt(args[2] || '0');
                         var y = parseInt(args[3] || '0');
@@ -241,6 +412,10 @@ var Saba;
                     case 'innerTop':
                     case 'innerBottom':
                         {
+                            if (!args[1]) {
+                                console.error("\u30D7\u30E9\u30B0\u30A4\u30F3\u30B3\u30DE\u30F3\u30C9" + command + "\u306E" + args[0] + "\u306E\u5F15\u6570\u304C\u8DB3\u308A\u307E\u305B\u3093\u3002actorId \u304C\u5FC5\u8981\u3067\u3059");
+                                return;
+                            }
                             var actor = $gameActors.actor(parseInt(args[1]));
                             if (!actor) {
                                 throw new Error('立ち絵コマンド: ' + args[0] + ' の' + args[1] + 'のアクターが存在しません');
@@ -271,35 +446,63 @@ var Saba;
             _Game_Interpreter.prototype.tachiePictureCommnad = function (command, actorId, x, y, opacity) {
                 switch (command) {
                     case 'showLeft':
-                        $gameTemp.tachieActorId = actorId;
-                        $gameTemp.tachieActorPos = Tachie.LEFT_POS;
-                        if (opacity < 255) {
-                            var picture_1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
-                            if (picture_1 && picture_1.tachieActorId === actorId) {
-                                opacity = 255;
+                        {
+                            $gameTemp.tachieActorId = actorId;
+                            $gameTemp.tachieActorPos = Tachie.LEFT_POS;
+                            var lastTone = [0, 0, 0, 0];
+                            if (opacity < 255) {
+                                var picture_1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                                if (picture_1 && picture_1.tachieActorId === actorId) {
+                                    opacity = 255;
+                                    lastTone = picture_1.tone();
+                                }
                             }
-                        }
-                        $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
-                        if (opacity < 255) {
-                            var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true] };
+                            $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
+                            var picture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                            picture.tint(lastTone, 0);
+                            var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, [0, 0, 0, 0], toneChangeDuration, false] };
                             this._list.splice(this._index + 1, 0, c);
+                            if (opacity < 255) {
+                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            var rightPicture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                            if (rightPicture && rightPicture.name() != '') {
+                                var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            break;
                         }
-                        break;
                     case 'showRight':
-                        $gameTemp.tachieActorId = actorId;
-                        $gameTemp.tachieActorPos = Tachie.RIGHT_POS;
-                        var picId = Tachie.DEFAULT_PICTURE_ID2;
-                        var picture = $gameScreen.picture(picId);
-                        if (picture && picture.tachieActorId === actorId) {
-                            opacity = 255;
-                        }
-                        var xx = x + rightPosX;
-                        $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
-                        if (opacity < 255) {
-                            var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true] };
+                        {
+                            $gameTemp.tachieActorId = actorId;
+                            $gameTemp.tachieActorPos = Tachie.RIGHT_POS;
+                            var lastTone = [0, 0, 0, 0];
+                            var picId = Tachie.DEFAULT_PICTURE_ID2;
+                            if (opacity < 255) {
+                                var picture_2 = $gameScreen.picture(picId);
+                                if (picture_2 && picture_2.tachieActorId === actorId) {
+                                    opacity = 255;
+                                    lastTone = picture_2.tone();
+                                }
+                            }
+                            var xx = x + rightPosX;
+                            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
+                            var picture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
+                            picture.tint(lastTone, 0);
+                            var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false] };
                             this._list.splice(this._index + 1, 0, c);
+                            if (opacity < 255) {
+                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            var leftPicture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
+                            if (leftPicture && leftPicture.name() != '') {
+                                var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false] };
+                                this._list.splice(this._index + 1, 0, c);
+                            }
+                            break;
                         }
-                        break;
                 }
             };
             _Game_Interpreter.prototype.tachieActorCommnad = function (actor, command, arg2, args) {
@@ -684,6 +887,7 @@ var Saba;
                     this.doPreloadTachie(this.bodyFrontFile());
                     this.doPreloadTachie(this.innerBottomFile());
                     this.doPreloadTachie(this.innerTopFile());
+                    this.doPreloadTachie(this.hairFile());
                     this.doPreloadTachie(this.hoppeFile());
                     this.doPreloadTachie(this.faceFile());
                 }
@@ -704,6 +908,9 @@ var Saba;
                 ImageManager.loadTachie(file);
             };
             _Game_Actor.prototype.outerBackFile = function () {
+                if (!enableOuterBackLayer) {
+                    return null;
+                }
                 return this.baseId + 'out_' + this.outerId + '_back_' + this.poseId;
             };
             _Game_Actor.prototype.outerShadowFile = function () {
@@ -713,21 +920,33 @@ var Saba;
                 return this.baseId + 'out_' + this.outerId + '_shadow_' + this.poseId;
             };
             _Game_Actor.prototype.outerMainFile = function () {
+                if (!enableOuterMainLayer) {
+                    return null;
+                }
                 if (!this.hasOuter()) {
                     return null;
                 }
                 return this.baseId + 'out_' + this.outerId + '_main_' + this.poseId;
             };
             _Game_Actor.prototype.outerFrontFile = function () {
+                if (!enableOuterFrontLayer) {
+                    return null;
+                }
                 if (!this.hasOuter()) {
                     return null;
                 }
                 return this.baseId + 'out_' + this.outerId + '_front_' + this.poseId;
             };
             _Game_Actor.prototype.bodyBackFile = function () {
+                if (!enableBodyLayer) {
+                    return null;
+                }
                 return this.baseId + 'body_' + this.poseId;
             };
             _Game_Actor.prototype.bodyFrontFile = function () {
+                if (!enableFaceLayer) {
+                    return null;
+                }
                 return this.baseId + 'face_' + this.poseId;
             };
             _Game_Actor.prototype.innerBottomFile = function () {
@@ -741,6 +960,12 @@ var Saba;
                     return null;
                 }
                 return this.baseId + 'in_' + this.innerTopId + '_top';
+            };
+            _Game_Actor.prototype.hairFile = function () {
+                if (!enableHairLayer) {
+                    return null;
+                }
+                return this.baseId + 'hair_' + this.poseId;
             };
             _Game_Actor.prototype.hoppeFile = function () {
                 if (this.hoppeId === 0) {
@@ -835,22 +1060,26 @@ var Saba;
             return _Game_Screen;
         }(Game_Screen));
         var TachieDrawerMixin = function () {
-            this.drawTachie = function (actorId, bitmap, x, y, rect, faceId) {
+            this.drawTachie = function (actorId, bitmap, x, y, rect, faceId, scale) {
                 if (x === void 0) { x = 0; }
                 if (y === void 0) { y = 0; }
                 if (faceId === void 0) { faceId = 0; }
-                if (!rect) {
-                    rect = new Rectangle(0, 0, 0, 0);
-                }
+                if (scale === void 0) { scale = 1; }
                 var actor = $gameActors.actor(actorId);
                 var point = this.calcTachieActorPos(actor);
-                rect.x -= point.x;
-                rect.y -= point.y;
+                if (!rect) {
+                    rect = new Rectangle(0, 0, 0, 0);
+                    x += point.x;
+                    y += point.y;
+                }
+                //rect.x += point.x;
+                //rect.y += point.y;
                 var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
                 actor.clearDirty();
                 if (actor.isCacheChanged()) {
                     cache.clear();
                     actor.clearCacheChanged();
+                    this.drawTachieHair(actor, cache);
                     this.drawTachieOuterBack(actor, cache);
                     this.drawTachieBodyBack(actor, cache);
                     this.drawTachieInnerBottom(actor, cache);
@@ -860,9 +1089,9 @@ var Saba;
                     this.drawTachieOuterFront(actor, cache);
                     console.log('createCache:' + actor.actorId());
                 }
-                this.drawTachieCache(actor, cache, bitmap, x, y, rect);
-                this.drawTachieHoppe(actor, bitmap, x, y, rect);
-                this.drawTachieFace(actor, bitmap, x, y, rect, faceId);
+                this.drawTachieCache(actor, cache, bitmap, x, y, rect, scale);
+                this.drawTachieHoppe(actor, bitmap, x, y, rect, scale);
+                this.drawTachieFace(actor, bitmap, x, y, rect, faceId, scale);
             };
             this.calcTachieActorPos = function (actor) {
                 var dx = actor.tachieOffsetX;
@@ -875,24 +1104,27 @@ var Saba;
                 }
                 return new Point(dx, dy);
             };
-            this.drawTachieCache = function (actor, cache, bitmap, x, y, rect) {
+            this.drawTachieCache = function (actor, cache, bitmap, x, y, rect, scale) {
                 var xx = -rect.x < 0 ? 0 : -rect.x;
                 var yy = -rect.y < 0 ? 0 : -rect.y;
+                var ww = rect.width / scale;
                 var w = rect.width;
                 if (w <= 0 || w + xx > cache.width) {
                     w = cache.width - xx;
+                    ww = w;
                 }
+                var hh = rect.height / scale;
                 var h = rect.height;
                 if (h <= 0 || h + yy > cache.height) {
                     h = cache.height - yy;
+                    hh = h;
                 }
-                console.log(xx, yy, w, h, x, y);
-                bitmap.blt(cache, xx, yy, w, h, x, y);
-                //this.bitmap._context.putImageData(cache._context.getImageData(0, 0, cache.width, cache.height), 0, 0);
+                bitmap.blt(cache, xx, yy, ww, hh, x, y, w, h);
             };
-            this.drawTachieFile = function (file, bitmap, actor, x, y, rect) {
+            this.drawTachieFile = function (file, bitmap, actor, x, y, rect, scale) {
                 if (x === void 0) { x = 0; }
                 if (y === void 0) { y = 0; }
+                if (scale === void 0) { scale = 1; }
                 if (!file) {
                     return;
                 }
@@ -900,13 +1132,13 @@ var Saba;
                     rect = Rectangle.emptyRectangle;
                 }
                 if (useTextureAtlas) {
-                    this.drawTachieTextureAtlas(file, bitmap, actor, x, y, rect);
+                    this.drawTachieTextureAtlas(file, bitmap, actor, x, y, rect, scale);
                 }
                 else {
-                    this.drawTachieImage(file, bitmap, actor, x, y, rect);
+                    this.drawTachieImage(file, bitmap, actor, x, y, rect, scale);
                 }
             };
-            this.drawTachieTextureAtlas = function (file, bitmap, actor, x, y, rect) {
+            this.drawTachieTextureAtlas = function (file, bitmap, actor, x, y, rect, scale) {
                 var texture = PIXI.TextureCache[file + '.png'];
                 if (!texture) {
                     return;
@@ -916,18 +1148,12 @@ var Saba;
                 var trim = texture.trim;
                 var crop = texture.crop;
                 var w = crop.width;
-                if (w < rect.width) {
-                    w = rect.width;
-                }
                 var h = crop.height;
-                if (h < rect.height) {
-                    h = rect.height;
-                }
-                var dx = trim.x + actor.tachieOffsetX + x;
-                var dy = trim.y + actor.tachieOffsetY + y;
-                bitmap.context.drawImage(img, frame.x + rect.x, frame.y + rect.y, crop.width, crop.height, dx, dy, w, h);
+                var dx = trim.x + rect.x;
+                var dy = trim.y + rect.y;
+                bitmap.context.drawImage(img, frame.x, frame.y, w, h, dx * scale + x, dy * scale + y, w * scale, h * scale);
             };
-            this.drawTachieImage = function (file, bitmap, actor, x, y, rect) {
+            this.drawTachieImage = function (file, bitmap, actor, x, y, rect, scale) {
                 var img = ImageManager.loadTachie(file);
                 if (!img.isReady()) {
                     console.log('draw' + file);
@@ -936,15 +1162,22 @@ var Saba;
                 }
                 var xx = -rect.x < 0 ? 0 : -rect.x;
                 var yy = -rect.y < 0 ? 0 : -rect.y;
-                var w = rect.width;
+                var ww = rect.width;
+                var w = ww;
                 if (w <= 0 || w + xx > img.width) {
                     w = img.width - xx;
+                    ww = w;
                 }
                 var h = rect.height;
+                var hh = h;
                 if (h <= 0 || h + yy > img.height) {
                     h = img.height - yy;
+                    hh = h;
                 }
-                bitmap.blt(img, xx, yy, w, h, x, y);
+                bitmap.blt(img, xx, yy, ww, hh, x, y, w * scale, h * scale);
+            };
+            this.drawTachieHair = function (actor, bitmap) {
+                this.drawTachieFile(actor.hairFile(), bitmap, actor);
             };
             this.drawTachieOuterBack = function (actor, bitmap) {
                 this.drawTachieFile(actor.outerBackFile(), bitmap, actor);
@@ -973,14 +1206,17 @@ var Saba;
             this.drawTachieHoppe = function (actor, bitmap, x, y, rect) {
                 this.drawTachieFile(actor.hoppeFile(), bitmap, actor, x, y, rect);
             };
-            this.drawTachieFace = function (actor, bitmap, x, y, rect, faceId) {
+            this.drawTachieFace = function (actor, bitmap, x, y, rect, faceId, scale) {
                 if (faceId === 0) {
                     faceId = actor.faceId;
                 }
                 var file = actor.baseId + faceId.padZero(2);
-                this.drawTachieFile(file, bitmap, actor, x, y, rect);
+                this.drawTachieFile(file, bitmap, actor, x, y, rect, scale);
             };
         };
+        TachieDrawerMixin.call(Sprite_Base.prototype);
+        TachieDrawerMixin.call(Sprite_Picture.prototype);
+        TachieDrawerMixin.call(Window_Base.prototype);
         var _Sprite_Picture = (function (_super) {
             __extends(_Sprite_Picture, _super);
             function _Sprite_Picture() {
@@ -1023,15 +1259,13 @@ var Saba;
             };
             return _Sprite_Picture;
         }(Sprite_Picture));
-        TachieDrawerMixin.call(Sprite_Picture.prototype);
-        TachieDrawerMixin.call(Window_Base.prototype);
         var Window_MessageName = (function (_super) {
             __extends(Window_MessageName, _super);
-            function Window_MessageName() {
+            function Window_MessageName(windowHeight) {
                 var width = 180;
                 var height = _super.prototype.fittingHeight.call(this, 1) + 14;
-                var x = 30;
-                var y = 430;
+                var x = nameLeft;
+                var y = Graphics.boxHeight - windowHeight - windowMargin[0] - windowMargin[2] - height;
                 _super.call(this, x, y, width, height);
                 this.padding = 8;
                 this.openness = 0;
@@ -1083,6 +1317,10 @@ var Saba;
                     this.visible = false;
                     return;
                 }
+                if ($gameTemp.hideBalloon) {
+                    this.visible = false;
+                    return;
+                }
                 if (this._windowAcrotId === $gameTemp.tachieActorId) {
                     return;
                 }
@@ -1109,11 +1347,11 @@ var Saba;
             Sprite_WindowBalloon.prototype.updatePosition = function () {
                 if ($gameTemp.tachieActorPos === Tachie.LEFT_POS) {
                     this.scale.x = 1;
-                    this.x = 300;
+                    this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 - 140;
                 }
                 else if ($gameTemp.tachieActorPos === Tachie.RIGHT_POS) {
                     this.scale.x = -1;
-                    this.x = 500;
+                    this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 + 140;
                 }
             };
             return Sprite_WindowBalloon;
@@ -1123,17 +1361,27 @@ var Saba;
             function Window_TachieMessage() {
                 _super.call(this);
             }
-            Window_TachieMessage.prototype.contentsHeight = function () {
-                return this.height;
+            Window_TachieMessage.prototype.windowHeight = function () {
+                return _super.prototype.windowHeight.call(this);
+            };
+            ;
+            Window_TachieMessage.prototype.windowWidth = function () {
+                return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
             };
             ;
             Window_TachieMessage.prototype.numVisibleRows = function () {
                 return 3;
             };
+            Window_TachieMessage.prototype.fittingHeight = function (numLines) {
+                return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+            };
             Window_TachieMessage.prototype._refreshContents = function () {
                 this._windowContentsSprite.move(this.padding + 6, 0);
             };
             ;
+            Window_TachieMessage.prototype.contentsHeight = function () {
+                return this.windowHeight() - this.standardPadding() * 2 + 20;
+            };
             Window_TachieMessage.prototype._updateContents = function () {
                 var w = this._width - this._padding * 2;
                 var h = this._height - 0 * 2;
@@ -1152,7 +1400,8 @@ var Saba;
             };
             Window_TachieMessage.prototype.createSubWindows = function () {
                 _super.prototype.createSubWindows.call(this);
-                this._messageNameWindow = new Window_MessageName();
+                console.log(this.windowHeight());
+                this._messageNameWindow = new Window_MessageName(this.windowHeight());
                 this._balloonSprite = new Sprite_WindowBalloon(this);
                 this._balloonSprite.y = -39;
                 this.addChild(this._balloonSprite);
@@ -1250,12 +1499,12 @@ var Saba;
                 if (Saba.BackLog) {
                     Saba.BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
                 }
-                this._textState.y = this.standardPadding();
+                this._textState.y = this.standardPadding() + windowPadding[0];
                 this._balloonSprite.showBalloon();
                 this._messageNameWindow.draw($gameTemp.tachieName);
             };
             Window_TachieMessage.prototype.updatePlacement = function () {
-                this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
+                this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
             };
             Window_TachieMessage.prototype.terminateMessage = function () {
                 $gameMessage.clear();
@@ -1266,6 +1515,19 @@ var Saba;
             };
             Window_TachieMessage.prototype.textAreaWidth = function () {
                 return this.contentsWidth() + 20;
+            };
+            Window_TachieMessage.prototype.standardFontSize = function () {
+                return fontSize;
+            };
+            Window_TachieMessage.prototype.lineHeight = function () {
+                return this.standardFontSize() + 8;
+            };
+            Window_TachieMessage.prototype.newLineX = function () {
+                var x = _super.prototype.newLineX.call(this);
+                return x + windowPadding[3];
+            };
+            Window_TachieMessage.prototype.drawMessageFace = function () {
+                this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
             };
             return Window_TachieMessage;
         }(Window_Message));

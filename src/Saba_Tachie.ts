@@ -130,7 +130,7 @@
  * @requiredAssets img/tachie/*
  * 
  * @help
- * Ver0.14
+ * Ver
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。

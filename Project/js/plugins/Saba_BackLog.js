@@ -1,3 +1,17 @@
+var Saba;
+(function (Saba) {
+    Saba.applyMyMethods = function (myClass, presetClass, applyConstructor) {
+        for (var p in myClass.prototype) {
+            if (myClass.prototype.hasOwnProperty(p)) {
+                if (p === 'constructor' && !applyConstructor) {
+                    continue;
+                }
+                Object.defineProperty(presetClass.prototype, p, Object.getOwnPropertyDescriptor(myClass.prototype, p));
+            }
+        }
+    };
+})(Saba || (Saba = {}));
+
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -64,7 +78,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver0.1
+ * Ver 2016-03-30 20:06:42
  *
  * テキストのバックログを表示するプラグインです。
  * 立ち絵スクリプトとの併用を想定しています。

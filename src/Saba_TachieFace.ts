@@ -14,7 +14,7 @@
  * @default 0, 0
  * 
  * @help
- * Ver0.1
+ * Ver
  *
  *
  */

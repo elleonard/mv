@@ -196,6 +196,7 @@ var Saba;
             'position': SimpleScenario.list('right', 'left'),
         };
         SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
+        SimpleScenario.validates['a1'] = SimpleScenario.validates['a2'] = SimpleScenario.validates['a3'] = SimpleScenario.validates['a4'] = SimpleScenario.validates['a5'] = SimpleScenario.validates['a6'] = SimpleScenario.validates['a7'] = SimpleScenario.validates['a8'] = SimpleScenario.validates['a9'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['m1'] = {
             'index': SimpleScenario.isNumeric(0),
         };
@@ -215,6 +216,9 @@ var Saba;
         SimpleScenario.validates['hide'] = {};
         SimpleScenario.validates['else'] = {};
         SimpleScenario.validates['return'] = {};
+        SimpleScenario.validates['hide_left'] = {};
+        SimpleScenario.validates['hide_right'] = {};
+        SimpleScenario.validates['color'] = {};
         SimpleScenario.validates['default_pos'] = {
             'actor': [
                 SimpleScenario.notEmpty(),

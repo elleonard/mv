@@ -23,7 +23,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default 150
  *
  * @help
- * Ver 2016-04-02 23:18:37
+ * Ver 2016-04-02 23:43:44
  *
  */
 var Saba;
@@ -44,7 +44,7 @@ var Saba;
         var TachieSprite = (function (_super) {
             __extends(TachieSprite, _super);
             function TachieSprite() {
-                var bitmap = new Bitmap(800, 960);
+                var bitmap = new Bitmap(Graphics.boxWidth, Graphics.boxHeight);
                 _super.call(this);
                 this.hiddenX = hiddenX;
                 this.appearedX = appearX;

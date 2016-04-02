@@ -46,7 +46,7 @@ class TachieSprite extends Sprite_Base {
     speed: number;
     actorId: number;
     constructor() {
-        var bitmap = new Bitmap(800, 960)
+        var bitmap = new Bitmap(Graphics.boxWidth, Graphics.boxHeight);
         super();
         this.hiddenX = hiddenX;
         this.appearedX = appearX;

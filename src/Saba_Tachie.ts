@@ -1239,6 +1239,12 @@ class Window_MessageName extends Window_Base {
     standardPadding(): number {
         return 0;
     }
+    update(): void {
+        super.update();
+        if ($gameMessage.positionType() !== 2) {
+            this.visible = false;
+        }
+    }
     draw(name): void {
         if (! name) {
             this.visible = false;
@@ -1270,6 +1276,14 @@ class Sprite_WindowBalloon extends Sprite_Base {
             return;
         }
         if ($gameTemp.hideBalloon) {
+            this.visible = false;
+            return;
+        }
+        if ($gameMessage.positionType() !== 2) {
+            this.visible = false;
+            return;
+        }
+        if ($gameMessage.background() !== 0) {
             this.visible = false;
             return;
         }
@@ -1327,35 +1341,58 @@ export class Window_TachieMessage extends Window_Message {
     protected _windowSkinId: number;
     protected _triggered: boolean;
     protected _windowHide: boolean;
+    protected _galMode: boolean;
     constructor() {
+        this._galMode = true;
         super();
     }
-    windowHeight() {
-        return super.windowHeight();
-    };
     windowWidth(): number {
-        return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
+        if (this._galMode) {
+            return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
+        } else {
+            return super.windowWidth();
+        }
     };
     numVisibleRows(): number {
-        return 3;
+        if (this._galMode) {
+            return 3;
+        } else {
+            return super.numVisibleRows();
+        }
     }
     fittingHeight(numLines): number {
-        return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+        if (this._galMode) {
+            return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+        } else {
+            return super.fittingHeight(numLines);
+        }
     }
     _refreshContents(): void {
-        this._windowContentsSprite.move(this.padding + 6, 0);
+        if (this._galMode) {
+            this._windowContentsSprite.move(this.padding + 6, 0);
+        } else {
+            super._refreshContents();
+        }
     };
     contentsHeight() {
-        return this.windowHeight() - this.standardPadding() * 2 + 20;
+        if (this._galMode) {
+            return this.windowHeight() - this.standardPadding() * 2 + 20;
+        } else {
+            return super.contentsHeight();
+        }
     }
     _updateContents(): void {
-        var w = this._width - this._padding * 2;
-        var h = this._height - 0 * 2;
-        if (w > 0 && h > 0) {
-            this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
-            this._windowContentsSprite.visible = this.isOpen();
+        if (this._galMode) {
+            var w = this._width - this._padding * 2;
+            var h = this._height - 0 * 2;
+            if (w > 0 && h > 0) {
+                this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
+                this._windowContentsSprite.visible = this.isOpen();
+            } else {
+                this._windowContentsSprite.visible = false;
+            }
         } else {
-            this._windowContentsSprite.visible = false;
+            return super._updateContents();
         }
     }
     subWindows(): Array<Window_Base> {
@@ -1372,6 +1409,10 @@ export class Window_TachieMessage extends Window_Message {
     }
     update(): void {
         super.update();
+        if (! this._galMode) {
+            this.updateMessageSkip();
+            return;
+        }
         if (this._windowSkinId !== $gameTemp.tachieActorId) {
             if ($gameTemp.tachieActorId > 0) {
                 this._windowSkinId = $gameTemp.tachieActorId;
@@ -1382,10 +1423,9 @@ export class Window_TachieMessage extends Window_Message {
                     this.windowskin = ImageManager.loadSystem('Window');
                 }
             } else {
-                this._windowSkinId = 0;
-                this.windowskin = ImageManager.loadSystem('Window');
-                $gameTemp.tachieActorId = 0;
+                this.clearWindowSkil();
             }
+            console.log(this.windowskin)
         }
         if (this.isClosing() && this.openness < 240) {
             this._balloonSprite.visible = false;
@@ -1399,6 +1439,11 @@ export class Window_TachieMessage extends Window_Message {
         this.updateMessageSkip();
         this.updateWindowVisibility();
     }
+    clearWindowSkil(): void {
+        this._windowSkinId = 0;
+        this.windowskin = ImageManager.loadSystem('Window');
+        $gameTemp.tachieActorId = 0;
+    }
     updateMessageSkip(): void {
         if (Input.isPressed(MESSAGE_SKIP_KEY)) {
             if (this._windowHide) {
@@ -1408,11 +1453,11 @@ export class Window_TachieMessage extends Window_Message {
                 return;
             }
             this._pauseSkip = true;
-            this._showFast = true;
+            this._showFast = true; 
             this._triggered = true;
             this.pause = false;
             this._waitCount = 0;
-            if (!this._textState) {
+            if (! this._textState) {
                 this.terminateMessage();
             }
         }
@@ -1453,6 +1498,9 @@ export class Window_TachieMessage extends Window_Message {
     }
     startMessage(): void {
         super.startMessage();
+        if (! this._galMode) {
+            return;
+        }
         if (BackLog) {
             BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
         }
@@ -1461,7 +1509,12 @@ export class Window_TachieMessage extends Window_Message {
         this._messageNameWindow.draw($gameTemp.tachieName);
     }
     updatePlacement(): void {
-        this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
+        if (this._galMode) {
+            this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
+        } else {
+            super.updatePlacement();
+        }
+        this.x = (Graphics.boxWidth - this.windowWidth()) / 2;
     }
     terminateMessage(): void {
         $gameMessage.clear();
@@ -1474,17 +1527,53 @@ export class Window_TachieMessage extends Window_Message {
         return this.contentsWidth() + 20;
     }
     standardFontSize() {
-        return fontSize;
+        if (this._galMode) {
+            return fontSize;
+        } else {
+            return super.standardFontSize();
+        }
     }
     lineHeight() {
-        return this.standardFontSize() + 8;
+        if (this._galMode) {
+            return this.standardFontSize() + 8;
+        } else {
+            return super.lineHeight();
+        }
     }
     newLineX() {
-        var x = super.newLineX();
-        return x + windowPadding[3];
+        if (this._galMode) {
+            var x = super.newLineX();
+            return x + windowPadding[3];
+        } else {
+            return super.newLineX();
+        }
     }
     drawMessageFace(): void {
         this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
+    }
+    updateBackground(): void {
+        this.refreshWindow();
+        super.updateBackground();
+    }
+    refreshWindow(): void {
+        if (this._galMode) {
+            if ($gameMessage.background() !== 0 || $gameMessage.positionType() !== 2) {
+                this.clearWindowSkil();
+                this._galMode = false;
+                this.move(0, 0, this.windowWidth(), this.windowHeight());
+                this.createContents();
+                this.updatePlacement();
+                this._refreshContents();
+            }
+        } else {
+            if ($gameMessage.background() === 0 && $gameMessage.positionType() === 2) {
+                this._galMode = true;
+                this.move(0, 0, this.windowWidth(), this.windowHeight());
+                this.createContents();
+                this.updatePlacement();
+                this._refreshContents();
+            }
+        }
     }
 }
 

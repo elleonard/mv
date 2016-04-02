@@ -34,7 +34,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-03-30 22:47:09
+ * Ver 2016-04-02 22:55:18
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -562,9 +562,9 @@ var Saba;
              * ホワイトスペースを削除します。
              */
             Scenario_Converter.prototype.removeWS = function (line) {
-                var ret = line.replace(/^\s+/g, '');
+                var ret = line.replace(/^[\x20|\t]+/g, '');
                 if (ret === '_') {
-                    return '';
+                    return ' ';
                 }
                 else {
                     return ret;
@@ -748,7 +748,7 @@ var Saba;
                 if (context.header['name']) {
                     name = context.headerStr('name');
                 }
-                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie inactiveAll"] });
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie deactivateAll"] });
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
                 var face = '';
                 if (context.header['face']) {
@@ -801,6 +801,7 @@ var Saba;
                 this._defaultMobNameMap[mobId] = name;
             };
             Scenario_Converter.prototype.convertCommand_message_h = function (context) {
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
                 var actor = context.header['actor'] || '';
                 var index = context.headerInt('index', 0);
                 var back = context.headerInt('back', 0);

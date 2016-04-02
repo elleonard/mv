@@ -547,7 +547,7 @@ export class Scenario_Converter {
     removeWS(line: string): string {
         const ret = line.replace(/^[\x20|\t]+/g, '');
         if (ret === '_') {
-            return '';
+            return ' ';
         } else {
             return ret;
         }
@@ -780,6 +780,7 @@ export class Scenario_Converter {
         this._defaultMobNameMap[mobId] = name;
     }
     convertCommand_message_h(context: Context): void {
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         const actor = context.header['actor'] || '';
         const index = context.headerInt('index', 0);
         const back = context.headerInt('back', 0);

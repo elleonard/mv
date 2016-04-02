@@ -154,7 +154,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-03-30 23:03:08
+ * Ver 2016-04-02 22:48:29
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -212,6 +212,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * Tachie hideName                      # 名前欄を非表示にする
  * Tachie clear                         # 立ち絵を全て非表示にする
  * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
+ * Tachie deactivateAll                   # すべてのキャラを暗くします
  *
  *
  */
@@ -324,7 +325,8 @@ var Saba;
                     case 'windowColor':
                         $gameTemp.tachieActorId = parseInt(args[1]);
                         break;
-                    case 'inactiveAll':
+                    case 'inactiveAll': // 後方互換用
+                    case 'deactivateAll':
                         {
                             var picture1 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
                             var picture2 = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
@@ -1170,6 +1172,12 @@ var Saba;
                 var h = crop.height;
                 var dx = trim.x + rect.x;
                 var dy = trim.y + rect.y;
+                if (rect.width > 0 && rect.width < w + dx * scale) {
+                    w = rect.width - dx * scale;
+                }
+                if (rect.height > 0 && rect.height < h + dy * scale) {
+                    h = rect.height - dy * scale;
+                }
                 bitmap.context.drawImage(img, frame.x, frame.y, w, h, dx * scale + x, dy * scale + y, w * scale, h * scale);
             };
             this.drawTachieImage = function (file, bitmap, actor, x, y, rect, scale) {
@@ -1292,6 +1300,12 @@ var Saba;
             Window_MessageName.prototype.standardPadding = function () {
                 return 0;
             };
+            Window_MessageName.prototype.update = function () {
+                _super.prototype.update.call(this);
+                if ($gameMessage.positionType() !== 2) {
+                    this.visible = false;
+                }
+            };
             Window_MessageName.prototype.draw = function (name) {
                 if (!name) {
                     this.visible = false;
@@ -1322,6 +1336,14 @@ var Saba;
                     return;
                 }
                 if ($gameTemp.hideBalloon) {
+                    this.visible = false;
+                    return;
+                }
+                if ($gameMessage.positionType() !== 2) {
+                    this.visible = false;
+                    return;
+                }
+                if ($gameMessage.background() !== 0) {
                     this.visible = false;
                     return;
                 }
@@ -1378,38 +1400,65 @@ var Saba;
         var Window_TachieMessage = (function (_super) {
             __extends(Window_TachieMessage, _super);
             function Window_TachieMessage() {
+                this._galMode = true;
                 _super.call(this);
             }
-            Window_TachieMessage.prototype.windowHeight = function () {
-                return _super.prototype.windowHeight.call(this);
-            };
-            ;
             Window_TachieMessage.prototype.windowWidth = function () {
-                return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
+                if (this._galMode) {
+                    return Graphics.boxWidth - windowMargin[1] - windowMargin[3];
+                }
+                else {
+                    return _super.prototype.windowWidth.call(this);
+                }
             };
             ;
             Window_TachieMessage.prototype.numVisibleRows = function () {
-                return 3;
+                if (this._galMode) {
+                    return 3;
+                }
+                else {
+                    return _super.prototype.numVisibleRows.call(this);
+                }
             };
             Window_TachieMessage.prototype.fittingHeight = function (numLines) {
-                return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+                if (this._galMode) {
+                    return numLines * this.lineHeight() + this.standardPadding() * 2 + windowPadding[0] + windowPadding[2];
+                }
+                else {
+                    return _super.prototype.fittingHeight.call(this, numLines);
+                }
             };
             Window_TachieMessage.prototype._refreshContents = function () {
-                this._windowContentsSprite.move(this.padding + 6, 0);
+                if (this._galMode) {
+                    this._windowContentsSprite.move(this.padding + 6, 0);
+                }
+                else {
+                    _super.prototype._refreshContents.call(this);
+                }
             };
             ;
             Window_TachieMessage.prototype.contentsHeight = function () {
-                return this.windowHeight() - this.standardPadding() * 2 + 20;
-            };
-            Window_TachieMessage.prototype._updateContents = function () {
-                var w = this._width - this._padding * 2;
-                var h = this._height - 0 * 2;
-                if (w > 0 && h > 0) {
-                    this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
-                    this._windowContentsSprite.visible = this.isOpen();
+                if (this._galMode) {
+                    return this.windowHeight() - this.standardPadding() * 2 + 20;
                 }
                 else {
-                    this._windowContentsSprite.visible = false;
+                    return _super.prototype.contentsHeight.call(this);
+                }
+            };
+            Window_TachieMessage.prototype._updateContents = function () {
+                if (this._galMode) {
+                    var w = this._width - this._padding * 2;
+                    var h = this._height - 0 * 2;
+                    if (w > 0 && h > 0) {
+                        this._windowContentsSprite.setFrame(this.origin.x, this.origin.y, w, h);
+                        this._windowContentsSprite.visible = this.isOpen();
+                    }
+                    else {
+                        this._windowContentsSprite.visible = false;
+                    }
+                }
+                else {
+                    return _super.prototype._updateContents.call(this);
                 }
             };
             Window_TachieMessage.prototype.subWindows = function () {
@@ -1426,6 +1475,10 @@ var Saba;
             };
             Window_TachieMessage.prototype.update = function () {
                 _super.prototype.update.call(this);
+                if (!this._galMode) {
+                    this.updateMessageSkip();
+                    return;
+                }
                 if (this._windowSkinId !== $gameTemp.tachieActorId) {
                     if ($gameTemp.tachieActorId > 0) {
                         this._windowSkinId = $gameTemp.tachieActorId;
@@ -1438,10 +1491,9 @@ var Saba;
                         }
                     }
                     else {
-                        this._windowSkinId = 0;
-                        this.windowskin = ImageManager.loadSystem('Window');
-                        $gameTemp.tachieActorId = 0;
+                        this.clearWindowSkil();
                     }
+                    console.log(this.windowskin);
                 }
                 if (this.isClosing() && this.openness < 240) {
                     this._balloonSprite.visible = false;
@@ -1455,6 +1507,11 @@ var Saba;
                 }
                 this.updateMessageSkip();
                 this.updateWindowVisibility();
+            };
+            Window_TachieMessage.prototype.clearWindowSkil = function () {
+                this._windowSkinId = 0;
+                this.windowskin = ImageManager.loadSystem('Window');
+                $gameTemp.tachieActorId = 0;
             };
             Window_TachieMessage.prototype.updateMessageSkip = function () {
                 if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY)) {
@@ -1514,6 +1571,9 @@ var Saba;
             };
             Window_TachieMessage.prototype.startMessage = function () {
                 _super.prototype.startMessage.call(this);
+                if (!this._galMode) {
+                    return;
+                }
                 if (Saba.BackLog) {
                     Saba.BackLog.$gameBackLog.addLog($gameTemp.tachieName, $gameMessage.allText());
                 }
@@ -1522,7 +1582,13 @@ var Saba;
                 this._messageNameWindow.draw($gameTemp.tachieName);
             };
             Window_TachieMessage.prototype.updatePlacement = function () {
-                this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
+                if (this._galMode) {
+                    this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
+                }
+                else {
+                    _super.prototype.updatePlacement.call(this);
+                }
+                this.x = (Graphics.boxWidth - this.windowWidth()) / 2;
             };
             Window_TachieMessage.prototype.terminateMessage = function () {
                 $gameMessage.clear();
@@ -1535,17 +1601,57 @@ var Saba;
                 return this.contentsWidth() + 20;
             };
             Window_TachieMessage.prototype.standardFontSize = function () {
-                return fontSize;
+                if (this._galMode) {
+                    return fontSize;
+                }
+                else {
+                    return _super.prototype.standardFontSize.call(this);
+                }
             };
             Window_TachieMessage.prototype.lineHeight = function () {
-                return this.standardFontSize() + 8;
+                if (this._galMode) {
+                    return this.standardFontSize() + 8;
+                }
+                else {
+                    return _super.prototype.lineHeight.call(this);
+                }
             };
             Window_TachieMessage.prototype.newLineX = function () {
-                var x = _super.prototype.newLineX.call(this);
-                return x + windowPadding[3];
+                if (this._galMode) {
+                    var x = _super.prototype.newLineX.call(this);
+                    return x + windowPadding[3];
+                }
+                else {
+                    return _super.prototype.newLineX.call(this);
+                }
             };
             Window_TachieMessage.prototype.drawMessageFace = function () {
                 this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
+            };
+            Window_TachieMessage.prototype.updateBackground = function () {
+                this.refreshWindow();
+                _super.prototype.updateBackground.call(this);
+            };
+            Window_TachieMessage.prototype.refreshWindow = function () {
+                if (this._galMode) {
+                    if ($gameMessage.background() !== 0 || $gameMessage.positionType() !== 2) {
+                        this.clearWindowSkil();
+                        this._galMode = false;
+                        this.move(0, 0, this.windowWidth(), this.windowHeight());
+                        this.createContents();
+                        this.updatePlacement();
+                        this._refreshContents();
+                    }
+                }
+                else {
+                    if ($gameMessage.background() === 0 && $gameMessage.positionType() === 2) {
+                        this._galMode = true;
+                        this.move(0, 0, this.windowWidth(), this.windowHeight());
+                        this.createContents();
+                        this.updatePlacement();
+                        this._refreshContents();
+                    }
+                }
             };
             return Window_TachieMessage;
         }(Window_Message));

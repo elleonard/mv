@@ -545,7 +545,7 @@ export class Scenario_Converter {
      * ホワイトスペースを削除します。
      */
     removeWS(line: string): string {
-        const ret = line.replace(/^\s+/g, '');
+        const ret = line.replace(/^[\x20|\t]+/g, '');
         if (ret === '_') {
             return '';
         } else {
@@ -726,7 +726,7 @@ export class Scenario_Converter {
         if (context.header['name']) {
             name = context.headerStr('name');
         }
-        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie inactiveAll`]});
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie deactivateAll`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
 
         let face = '';

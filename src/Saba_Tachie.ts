@@ -193,6 +193,7 @@
  * Tachie hideName                      # 名前欄を非表示にする
  * Tachie clear                         # 立ち絵を全て非表示にする
  * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
+ * Tachie deactivateAll                   # すべてのキャラを暗くします
  *
  *
  */
@@ -309,7 +310,8 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'windowColor':
             $gameTemp.tachieActorId = parseInt(args[1]);
             break;
-        case 'inactiveAll':
+        case 'inactiveAll':     // 後方互換用
+        case 'deactivateAll':
         {
             const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
             const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
@@ -1108,7 +1110,13 @@ var TachieDrawerMixin = function() {
         var h = crop.height;
         var dx = trim.x + rect.x;
         var dy = trim.y + rect.y;
-
+        if (rect.width > 0 && rect.width < w + dx * scale) {
+            w = rect.width - dx * scale;
+        }
+        if (rect.height > 0 && rect.height < h + dy * scale) {
+            h = rect.height - dy * scale;
+        }
+    
         bitmap.context.drawImage(img, frame.x, frame.y, w, h, dx * scale + x, dy * scale + y, w * scale, h * scale);
     };
     this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {

@@ -40,7 +40,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default
  *
  * @help
- * Ver 2016-04-03 18:03:31
+ * Ver 2016-04-03 19:03:23
  *
  * Saba_Tachie と併用してください
  */
@@ -141,6 +141,10 @@ var Saba;
             TachieSprite.prototype.redraw = function () {
                 var index = $gameSystem.mapTachieActorIndex;
                 var actor = $gameParty.battleMembers()[index];
+                if (!actor) {
+                    this.hidden = true;
+                    return;
+                }
                 var id = actor.actorId();
                 this.actorId = id;
                 this.bitmap.clear();

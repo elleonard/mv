@@ -141,6 +141,10 @@ class TachieSprite extends Sprite_Base {
     redraw(): void {
         var index = $gameSystem.mapTachieActorIndex;
         var actor = $gameParty.battleMembers()[index];
+        if (! actor) {
+            this.hidden = true;
+            return;
+        }
         var id = actor.actorId();
         this.actorId = id;
         this.bitmap.clear();

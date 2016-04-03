@@ -30,7 +30,7 @@
  * @desc 立ち絵切り替え時のSEです。ファイル名、ボリューム、ピッチの順です
  * @default Jump1 80 100
  *
- * @param skilActorList
+ * @param skipActorList
  * @desc マップで立ち絵を表示しないアクターIDのリストです。空白区切り(2 3 4……など)
  * @default 
  * 
@@ -51,7 +51,7 @@ const speed = parseInt(parameters['speed']);
 const changeTachieButton = parameters['changeTachieButton'];
 const seList = parameters['se'].split(' ');
 var seFile: MV.AudioParameters = {name: seList[0], pan: 0, volume: parseInt(seList[1]), pitch: parseInt(seList[2]), pos: 0};
-const skipActorList = Saba.toIntArray(parameters['skilActorList'].split(' '));
+const skipActorList = Saba.toIntArray(parameters['skipActorList'].split(' '));
 
 var _Spriteset_Map_createUpperLayer = Spriteset_Map.prototype.createUpperLayer;
 Spriteset_Map.prototype.createUpperLayer = function() {

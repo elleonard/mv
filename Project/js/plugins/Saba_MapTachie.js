@@ -35,12 +35,12 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc 立ち絵切り替え時のSEです。ファイル名、ボリューム、ピッチの順です
  * @default Jump1 80 100
  *
- * @param skilActorList
+ * @param skipActorList
  * @desc マップで立ち絵を表示しないアクターIDのリストです。空白区切り(2 3 4……など)
  * @default
  *
  * @help
- * Ver 2016-04-03 17:31:57
+ * Ver 2016-04-03 18:03:31
  *
  * Saba_Tachie と併用してください
  */
@@ -56,7 +56,7 @@ var Saba;
         var changeTachieButton = parameters['changeTachieButton'];
         var seList = parameters['se'].split(' ');
         var seFile = { name: seList[0], pan: 0, volume: parseInt(seList[1]), pitch: parseInt(seList[2]), pos: 0 };
-        var skipActorList = Saba.toIntArray(parameters['skilActorList'].split(' '));
+        var skipActorList = Saba.toIntArray(parameters['skipActorList'].split(' '));
         var _Spriteset_Map_createUpperLayer = Spriteset_Map.prototype.createUpperLayer;
         Spriteset_Map.prototype.createUpperLayer = function () {
             _Spriteset_Map_createUpperLayer.call(this);

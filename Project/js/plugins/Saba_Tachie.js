@@ -32,9 +32,17 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
  *
+ * @param leftPosX
+ * @desc 左側に立つ場合のx座標です
+ * @default 0
+ *
  * @param rightPosX
  * @desc 右側に立つ場合のx座標です
  * @default 400
+ *
+ * @param posY
+ * @desc 全員のy座標です
+ * @default 0
  *
  * @param actor1offset
  * @desc アクター１のキャラのx座標，y座標の補正値です
@@ -161,7 +169,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-03 14:50:42
+ * Ver 2016-04-03 20:56:46
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -228,7 +236,9 @@ var Saba;
     var Tachie;
     (function (Tachie) {
         var parameters = PluginManager.parameters('Saba_Tachie');
+        var leftPosX = parseInt(parameters['leftPosX']);
         var rightPosX = parseInt(parameters['rightPosX']);
+        var posY = parseInt(parameters['posY']);
         var nameLeft = parseInt(parameters['nameLeft']);
         var fontSize = parseInt(parameters['fontSize']);
         var windowMarginParam = parameters['windowMargin'].split(',');
@@ -472,6 +482,7 @@ var Saba;
                 }
             };
             _Game_Interpreter.prototype.tachiePictureCommnad = function (command, actorId, x, y, opacity) {
+                var yy = y + posY;
                 switch (command) {
                     case 'showLeft':
                         {
@@ -485,13 +496,14 @@ var Saba;
                                     lastTone = picture_1.tone();
                                 }
                             }
-                            $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
+                            var xx = x + leftPosX;
+                            $gameScreen.showPicture(Tachie.DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
                             var picture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
                             picture.tint(lastTone, 0);
                             var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, [0, 0, 0, 0], toneChangeDuration, false] };
                             this._list.splice(this._index + 1, 0, c);
                             if (opacity < 255) {
-                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true] };
+                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID1, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true] };
                                 this._list.splice(this._index + 1, 0, c);
                             }
                             var rightPicture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
@@ -515,13 +527,13 @@ var Saba;
                                 }
                             }
                             var xx = x + rightPosX;
-                            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
+                            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
                             var picture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID2);
                             picture.tint(lastTone, 0);
                             var c = { 'code': 234, 'indent': this._indent, 'parameters': [Tachie.DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false] };
                             this._list.splice(this._index + 1, 0, c);
                             if (opacity < 255) {
-                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true] };
+                                var c = { 'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true] };
                                 this._list.splice(this._index + 1, 0, c);
                             }
                             var leftPicture = $gameScreen.picture(Tachie.DEFAULT_PICTURE_ID1);
@@ -1153,11 +1165,21 @@ var Saba;
                     w = cache.width - xx;
                     ww = w;
                 }
+                if (xx + ww > cache.width) {
+                    var xScale = (cache.width - xx) * 1.0 / ww;
+                    ww = cache.width - xx;
+                    w *= xScale;
+                }
                 var hh = rect.height / scale;
                 var h = rect.height;
                 if (h <= 0 || h + yy > cache.height) {
                     h = cache.height - yy;
                     hh = h;
+                }
+                if (yy + hh > cache.height) {
+                    var yScale = (cache.height - yy) * 1.0 / hh;
+                    hh = cache.height - yy;
+                    h *= yScale;
                 }
                 bitmap.blt(cache, xx, yy, ww, hh, x, y, w, h);
             };
@@ -1208,19 +1230,29 @@ var Saba;
                 }
                 var xx = -rect.x < 0 ? 0 : -rect.x;
                 var yy = -rect.y < 0 ? 0 : -rect.y;
-                var ww = rect.width;
-                var w = ww;
+                var ww = rect.width / scale;
+                var w = rect.width;
                 if (w <= 0 || w + xx > img.width) {
                     w = img.width - xx;
                     ww = w;
                 }
+                if (xx + ww > img.width) {
+                    var xScale = (img.width - xx) * 1.0 / ww;
+                    ww = img.width - xx;
+                    w *= xScale;
+                }
+                var hh = rect.height / scale;
                 var h = rect.height;
-                var hh = h;
                 if (h <= 0 || h + yy > img.height) {
                     h = img.height - yy;
                     hh = h;
                 }
-                bitmap.blt(img, xx, yy, ww, hh, x, y, w * scale, h * scale);
+                if (yy + hh > img.height) {
+                    var yScale = (img.height - yy) * 1.0 / hh;
+                    hh = img.height - yy;
+                    h *= yScale;
+                }
+                bitmap.blt(img, xx, yy, ww, hh, x, y, w, h);
             };
             this.drawTachieHair = function (actor, bitmap) {
                 this.drawTachieFile(actor.hairFile(), bitmap, actor);

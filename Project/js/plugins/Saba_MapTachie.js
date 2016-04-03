@@ -39,8 +39,16 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc マップで立ち絵を表示しないアクターIDのリストです。空白区切り(2 3 4……など)
  * @default
  *
+ * @param hideByMenu
+ * @desc メニューを表示する時に背景の立ち絵を非表示にする場合、true に設定します
+ * @default true
+ *
+ * @param hideByBattleEffect
+ * @desc バトル演出を表示する時に背景の立ち絵を非表示にする場合、true に設定します
+ * @default true
+ *
  * @help
- * Ver 2016-04-03 19:03:23
+ * Ver 2016-04-03 20:20:49
  *
  * Saba_Tachie と併用してください
  */
@@ -53,6 +61,8 @@ var Saba;
         var appearX = parseInt(parameters['appearX']);
         var hiddenX = parseInt(parameters['hiddenX']);
         var speed = parseInt(parameters['speed']);
+        var hideByMenu = parameters['hideByMenu'] === 'true';
+        var hideByBattleEffect = parameters['hideByBattleEffect'] === 'true';
         var changeTachieButton = parameters['changeTachieButton'];
         var seList = parameters['se'].split(' ');
         var seFile = { name: seList[0], pan: 0, volume: parseInt(seList[1]), pitch: parseInt(seList[2]), pos: 0 };
@@ -62,6 +72,25 @@ var Saba;
             _Spriteset_Map_createUpperLayer.call(this);
             this._tachieSprite = new TachieSprite();
             this.addChild(this._tachieSprite);
+        };
+        var _Scene_Map_snapForBattleBackground = Scene_Map.prototype.snapForBattleBackground;
+        Scene_Map.prototype.snapForBattleBackground = function () {
+            if (hideByMenu) {
+                this._spriteset.removeChild(this._spriteset._tachieSprite);
+            }
+            _Scene_Map_snapForBattleBackground.call(this);
+        };
+        var _Scene_Map_startEncounterEffect = Scene_Map.prototype.startEncounterEffect;
+        Scene_Map.prototype.startEncounterEffect = function () {
+            if (hideByBattleEffect) {
+                this._spriteset.removeChild(this._spriteset._tachieSprite);
+            }
+            _Scene_Map_startEncounterEffect.call(this);
+        };
+        var _Scene_Map_terminate = Scene_Map.prototype.terminate;
+        Scene_Map.prototype.terminate = function () {
+            this._spriteset.removeChild(this._spriteset._tachieSprite);
+            _Scene_Map_terminate.call(this);
         };
         var TachieSprite = (function (_super) {
             __extends(TachieSprite, _super);

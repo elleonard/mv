@@ -6,9 +6,17 @@
  * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
  *
+ * @param leftPosX
+ * @desc 左側に立つ場合のx座標です
+ * @default 0
+ *
  * @param rightPosX
  * @desc 右側に立つ場合のx座標です
  * @default 400
+ *
+ * @param posY
+ * @desc 全員のy座標です
+ * @default 0
  *
  * @param actor1offset
  * @desc アクター１のキャラのx座標，y座標の補正値です
@@ -201,7 +209,9 @@ module Saba {
 export module Tachie {
 
 const parameters = PluginManager.parameters('Saba_Tachie');
+const leftPosX = parseInt(parameters['leftPosX']);
 const rightPosX = parseInt(parameters['rightPosX']);
+const posY = parseInt(parameters['posY']);
 const nameLeft = parseInt(parameters['nameLeft']);
 const fontSize = parseInt(parameters['fontSize']);
 const windowMarginParam = parameters['windowMargin'].split(',');
@@ -447,6 +457,7 @@ class _Game_Interpreter extends Game_Interpreter {
         }
     }
     tachiePictureCommnad(command: string, actorId: number, x: number, y: number, opacity: number): void {
+        const yy = y + posY;
         switch (command) {
         case 'showLeft':
         {
@@ -461,7 +472,8 @@ class _Game_Interpreter extends Game_Interpreter {
                 }
             }
             
-            $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, x, y, 100, 100, opacity, 0);
+            const xx = x + leftPosX;
+            $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
             const picture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
             picture.tint(lastTone, 0);
             
@@ -469,7 +481,7 @@ class _Game_Interpreter extends Game_Interpreter {
             this._list.splice(this._index + 1, 0, c);
             
             if (opacity < 255) {
-                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, 0, 0, 0, x, y, 100, 100, 255, 0, 15, true]};
+                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true]};
                 this._list.splice(this._index + 1, 0, c);
             }
             const rightPicture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
@@ -494,7 +506,7 @@ class _Game_Interpreter extends Game_Interpreter {
             }
             
             const xx = x + rightPosX;
-            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, y, 100, 100, opacity, 0);
+            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
             const picture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
             picture.tint(lastTone, 0);
             
@@ -502,7 +514,7 @@ class _Game_Interpreter extends Game_Interpreter {
             this._list.splice(this._index + 1, 0, c);
             
             if (opacity < 255) {
-                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, y, 100, 100, 255, 0, 15, true]};
+                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true]};
                 this._list.splice(this._index + 1, 0, c);
             }
             const leftPicture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
@@ -1089,11 +1101,21 @@ var TachieDrawerMixin = function() {
             w = cache.width - xx;
             ww = w;
         }
+        if (xx + ww > cache.width) {
+            var xScale = (cache.width - xx) * 1.0 / ww;
+            ww = cache.width - xx;
+            w *= xScale;
+        }
         var hh = rect.height / scale;
         var h = rect.height;
         if (h <= 0 || h + yy > cache.height) {
             h = cache.height - yy;
             hh = h;
+        }
+        if (yy + hh > cache.height) {
+            var yScale = (cache.height - yy) * 1.0 / hh;
+            hh = cache.height - yy;
+            h *= yScale;
         }
         bitmap.blt(cache, xx, yy, ww, hh, x, y, w, h);
     };
@@ -1141,19 +1163,29 @@ var TachieDrawerMixin = function() {
         }
         var xx = -rect.x < 0 ? 0 : -rect.x;
         var yy = -rect.y < 0 ? 0 : -rect.y;
-        var ww = rect.width; 
-        var w = ww; 
+        var ww = rect.width / scale; 
+        var w = rect.width; 
         if (w <= 0 || w + xx > img.width) {
             w = img.width - xx;
             ww = w;
         }
+        if (xx + ww > img.width) {
+            var xScale = (img.width - xx) * 1.0 / ww;
+            ww = img.width - xx;
+            w *= xScale;
+        }
+        var hh = rect.height / scale;
         var h = rect.height;
-        var hh = h;
         if (h <= 0 || h + yy > img.height) {
             h = img.height - yy;
             hh = h;
         }
-        bitmap.blt(img, xx, yy, ww, hh, x, y, w * scale, h * scale);
+        if (yy + hh > img.height) {
+            var yScale = (img.height - yy) * 1.0 / hh;
+            hh = img.height - yy;
+            h *= yScale;
+        }
+        bitmap.blt(img, xx, yy, ww, hh, x, y, w, h);
     };
     this.drawTachieHair = function(actor: Game_Actor, bitmap: Bitmap): void {
         this.drawTachieFile(actor.hairFile(), bitmap, actor);

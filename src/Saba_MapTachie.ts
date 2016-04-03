@@ -33,6 +33,14 @@
  * @param skipActorList
  * @desc マップで立ち絵を表示しないアクターIDのリストです。空白区切り(2 3 4……など)
  * @default 
+ *
+ * @param hideByMenu
+ * @desc メニューを表示する時に背景の立ち絵を非表示にする場合、true に設定します
+ * @default true
+ *
+ * @param hideByBattleEffect
+ * @desc バトル演出を表示する時に背景の立ち絵を非表示にする場合、true に設定します
+ * @default true
  * 
  * @help
  * Ver
@@ -47,6 +55,8 @@ const tachieY = parseInt(parameters['tachieY']);
 const appearX = parseInt(parameters['appearX']);
 const hiddenX = parseInt(parameters['hiddenX']);
 const speed = parseInt(parameters['speed']);
+const hideByMenu = parameters['hideByMenu'] === 'true';
+const hideByBattleEffect = parameters['hideByBattleEffect'] === 'true';
 
 const changeTachieButton = parameters['changeTachieButton'];
 const seList = parameters['se'].split(' ');
@@ -58,6 +68,28 @@ Spriteset_Map.prototype.createUpperLayer = function() {
     _Spriteset_Map_createUpperLayer.call(this);
     this._tachieSprite = new TachieSprite();
     this.addChild(this._tachieSprite);
+};
+
+var _Scene_Map_snapForBattleBackground = Scene_Map.prototype.snapForBattleBackground;
+Scene_Map.prototype.snapForBattleBackground = function() {
+    if (hideByMenu) {
+        this._spriteset.removeChild(this._spriteset._tachieSprite);
+    }
+    _Scene_Map_snapForBattleBackground.call(this);
+};
+
+var _Scene_Map_startEncounterEffect = Scene_Map.prototype.startEncounterEffect;
+Scene_Map.prototype.startEncounterEffect = function() {
+    if (hideByBattleEffect) {
+        this._spriteset.removeChild(this._spriteset._tachieSprite);
+    }
+    _Scene_Map_startEncounterEffect.call(this);
+};
+
+var _Scene_Map_terminate = Scene_Map.prototype.terminate;
+Scene_Map.prototype.terminate = function() {
+    this._spriteset.removeChild(this._spriteset._tachieSprite);
+    _Scene_Map_terminate.call(this);
 };
 
 class TachieSprite extends Sprite_Base {

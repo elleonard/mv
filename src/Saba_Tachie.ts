@@ -946,7 +946,7 @@ class _Game_Actor extends Game_Actor {
         return this.baseId + 'hoppe';
     }
     faceFile(): string {
-        return this.baseId + this.faceId;
+        return this.baseId + this.faceId.padZero(2);
     }
 }
 

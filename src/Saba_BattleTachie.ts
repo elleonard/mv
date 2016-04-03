@@ -37,6 +37,14 @@ Scene_Battle.prototype.createActorCommandWindow = function () {
     _Scene_Battle_createActorCommandWindow.call(this);
     this._tachieSprite.setActorCommandWindow(this._actorCommandWindow);
 };
+
+var _Scene_Battle_create = Scene_Battle.prototype.create;
+Scene_Battle.prototype.create = function() {
+    _Scene_Battle_create.call(this);
+    for (let actor of $gameParty.battleMembers()) {
+        actor.preloadTachie();
+    }
+}
     
 class TachieSprite extends Sprite_Base {
     _commandWindow: Window_ActorCommand;

@@ -23,7 +23,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default 150
  *
  * @help
- * Ver 2016-04-02 23:43:44
+ * Ver 2016-04-03 11:01:08
  *
  */
 var Saba;
@@ -40,6 +40,14 @@ var Saba;
             this._spriteset.addChild(this._tachieSprite);
             _Scene_Battle_createActorCommandWindow.call(this);
             this._tachieSprite.setActorCommandWindow(this._actorCommandWindow);
+        };
+        var _Scene_Battle_create = Scene_Battle.prototype.create;
+        Scene_Battle.prototype.create = function () {
+            _Scene_Battle_create.call(this);
+            for (var _i = 0, _a = $gameParty.battleMembers(); _i < _a.length; _i++) {
+                var actor = _a[_i];
+                actor.preloadTachie();
+            }
         };
         var TachieSprite = (function (_super) {
             __extends(TachieSprite, _super);

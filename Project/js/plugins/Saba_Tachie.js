@@ -154,7 +154,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-02 22:48:29
+ * Ver 2016-04-03 11:03:56
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -995,7 +995,7 @@ var Saba;
                 return this.baseId + 'hoppe';
             };
             _Game_Actor.prototype.faceFile = function () {
-                return this.baseId + this.faceId;
+                return this.baseId + this.faceId.padZero(2);
             };
             return _Game_Actor;
         }(Game_Actor));

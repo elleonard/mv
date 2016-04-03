@@ -575,6 +575,15 @@ class _Game_Interpreter extends Game_Interpreter {
     }
 }
 
+var _Scene_Map_create = Scene_Map.prototype.create;
+Scene_Map.prototype.create = function() {
+    _Scene_Map_create.call(this);
+    for (let actor of $gameParty.battleMembers()) {
+        actor.preloadTachie();
+    }
+}
+
+
 Game_Interpreter.prototype.setup = function(list, eventId) {
     this.clear();
     this._mapId = $gameMap.mapId();
@@ -1028,6 +1037,10 @@ class _Game_Screen extends Game_Screen {
 var TachieDrawerMixin = function() {
     this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1): void {
         var actor = $gameActors.actor(actorId);
+        if (! actor) {
+            console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
+            return;
+        }
         var point = this.calcTachieActorPos(actor);
         if (! rect) {
             rect = new Rectangle(0, 0, 0, 0);

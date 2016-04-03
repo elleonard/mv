@@ -10,6 +10,13 @@ var Saba;
             }
         }
     };
+    Saba.toIntArray = function (list) {
+        var ret = [];
+        for (var i = 0; i < list.length; i++) {
+            ret[i] = parseInt(list[i]);
+        }
+        return ret;
+    };
 })(Saba || (Saba = {}));
 
 var __extends = (this && this.__extends) || function (d, b) {
@@ -154,7 +161,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-03 11:03:56
+ * Ver 2016-04-03 14:50:42
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -587,6 +594,14 @@ var Saba;
             };
             return _Game_Interpreter;
         }(Game_Interpreter));
+        var _Scene_Map_create = Scene_Map.prototype.create;
+        Scene_Map.prototype.create = function () {
+            _Scene_Map_create.call(this);
+            for (var _i = 0, _a = $gameParty.battleMembers(); _i < _a.length; _i++) {
+                var actor = _a[_i];
+                actor.preloadTachie();
+            }
+        };
         Game_Interpreter.prototype.setup = function (list, eventId) {
             this.clear();
             this._mapId = $gameMap.mapId();
@@ -1087,6 +1102,10 @@ var Saba;
                 if (faceId === void 0) { faceId = 0; }
                 if (scale === void 0) { scale = 1; }
                 var actor = $gameActors.actor(actorId);
+                if (!actor) {
+                    console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
+                    return;
+                }
                 var point = this.calcTachieActorPos(actor);
                 if (!rect) {
                     rect = new Rectangle(0, 0, 0, 0);

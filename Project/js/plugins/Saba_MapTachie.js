@@ -48,7 +48,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default true
  *
  * @help
- * Ver 2016-04-03 20:20:49
+ * Ver 2016-04-04 08:06:03
  *
  * Saba_Tachie と併用してください
  */
@@ -151,6 +151,11 @@ var Saba;
                 }
                 if ($gameTemp.tachieAvairable) {
                     // 立ち絵つき会話が始まっている
+                    this.hidden = true;
+                    return;
+                }
+                if ($gameMap.isEventRunning()) {
+                    // イベント実行中
                     this.hidden = true;
                     return;
                 }

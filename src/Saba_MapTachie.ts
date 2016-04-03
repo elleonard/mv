@@ -159,6 +159,11 @@ class TachieSprite extends Sprite_Base {
             this.hidden = true;
             return;
         }
+        if ($gameMap.isEventRunning()) {
+            // イベント実行中
+            this.hidden = true;
+            return;
+        }
         var id = actor.actorId();
         if (id != this.actorId) {
             if (this.x == this.hiddenX) {

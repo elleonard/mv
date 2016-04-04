@@ -1068,6 +1068,7 @@ ImageManager.isReady = function() {
 };
 
 
+
 class _Game_Temp extends Game_Temp {
     protected actorBitmapCache: {[actorId: number]: Bitmap};
     protected actorBitmapBodyCache: {[actorId: number]: Bitmap};
@@ -1106,7 +1107,7 @@ class _Game_Screen extends Game_Screen {
 }
 
 var TachieDrawerMixin = function() {
-    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1): boolean {
+    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1, clearByDraw = false): boolean {
         var actor = $gameActors.actor(actorId);
         if (! actor) {
             console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
@@ -1120,11 +1121,15 @@ var TachieDrawerMixin = function() {
             return false;
         }
         var point = this.calcTachieActorPos(actor);
+        if (clearByDraw) {
+            bitmap.clear();
+        }
         if (! rect) {
             rect = new Rectangle(0, 0, 0, 0);
             x += point.x;
             y += point.y;
         }
+        
         //rect.x += point.x;
         //rect.y += point.y;
         var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
@@ -1142,10 +1147,15 @@ var TachieDrawerMixin = function() {
             this.drawTachieOuterFront(actor, cache);
             console.log('createCache:' + actor.actorId());
         }
-        
+        if (! $gameTemp.tachieTmpBitmap) {
+            $gameTemp.tachieTmpBitmap = new Bitmap(Graphics.width, Graphics.height)
+        }
+        var tempBitmap = $gameTemp.tachieTmpBitmap;
         this.drawTachieCache(actor, cache, bitmap, x, y, rect, scale);
-        this.drawTachieHoppe(actor, bitmap, x, y, rect, scale);
-        this.drawTachieFace(actor, bitmap, x, y, rect, faceId, scale);
+        tempBitmap.clear();
+        this.drawTachieHoppe(actor, tempBitmap);
+        this.drawTachieFace(actor, tempBitmap, faceId);
+        this.drawTachieCache(actor, tempBitmap, bitmap, x, y, rect, scale);
         return true;
     };
     this.calcTachieActorPos = function(actor: Game_Actor): Point {
@@ -1166,7 +1176,7 @@ var TachieDrawerMixin = function() {
         var w = rect.width;
         if (w <= 0 || w + xx > cache.width) {
             w = cache.width - xx;
-            ww = w;
+            ww = w / scale;
         }
         if (xx + ww > cache.width) {
             var xScale = (cache.width - xx) * 1.0 / ww;
@@ -1177,7 +1187,7 @@ var TachieDrawerMixin = function() {
         var h = rect.height;
         if (h <= 0 || h + yy > cache.height) {
             h = cache.height - yy;
-            hh = h;
+            hh = h / scale;
         }
         if (yy + hh > cache.height) {
             var yScale = (cache.height - yy) * 1.0 / hh;
@@ -1206,44 +1216,18 @@ var TachieDrawerMixin = function() {
         }
         var img = texture.baseTexture.source;
         var frame = texture.frame;
-        var x = frame.x;
-        var y = frame.y;
+        var sx = frame.x;
+        var sy = frame.y;
         var trim = texture.trim;
         var crop = texture.crop;
         var ww = crop.width / scale;
         var w = crop.width;
         var hh = crop.height / scale;
         var h = crop.height;
-        var dx = (trim.x + rect.x) * scale;
-        var dy = (trim.y + rect.y) * scale;
+        var dx = (trim.x + rect.x);
+        var dy = (trim.y + rect.y) ;
         
-        var minusY = 0;
-        if (dy < 0) {
-            minusY -= dy / scale;
-            y += minusY;
-            hh -= minusY
-            dy = 0;
-        }
-        var minusX = 0;
-        if (dx < 0) {
-            minusX -= dx / scale;
-            x += minusX;
-            ww += minusY;
-            dx = 0;
-        }
-        
-        if (dx + ww > crop.width) {
-            var xScale = (crop.width - dx) * 1.0 / ww;
-            ww = crop.width - dx;
-            w *= xScale;
-        }
-        if (dy + hh > crop.height) {
-            var yScale = (crop.height - dy) * 1.0 / hh;
-            hh = crop.height - dy;
-            h *= yScale;
-        }
-        //console.log(ww, hh, dx + x, dy + y, w, h)
-        bitmap.context.drawImage(img, x, y, ww, hh, dx + x, dy + y, w, h);
+        bitmap.context.drawImage(img, sx, sy, ww, hh, dx + x, dy + y, w, h);
     };
     this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
         var img: Bitmap = ImageManager.loadTachie(file);
@@ -1305,15 +1289,15 @@ var TachieDrawerMixin = function() {
     this.drawTachieInnerTop = function(actor: Game_Actor, bitmap: Bitmap): void {
         this.drawTachieFile(actor.innerTopFile(), bitmap, actor);
     };
-    this.drawTachieHoppe = function(actor: Game_Actor, bitmap: Bitmap, x: number, y: number, rect: Rectangle): void {
-        this.drawTachieFile(actor.hoppeFile(), bitmap, actor, x, y, rect);
+    this.drawTachieHoppe = function(actor: Game_Actor, bitmap: Bitmap): void {
+        this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
     };
-    this.drawTachieFace = function(actor: Game_Actor, bitmap: Bitmap, x: number, y: number, rect: Rectangle, faceId: number, scale: number): void {
+    this.drawTachieFace = function(actor: Game_Actor, bitmap: Bitmap, faceId: number): void {
         if (faceId === 0) {
             faceId = actor.faceId;
         }
         var file = actor.baseId + faceId.padZero(2);
-        this.drawTachieFile(file, bitmap, actor, x, y, rect, scale);
+        this.drawTachieFile(file, bitmap, actor);
     };
 
 };
@@ -1352,10 +1336,7 @@ class _Sprite_Picture extends Sprite_Picture {
         if (actorId === 0) {
             return;
         }
-        this.bitmap.clear();
-        //var bitmap = $gameTemp.getPictureBitmapCache($gameScreen.getPictureId(picture));
-        this.bitmap.clear();
-        this.drawTachie(actorId, this.bitmap);
+        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
     }
 }
 
@@ -1561,7 +1542,6 @@ export class Window_TachieMessage extends Window_Message {
             } else {
                 this.clearWindowSkil();
             }
-            console.log(this.windowskin)
         }
         if (this.isClosing() && this.openness < 240) {
             this._balloonSprite.visible = false;

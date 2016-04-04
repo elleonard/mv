@@ -10,5 +10,13 @@ export var applyMyMethods = (myClass: any, presetClass: any, applyConstructor?: 
     }
 };
 
+export var toIntArray = (list: Array<string>): Array<number> => {
+    var ret: Array<number> = [];
+    for (var i = 0; i < list.length; i++) {
+        ret[i] = parseInt(list[i]);
+    }
+    return ret;
+};
+
 
 }

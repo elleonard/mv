@@ -48,7 +48,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default true
  *
  * @help
- * Ver 2016-04-04 08:06:03
+ * Ver 2016-04-04 21:06:51
  *
  * Saba_Tachie と併用してください
  */
@@ -180,9 +180,11 @@ var Saba;
                     return;
                 }
                 var id = actor.actorId();
-                this.actorId = id;
                 this.bitmap.clear();
-                this.drawTachie(id, this.bitmap);
+                var success = this.drawTachie(id, this.bitmap);
+                if (success) {
+                    this.actorId = id;
+                }
             };
             TachieSprite.prototype.moveToTargetPosition = function () {
                 if (this.hidden) {

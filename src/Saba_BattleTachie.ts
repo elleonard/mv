@@ -77,9 +77,11 @@ class TachieSprite extends Sprite_Base {
         var id = this._commandWindow._actor.actorId();
         if (id != this.actorId) {
             if (this.x == this.hiddenX) {
-                this.actorId = id;
                 this.bitmap.clear();
-                this.drawTachie(id, this.bitmap);
+                var success = this.drawTachie(id, this.bitmap);
+                if (success) {
+                    this.actorId = id;
+                }
             } else if (this.x == this.appearedX) {
                 this.hidden = true;
             }

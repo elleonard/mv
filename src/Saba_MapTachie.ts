@@ -183,9 +183,11 @@ class TachieSprite extends Sprite_Base {
             return;
         }
         var id = actor.actorId();
-        this.actorId = id;
         this.bitmap.clear();
-        this.drawTachie(id, this.bitmap);
+        var success = this.drawTachie(id, this.bitmap);
+        if (success) {
+            this.actorId = id;
+        }
     }
     moveToTargetPosition(): void {
         if (this.hidden) {

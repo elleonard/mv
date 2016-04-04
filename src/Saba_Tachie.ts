@@ -1106,18 +1106,18 @@ class _Game_Screen extends Game_Screen {
 }
 
 var TachieDrawerMixin = function() {
-    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1): void {
+    this.drawTachie = function(actorId: number, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1): boolean {
         var actor = $gameActors.actor(actorId);
         if (! actor) {
             console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
-            return;
+            return false;
         }
         if (! ImageManager.isReady()) {
-            return;
+            return false;
         }
         actor.preloadTachie();
         if (! ImageManager.isReady()) {
-            return;
+            return false;
         }
         var point = this.calcTachieActorPos(actor);
         if (! rect) {
@@ -1146,6 +1146,7 @@ var TachieDrawerMixin = function() {
         this.drawTachieCache(actor, cache, bitmap, x, y, rect, scale);
         this.drawTachieHoppe(actor, bitmap, x, y, rect, scale);
         this.drawTachieFace(actor, bitmap, x, y, rect, faceId, scale);
+        return true;
     };
     this.calcTachieActorPos = function(actor: Game_Actor): Point {
         var dx = actor.tachieOffsetX;

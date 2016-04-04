@@ -298,6 +298,13 @@ var _Game_Actor_addNewState = Game_Actor.prototype.addNewState;
 var _Game_Actor_clearStates = Game_Actor.prototype.clearStates;
 var _Game_Actor_eraseState = Game_Actor.prototype.eraseState;
 
+var DataManager_extractSaveContents = DataManager.extractSaveContents;
+DataManager.extractSaveContents = function(contents) {
+    DataManager_extractSaveContents.call(this, contents);
+    for (let actor of $gameParty.members()) {
+        actor.setCacheChanged();
+    }
+}
 
 class _Game_Interpreter extends Game_Interpreter {
     pluginCommand(command: string, args: string[]) {

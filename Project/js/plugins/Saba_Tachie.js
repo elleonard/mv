@@ -169,7 +169,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-04 21:05:45
+ * Ver 2016-04-04 23:24:36
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -317,6 +317,14 @@ var Saba;
         var _Game_Actor_addNewState = Game_Actor.prototype.addNewState;
         var _Game_Actor_clearStates = Game_Actor.prototype.clearStates;
         var _Game_Actor_eraseState = Game_Actor.prototype.eraseState;
+        var DataManager_extractSaveContents = DataManager.extractSaveContents;
+        DataManager.extractSaveContents = function (contents) {
+            DataManager_extractSaveContents.call(this, contents);
+            for (var _i = 0, _a = $gameParty.members(); _i < _a.length; _i++) {
+                var actor = _a[_i];
+                actor.setCacheChanged();
+            }
+        };
         var _Game_Interpreter = (function (_super) {
             __extends(_Game_Interpreter, _super);
             function _Game_Interpreter() {

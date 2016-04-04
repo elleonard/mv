@@ -1141,18 +1141,25 @@ var TachieDrawerMixin = function() {
         var frame = texture.frame;
         var trim = texture.trim;
         var crop = texture.crop;
+        var ww = crop.width / scale;
         var w = crop.width;
+        var hh = crop.height / scale;
         var h = crop.height;
-        var dx = trim.x + rect.x;
-        var dy = trim.y + rect.y;
-        if (rect.width > 0 && rect.width < w + dx * scale) {
-            w = rect.width - dx * scale;
+        var dx = (trim.x + rect.x) * scale;
+        var dy = (trim.y + rect.y) * scale;
+        /*if (w <= 0 || w + dx + x > frame.width) {
+            w = frame.width - dx - x;
+            ww = w;
+        }*/
+        console.log(texture);
+        if (dx + ww > crop.width && scale != 1) {
+            var xScale = (crop.width - dx) * 1.0 / ww;
+            console.log(dx + ww, xScale, crop.width)
+            //ww = crop.width - dx;
+            //w *= xScale;
         }
-        if (rect.height > 0 && rect.height < h + dy * scale) {
-            h = rect.height - dy * scale;
-        }
-    
-        bitmap.context.drawImage(img, frame.x, frame.y, w, h, dx * scale + x, dy * scale + y, w * scale, h * scale);
+        //console.log(ww, hh, dx + x, dy + y, w, h)
+        bitmap.context.drawImage(img, frame.x, frame.y, ww, hh, dx + x, dy + y, w, h);
     };
     this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
         var img: Bitmap = ImageManager.loadTachie(file);
@@ -1295,7 +1302,7 @@ class Window_MessageName extends Window_Base {
             this.visible = false;
             return;
         }
-        this.width = this.convertEscapeCharacters(name).length * 28 + 40;
+        this.width = this.convertEscapeCharacters(name).length * this.standardFontSize() + 40;
         this.contents.clear();
         this.drawTextEx(name, 10, 0);
         this.open();

@@ -1112,6 +1112,13 @@ var TachieDrawerMixin = function() {
             console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
             return;
         }
+        if (! ImageManager.isReady()) {
+            return;
+        }
+        actor.preloadTachie();
+        if (! ImageManager.isReady()) {
+            return;
+        }
         var point = this.calcTachieActorPos(actor);
         if (! rect) {
             rect = new Rectangle(0, 0, 0, 0);

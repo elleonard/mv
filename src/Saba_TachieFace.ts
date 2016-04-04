@@ -61,21 +61,21 @@
 module Saba {
 module Tachie {
 
-export const offsetX = {};
-export const offsetY = {};
+export const faceOffsetX = {};
+export const faceOffsetY = {};
 
 const parameters = PluginManager.parameters('Saba_TachieFace');
 const disableTachieFaceIdList = Saba.toIntArray(parameters['disableTachieFaceIdList'].split(' '));
 
 for (let i = 1; i <= 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
-    offsetX[i] = parseInt(offset1[0] || '0');
-    offsetY[i] = parseInt(offset1[1] || '0');
-    if (isNaN(offsetX[i])) {
-        offsetX[i] = 0;
+    faceOffsetX[i] = parseInt(offset1[0] || '0');
+    faceOffsetY[i] = parseInt(offset1[1] || '0');
+    if (isNaN(faceOffsetX[i])) {
+        faceOffsetX[i] = 0;
     }
-    if (isNaN(offsetY[i])) {
-        offsetY[i] = 0;
+    if (isNaN(faceOffsetY[i])) {
+        faceOffsetY[i] = 0;
     }
 }
 
@@ -83,7 +83,7 @@ const faceScale = parseInt(parameters['faceScale']);
 
 
 const _Window_Base_drawActorFace = Window_Base.prototype.drawActorFace;
-Window_Base.prototype.drawActorFace = function(actor, x, y, width, height) {
+Window_Base.prototype.drawActorFace = function(actor, x, y, width, height, offsetX = 0, offsetY = 0) {
     if (disableTachieFaceIdList.indexOf(actor.actorId()) >= 0) {
         _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
         return;
@@ -91,7 +91,7 @@ Window_Base.prototype.drawActorFace = function(actor, x, y, width, height) {
     var imageAvailable = PIXI.TextureCache[actor.bodyBackFile() + '.png'] || ImageManager.loadTachie(actor.bodyBackFile()).isReady();
     if (! imageAvailable) {
         _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
-        return;
+        return true;
     }
     const actorId = actor.actorId();
     width = width || Window_Base._faceWidth;
@@ -100,8 +100,8 @@ Window_Base.prototype.drawActorFace = function(actor, x, y, width, height) {
     var ph = Window_Base._faceHeight;
     var dx = Math.floor(x + Math.max(width - pw, 0) / 2);
     var dy = Math.floor(y + Math.max(height - ph, 0) / 2);
-    var rect = new Rectangle(offsetX[actorId], offsetY[actorId], width, height);
-    this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0)
+    var rect = new Rectangle(faceOffsetX[actorId] + offsetX, faceOffsetY[actorId] + offsetY, width, height);
+    return this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0);
 };
 
 

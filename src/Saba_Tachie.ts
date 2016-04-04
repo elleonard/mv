@@ -284,12 +284,19 @@ export const RIGHT_POS = 2;
 export const MESSAGE_SKIP_KEY: string = parameters['skipKey'];
 export const WINDOW_HIDE_KEY: string = parameters['windowHideKey'];
 
+// ステートのメモ欄で、立ち絵のポーズを指定する時のキーです。
+const TACHIE_POSE_META_KEY = 'tachiePoseId';
+// ステートのメモ欄で、立ち絵の表情を指定する時のキーです。
+const TACHIE_FACE_META_KEY = 'tachieFaceId';
+
 var _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 var _Game_Picture_initTarget = Game_Picture.prototype.initTarget;
 var _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
 var _Sprite_Picture_loadBitmap = Sprite_Picture.prototype.loadBitmap;
 var _Game_Actor_initMembers = Game_Actor.prototype.initMembers;
-
+var _Game_Actor_addNewState = Game_Actor.prototype.addNewState;
+var _Game_Actor_clearStates = Game_Actor.prototype.clearStates;
+var _Game_Actor_eraseState = Game_Actor.prototype.eraseState;
 
 
 class _Game_Interpreter extends Game_Interpreter {
@@ -650,14 +657,23 @@ class _Game_Actor extends Game_Actor {
     protected _castOffOuter: boolean;
     protected _castOffInnerBottom: boolean;
     protected _castOffInnerTop: boolean;
+    
+    protected _statePoseId: number;
+    protected _stateFaceId: number;
 
     get baseId(): string {
         return 'actor' + this.actorId().padZero(2) + '_';
     }
     get poseId(): number {
+        if (this._statePoseId) {
+            return this._statePoseId;
+        }
         return this._poseId;
     }
     get faceId(): number {
+        if (this._stateFaceId) {
+            return this._stateFaceId;
+        }
         if (! this._faceId) {
             return 0;
         }
@@ -968,6 +984,49 @@ class _Game_Actor extends Game_Actor {
     }
     faceFile(): string {
         return this.baseId + this.faceId.padZero(2);
+    }
+    /**
+     * @override
+     */
+    addNewState(stateId: number): void {
+        _Game_Actor_addNewState.call(this, stateId);
+        this.updatePoseAndFaceByStates();
+    }
+    /**
+     * @override
+     */
+    clearStates(): void {
+        _Game_Actor_clearStates.call(this);
+        this.updatePoseAndFaceByStates();
+    }
+    /**
+     * @override
+     */
+    eraseState(stateId: number): void {
+        _Game_Actor_eraseState.call(this, stateId);
+        this.updatePoseAndFaceByStates();
+    }
+    updatePoseAndFaceByStates(): void {
+        var lastStatePoseId = this._statePoseId;
+        var lastStateFaceId = this._stateFaceId;
+        this._statePoseId = null;
+        this._stateFaceId = null;
+        for (let stateId of this._states) {
+            var state:RPG.State = $dataStates[stateId];
+            if (state.meta[TACHIE_POSE_META_KEY]) {
+                this._statePoseId = parseInt(state.meta[TACHIE_POSE_META_KEY]);
+            }
+            if (state.meta[TACHIE_FACE_META_KEY]) {
+                this._stateFaceId = parseInt(state.meta[TACHIE_FACE_META_KEY]);
+            }
+        }
+        if (this._statePoseId != lastStatePoseId) {
+            this.setDirty();
+            this.setCacheChanged();
+        }
+        if (this._stateFaceId != lastStateFaceId) {
+            this.setDirty();
+        }
     }
 }
 

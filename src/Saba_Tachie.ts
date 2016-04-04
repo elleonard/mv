@@ -1139,6 +1139,8 @@ var TachieDrawerMixin = function() {
         }
         var img = texture.baseTexture.source;
         var frame = texture.frame;
+        var x = frame.x;
+        var y = frame.y;
         var trim = texture.trim;
         var crop = texture.crop;
         var ww = crop.width / scale;
@@ -1147,19 +1149,34 @@ var TachieDrawerMixin = function() {
         var h = crop.height;
         var dx = (trim.x + rect.x) * scale;
         var dy = (trim.y + rect.y) * scale;
-        /*if (w <= 0 || w + dx + x > frame.width) {
-            w = frame.width - dx - x;
-            ww = w;
-        }*/
-        console.log(texture);
-        if (dx + ww > crop.width && scale != 1) {
+        
+        var minusY = 0;
+        if (dy < 0) {
+            minusY -= dy / scale;
+            y += minusY;
+            hh -= minusY
+            dy = 0;
+        }
+        var minusX = 0;
+        if (dx < 0) {
+            minusX -= dx / scale;
+            x += minusX;
+            ww += minusY;
+            dx = 0;
+        }
+        
+        if (dx + ww > crop.width) {
             var xScale = (crop.width - dx) * 1.0 / ww;
-            console.log(dx + ww, xScale, crop.width)
-            //ww = crop.width - dx;
-            //w *= xScale;
+            ww = crop.width - dx;
+            w *= xScale;
+        }
+        if (dy + hh > crop.height) {
+            var yScale = (crop.height - dy) * 1.0 / hh;
+            hh = crop.height - dy;
+            h *= yScale;
         }
         //console.log(ww, hh, dx + x, dy + y, w, h)
-        bitmap.context.drawImage(img, frame.x, frame.y, ww, hh, dx + x, dy + y, w, h);
+        bitmap.context.drawImage(img, x, y, ww, hh, dx + x, dy + y, w, h);
     };
     this.drawTachieImage = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
         var img: Bitmap = ImageManager.loadTachie(file);

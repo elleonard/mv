@@ -1343,7 +1343,7 @@ class _Sprite_Picture extends Sprite_Picture {
         if (actorId === 0) {
             return;
         }
-        if (this.lastDrawnActorId === actorId) {
+        if (this.lastDrawnActorId !== actorId) {
             this.bitmap.clear();
         }
         this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, true);

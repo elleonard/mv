@@ -419,30 +419,30 @@ export class Scenario_Converter {
                 return;
             }
             self.convertReplace(files);
-            self.convertFiles(files, scenario);
+            self.convertFiles(SCENARIO_PATH, files, scenario);
             console.log(scenario);
             fs.writeFileSync(DATA_PATH + 'Scenario.json', JSON.stringify(scenario));
             DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
             console.log('シナリオの変換が終わりました');
         });
     }
-    convertFiles(files, scenario): void {
+    convertFiles(basePath, files, scenario): void {
         if (! files) {
             return;
         }
         for (const file of files) {
-            const filePath = path.resolve(SCENARIO_PATH, file);
+            const filePath = path.resolve(basePath, file);
             const stat = fs.statSync(filePath);
             if (stat.isDirectory()) {
                 const files2 = fs.readdirSync(filePath);
-                this.convertFiles(files2, scenario);
+                this.convertFiles(filePath + '/', files2, scenario);
                 continue;
             }
             const name = this.parseValidFileName(file);
             if (! name) {
                 continue;
             }
-            const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
+            const text = fs.readFileSync(basePath +  file, 'utf8');
             scenario[name] = this.convert(file, text);
         }
     }

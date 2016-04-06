@@ -81,6 +81,13 @@ for (let i = 1; i <= 10; i++) {
 
 const faceScale = parseInt(parameters['faceScale']);
 
+var _Scene_MenuBase_prototype_create = Scene_MenuBase.prototype.create;
+Scene_MenuBase.prototype.create = function() {
+    _Scene_MenuBase_prototype_create.call(this);
+    for (let actor of $gameParty.members()) {
+        actor.preloadTachie();
+    }
+}
 
 const _Window_Base_drawActorFace = Window_Base.prototype.drawActorFace;
 Window_Base.prototype.drawActorFace = function(actor, x, y, width, height, offsetX = 0, offsetY = 0) {

@@ -169,7 +169,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-04 23:24:36
+ * Ver 2016-04-06 19:35:19
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1226,6 +1226,7 @@ var Saba;
                 this.drawTachieHoppe(actor, tempBitmap);
                 this.drawTachieFace(actor, tempBitmap, faceId);
                 this.drawTachieCache(actor, tempBitmap, bitmap, x, y, rect, scale);
+                this.lastDrawnActorId = actor.actorId();
                 return true;
             };
             this.calcTachieActorPos = function (actor) {
@@ -1373,8 +1374,7 @@ var Saba;
                 this.drawTachieFile(file, bitmap, actor);
             };
         };
-        TachieDrawerMixin.call(Sprite_Base.prototype);
-        TachieDrawerMixin.call(Sprite_Picture.prototype);
+        TachieDrawerMixin.call(Sprite.prototype);
         TachieDrawerMixin.call(Window_Base.prototype);
         var _Sprite_Picture = (function (_super) {
             __extends(_Sprite_Picture, _super);
@@ -1411,7 +1411,10 @@ var Saba;
                 if (actorId === 0) {
                     return;
                 }
-                this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+                if (this.lastDrawnActorId !== actorId) {
+                    this.bitmap.clear();
+                }
+                this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, true);
             };
             return _Sprite_Picture;
         }(Sprite_Picture));

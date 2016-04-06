@@ -75,7 +75,7 @@ var Saba;
  * @default 0, 0
  *
  * @help
- * Ver 2016-04-04 20:32:34
+ * Ver 2016-04-06 20:15:27
  *
  *
  */
@@ -83,24 +83,34 @@ var Saba;
 (function (Saba) {
     var Tachie;
     (function (Tachie) {
-        Tachie.offsetX = {};
-        Tachie.offsetY = {};
+        Tachie.faceOffsetX = {};
+        Tachie.faceOffsetY = {};
         var parameters = PluginManager.parameters('Saba_TachieFace');
         var disableTachieFaceIdList = Saba.toIntArray(parameters['disableTachieFaceIdList'].split(' '));
         for (var i = 1; i <= 10; i++) {
             var offset1 = String(parameters['actor' + i + 'offset']).split(',');
-            Tachie.offsetX[i] = parseInt(offset1[0] || '0');
-            Tachie.offsetY[i] = parseInt(offset1[1] || '0');
-            if (isNaN(Tachie.offsetX[i])) {
-                Tachie.offsetX[i] = 0;
+            Tachie.faceOffsetX[i] = parseInt(offset1[0] || '0');
+            Tachie.faceOffsetY[i] = parseInt(offset1[1] || '0');
+            if (isNaN(Tachie.faceOffsetX[i])) {
+                Tachie.faceOffsetX[i] = 0;
             }
-            if (isNaN(Tachie.offsetY[i])) {
-                Tachie.offsetY[i] = 0;
+            if (isNaN(Tachie.faceOffsetY[i])) {
+                Tachie.faceOffsetY[i] = 0;
             }
         }
         var faceScale = parseInt(parameters['faceScale']);
+        var _Scene_MenuBase_prototype_create = Scene_MenuBase.prototype.create;
+        Scene_MenuBase.prototype.create = function () {
+            _Scene_MenuBase_prototype_create.call(this);
+            for (var _i = 0, _a = $gameParty.members(); _i < _a.length; _i++) {
+                var actor = _a[_i];
+                actor.preloadTachie();
+            }
+        };
         var _Window_Base_drawActorFace = Window_Base.prototype.drawActorFace;
-        Window_Base.prototype.drawActorFace = function (actor, x, y, width, height) {
+        Window_Base.prototype.drawActorFace = function (actor, x, y, width, height, offsetX, offsetY) {
+            if (offsetX === void 0) { offsetX = 0; }
+            if (offsetY === void 0) { offsetY = 0; }
             if (disableTachieFaceIdList.indexOf(actor.actorId()) >= 0) {
                 _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
                 return;
@@ -108,7 +118,7 @@ var Saba;
             var imageAvailable = PIXI.TextureCache[actor.bodyBackFile() + '.png'] || ImageManager.loadTachie(actor.bodyBackFile()).isReady();
             if (!imageAvailable) {
                 _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
-                return;
+                return true;
             }
             var actorId = actor.actorId();
             width = width || Window_Base._faceWidth;
@@ -117,8 +127,8 @@ var Saba;
             var ph = Window_Base._faceHeight;
             var dx = Math.floor(x + Math.max(width - pw, 0) / 2);
             var dy = Math.floor(y + Math.max(height - ph, 0) / 2);
-            var rect = new Rectangle(Tachie.offsetX[actorId], Tachie.offsetY[actorId], width, height);
-            this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0);
+            var rect = new Rectangle(Tachie.faceOffsetX[actorId] + offsetX, Tachie.faceOffsetY[actorId] + offsetY, width, height);
+            return this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0);
         };
     })(Tachie || (Tachie = {}));
 })(Saba || (Saba = {}));

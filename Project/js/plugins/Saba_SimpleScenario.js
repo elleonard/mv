@@ -10,6 +10,13 @@ var Saba;
             }
         }
     };
+    Saba.toIntArray = function (list) {
+        var ret = [];
+        for (var i = 0; i < list.length; i++) {
+            ret[i] = parseInt(list[i]);
+        }
+        return ret;
+    };
 })(Saba || (Saba = {}));
 
 var __extends = (this && this.__extends) || function (d, b) {
@@ -34,7 +41,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-02 22:55:18
+ * Ver 2016-04-06 20:22:32
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -281,12 +288,12 @@ var __extends = (this && this.__extends) || function (d, b) {
  *　　battle_end
  *　　shop
  *　　input_name
- *　　menu_open
- *　　save_open
- *　　gameover
+ *○　menu_open
+ *○　save_open
+ *○　gameover
  *　　battle_bgm
  *　　battle_end_me
- *　　title_return
+ *○　title_return
 //**************************************************************************
 //　システム設定系
 //**************************************************************************
@@ -433,36 +440,37 @@ var Saba;
                         return;
                     }
                     self.convertReplace(files);
-                    for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
-                        var file = files_1[_i];
-                        var filePath = path.resolve(SimpleScenario.SCENARIO_PATH, file);
-                        var stat = fs.statSync(filePath);
-                        if (stat.isDirectory()) {
-                            var files2 = fs.readdirSync(filePath);
-                            for (var _a = 0, files2_1 = files2; _a < files2_1.length; _a++) {
-                                var file2 = files2_1[_a];
-                                var name_1 = self.parseValidFileName(file2);
-                                if (!name_1) {
-                                    continue;
-                                }
-                                var text_1 = fs.readFileSync(filePath + '/' + file2, 'utf8');
-                                scenario[name_1] = self.convert(file2, text_1);
-                            }
-                            continue;
-                        }
-                        var name_2 = self.parseValidFileName(file);
-                        if (!name_2) {
-                            continue;
-                        }
-                        var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
-                        scenario[name_2] = self.convert(file, text);
-                    }
+                    self.convertFiles(SimpleScenario.SCENARIO_PATH, files, scenario);
                     console.log(scenario);
                     fs.writeFileSync(DATA_PATH + 'Scenario.json', JSON.stringify(scenario));
                     DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
                     console.log('シナリオの変換が終わりました');
                 });
             };
+            Scenario_Converter.prototype.convertFiles = function (basePath, files, scenario) {
+                if (!files) {
+                    return;
+                }
+                for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
+                    var file = files_1[_i];
+                    var filePath = path.resolve(basePath, file);
+                    var stat = fs.statSync(filePath);
+                    if (stat.isDirectory()) {
+                        var files2 = fs.readdirSync(filePath);
+                        this.convertFiles(filePath + '/', files2, scenario);
+                        continue;
+                    }
+                    var name_1 = this.parseValidFileName(file);
+                    if (!name_1) {
+                        continue;
+                    }
+                    var text = fs.readFileSync(basePath + file, 'utf8');
+                    scenario[name_1] = this.convert(file, text);
+                }
+            };
+            /**
+             * 指定のファイルがシナリオファイルかどうかを返します
+             */
             Scenario_Converter.prototype.parseValidFileName = function (file) {
                 if (file.indexOf('replace.txt') === 0) {
                     return;
@@ -477,6 +485,9 @@ var Saba;
                 var name = file.substr(0, index);
                 return name;
             };
+            /**
+             * replace ファイルを変換します
+             */
             Scenario_Converter.prototype.convertReplace = function (files) {
                 for (var _i = 0, files_2 = files; _i < files_2.length; _i++) {
                     var file = files_2[_i];
@@ -484,7 +495,7 @@ var Saba;
                     if (index === -1) {
                         continue;
                     }
-                    var name_3 = file.substr(0, index);
+                    var name_2 = file.substr(0, index);
                     var text = fs.readFileSync(SimpleScenario.SCENARIO_PATH + file, 'utf8');
                     this.parseReplace(text);
                     return;
@@ -671,6 +682,7 @@ var Saba;
             Scenario_Converter.prototype.convertCommand_start = function (context) {
                 this.defaultPosMap = {};
                 this._defaultMobNameMap = {};
+                this._defaultMobFaceMap = {};
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie notClose on"] });
             };
             Scenario_Converter.prototype.convertCommand_hide = function (context) {
@@ -751,10 +763,15 @@ var Saba;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie deactivateAll"] });
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
                 var face = '';
+                var index = 0;
+                var faceList = this._defaultMobFaceMap[mobId];
+                if (faceList) {
+                    face = faceList[0];
+                    index = faceList[1];
+                }
                 if (context.header['face']) {
                     face = context.headerStr('face');
                 }
-                var index = 0;
                 if (context.header['index']) {
                     index = context.headerInt('index');
                 }
@@ -799,6 +816,11 @@ var Saba;
             Scenario_Converter.prototype.convertCommand_mob = function (mobId, context) {
                 var name = context.headerStr('name');
                 this._defaultMobNameMap[mobId] = name;
+                var face = context.headerStr('face');
+                var index = context.headerInt('index');
+                if (face && index >= 0) {
+                    this._defaultMobFaceMap[mobId] = [face, index];
+                }
             };
             Scenario_Converter.prototype.convertCommand_message_h = function (context) {
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
@@ -1569,18 +1591,27 @@ var Saba;
                 var flag = context.headerBool('flag', true) ? 0 : 1;
                 context.push({ 'code': 211, 'indent': this.indent, 'parameters': [flag] });
             };
+            /**
+             * ○ アニメーションの表示
+             */
             Scenario_Converter.prototype.convertCommand_anime = function (context) {
                 var target = context.headerInt('target');
                 var anime = context.headerInt('anime');
                 var wait = context.headerBool('wait', false);
                 context.push({ 'code': 212, 'indent': this.indent, 'parameters': [target, anime, wait] });
             };
+            /**
+             * ○ フキダシアイコンの表示
+             */
             Scenario_Converter.prototype.convertCommand_balloon = function (context) {
                 var target = context.headerInt('target');
                 var balloon = context.headerInt('balloon');
                 var wait = context.headerBool('wait', false);
                 context.push({ 'code': 213, 'indent': this.indent, 'parameters': [target, balloon, wait] });
             };
+            /**
+             * ○ イベントの一時消去
+             */
             Scenario_Converter.prototype.convertCommand_erace = function (context) {
                 context.push({ 'code': 214, 'indent': this.indent, 'parameters': [] });
             };
@@ -1674,6 +1705,9 @@ var Saba;
                 var wait = context.headerBool('wait', true);
                 context.push({ 'code': 236, 'indent': this.indent, 'parameters': [weather, strength, time, wait] });
             };
+            /**
+             * ○ ＢＧＭの演奏
+             */
             Scenario_Converter.prototype.convertCommand_bgm = function (context) {
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
@@ -1682,16 +1716,28 @@ var Saba;
                 var bgm = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 241, 'indent': this.indent, 'parameters': [bgm] });
             };
+            /**
+             * ○ ＢＧＭのフェードアウト
+             */
             Scenario_Converter.prototype.convertCommand_fadeout_bgm = function (context) {
                 var time = context.headerInt('time', 10);
                 context.push({ 'code': 242, 'indent': this.indent, 'parameters': [time] });
             };
+            /**
+             * ○ ＢＧＭの保存
+             */
             Scenario_Converter.prototype.convertCommand_save_bgm = function (context) {
                 context.push({ 'code': 243, 'indent': this.indent, 'parameters': [] });
             };
+            /**
+             * ○ ＢＧＭの再開
+             */
             Scenario_Converter.prototype.convertCommand_resume_bgm = function (context) {
                 context.push({ 'code': 244, 'indent': this.indent, 'parameters': [] });
             };
+            /**
+             * ○ ＢＧＳの演奏
+             */
             Scenario_Converter.prototype.convertCommand_bgs = function (context) {
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
@@ -1700,10 +1746,16 @@ var Saba;
                 var bgs = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 245, 'indent': this.indent, 'parameters': [bgs] });
             };
+            /**
+             * ○ ＢＧＳのフェードアウト
+             */
             Scenario_Converter.prototype.convertCommand_fadeout_bgs = function (context) {
                 var time = context.headerInt('time', 10);
                 context.push({ 'code': 246, 'indent': this.indent, 'parameters': [time] });
             };
+            /**
+             * ○ ＭＥの演奏
+             */
             Scenario_Converter.prototype.convertCommand_me = function (context) {
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
@@ -1712,6 +1764,9 @@ var Saba;
                 var me = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 249, 'indent': this.indent, 'parameters': [me] });
             };
+            /**
+             * ○ ＳＥの演奏
+             */
             Scenario_Converter.prototype.convertCommand_se = function (context) {
                 var name = context.headerStr('file');
                 var volume = context.headerInt('volume', 100);
@@ -1720,12 +1775,49 @@ var Saba;
                 var se = { name: name, volume: volume, pitch: pitch, pan: pan };
                 context.push({ 'code': 250, 'indent': this.indent, 'parameters': [se] });
             };
+            /**
+             * ○ ＳＥの停止
+             */
             Scenario_Converter.prototype.convertCommand_stop_se = function (context) {
                 context.push({ 'code': 251, 'indent': this.indent, 'parameters': [] });
             };
+            /**
+             * ○ メニュー画面を開く
+             */
+            Scenario_Converter.prototype.convertCommnad_menu_open = function (context) {
+                context.push({ 'code': 351, 'indent': this.indent, 'parameters': [] });
+            };
+            /**
+             * ○ セーブ画面を開く
+             */
+            Scenario_Converter.prototype.convertCommnad_save_open = function (context) {
+                context.push({ 'code': 352, 'indent': this.indent, 'parameters': [] });
+            };
+            /**
+             * ○ ゲームオーバー
+             */
+            Scenario_Converter.prototype.convertCommnad_gameover = function (context) {
+                context.push({ 'code': 353, 'indent': this.indent, 'parameters': [] });
+            };
+            /**
+             * ○ タイトル画面に戻す
+             */
+            Scenario_Converter.prototype.convertCommnad_title_return = function (context) {
+                context.push({ 'code': 354, 'indent': this.indent, 'parameters': [] });
+            };
+            /**
+             * ○ ムービーの再生
+             */
             Scenario_Converter.prototype.convertCommand_movie = function (context) {
                 var file = context.headerStr('file');
                 context.push({ 'code': 261, 'indent': this.indent, 'parameters': [file] });
+            };
+            /**
+             * ○ タイルセットの変更
+             */
+            Scenario_Converter.prototype.convertCommand_tileset = function (context) {
+                var id = context.headerStr('id');
+                context.push({ 'code': 282, 'indent': this.indent, 'parameters': [id] });
             };
             Scenario_Converter.prototype.convertCommand_all_recovery = function (context) {
                 var params = context.headerVar('actor');
@@ -2142,6 +2234,10 @@ var Saba;
         SimpleScenario.validates['end_else'] = {};
         SimpleScenario.validates['vehicle'] = {};
         SimpleScenario.validates['choice_end'] = {};
+        SimpleScenario.validates['menu_open'] = {};
+        SimpleScenario.validates['save_open'] = {};
+        SimpleScenario.validates['gameover'] = {};
+        SimpleScenario.validates['title_return'] = {};
         SimpleScenario.validates['message_h'] = {
             'index': SimpleScenario.isNumeric(0, 7),
             'back': SimpleScenario.isNumeric(0, 2),

@@ -419,34 +419,36 @@ export class Scenario_Converter {
                 return;
             }
             self.convertReplace(files);
-            for (const file of files) {
-                const filePath = path.resolve(SCENARIO_PATH, file);
-                const stat = fs.statSync(filePath);
-                if (stat.isDirectory()) {
-                    const files2 = fs.readdirSync(filePath);
-                    for (const file2 of files2) {
-                        const name = self.parseValidFileName(file2);
-                        if (! name) {
-                            continue;
-                        }
-                        const text = fs.readFileSync(filePath + '/' + file2, 'utf8');
-                        scenario[name] = self.convert(file2, text);
-                    }
-                    continue;
-                }
-                const name = self.parseValidFileName(file);
-                if (! name) {
-                    continue;
-                }
-                const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
-                scenario[name] = self.convert(file, text);
-            }
+            self.convertFiles(files, scenario);
             console.log(scenario);
             fs.writeFileSync(DATA_PATH + 'Scenario.json', JSON.stringify(scenario));
             DataManager.loadDataFile('$dataScenraio', SCENARIO_FILE_NAME);
             console.log('シナリオの変換が終わりました');
         });
     }
+    convertFiles(files, scenario): void {
+        if (! files) {
+            return;
+        }
+        for (const file of files) {
+            const filePath = path.resolve(SCENARIO_PATH, file);
+            const stat = fs.statSync(filePath);
+            if (stat.isDirectory()) {
+                const files2 = fs.readdirSync(filePath);
+                this.convertFiles(files2, scenario);
+                continue;
+            }
+            const name = this.parseValidFileName(file);
+            if (! name) {
+                continue;
+            }
+            const text = fs.readFileSync(SCENARIO_PATH +  file, 'utf8');
+            scenario[name] = this.convert(file, text);
+        }
+    }
+    /**
+     * 指定のファイルがシナリオファイルかどうかを返します
+     */
     parseValidFileName(file): string {
         if (file.indexOf('replace.txt') === 0) {
             return;
@@ -461,6 +463,9 @@ export class Scenario_Converter {
         const name = file.substr(0, index);
         return name;
     }
+    /**
+     * replace ファイルを変換します
+     */
     convertReplace(files): void {
         for (const file of files) {
             const index = file.indexOf('replace.txt');

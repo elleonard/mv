@@ -1163,6 +1163,7 @@ var TachieDrawerMixin = function() {
         this.drawTachieHoppe(actor, tempBitmap);
         this.drawTachieFace(actor, tempBitmap, faceId);
         this.drawTachieCache(actor, tempBitmap, bitmap, x, y, rect, scale);
+        this.lastDrawnActorId = actor.actorId();
         return true;
     };
     this.calcTachieActorPos = function(actor: Game_Actor): Point {
@@ -1309,8 +1310,7 @@ var TachieDrawerMixin = function() {
 
 };
 
-TachieDrawerMixin.call(Sprite_Base.prototype);
-TachieDrawerMixin.call(Sprite_Picture.prototype);
+TachieDrawerMixin.call(Sprite.prototype);
 TachieDrawerMixin.call(Window_Base.prototype);
  
 class _Sprite_Picture extends Sprite_Picture {
@@ -1343,7 +1343,10 @@ class _Sprite_Picture extends Sprite_Picture {
         if (actorId === 0) {
             return;
         }
-        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+        if (this.lastDrawnActorId === actorId) {
+            this.bitmap.clear();
+        }
+        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, true);
     }
 }
 
@@ -1748,6 +1751,7 @@ interface Game_Picture {
 interface Game_Temp {
     getPictureBitmapCache(actorId: number): Bitmap;
     getActorBitmapBodyCache(actorId: number): Bitmap;
+    tachieTmpBitmap: Bitmap;
     tachieName: string;
     tachieActorId: number;
     tachieActorPos: number;
@@ -1837,8 +1841,9 @@ interface ImageManagerStatic {
     loadTachie(file: string, hue?: number): Bitmap;
 }
 interface Window_Base {
-    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number): void;
+    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, clearByDraw?: boolean): void;
 }
-interface Sprite_Base {
-    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number): void;
+interface Sprite {
+    lastDrawnActorId: number;   // 最後に描画に成功したアクターID
+    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, clearByDraw?: boolean): void;
 }

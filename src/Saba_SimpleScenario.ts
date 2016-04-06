@@ -398,7 +398,8 @@ DataManager.checkError = function() {
 export class Scenario_Converter {
     indent: number;         // 現在のインデント
     defaultPosMap: {[actorId: number]: number};   // アクターごとのデフォルト立ち位置
-    _defaultMobNameMap: {[mobId: number]: string};   // モフごとのデフォルトの名前
+    _defaultMobNameMap: {[mobId: number]: string};      // モブごとのデフォルトの名前
+    _defaultMobFaceMap: {[mobId: number]: Array<any>};  // モブごとのデフォルトの顔グラ
     _replaceMap: {[key: string]: string};
     /**
      * 全てのシナリオを変換します。
@@ -646,6 +647,7 @@ export class Scenario_Converter {
     convertCommand_start(context: Context): void {
         this.defaultPosMap = {};
         this._defaultMobNameMap = {};
+        this._defaultMobFaceMap = {};
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie notClose on`]});
     }
     convertCommand_hide(context: Context): void {
@@ -730,11 +732,16 @@ export class Scenario_Converter {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
 
         let face = '';
+        let index = 0;
+        let faceList = this._defaultMobFaceMap[mobId];
+        if (faceList) {
+            face = faceList[0];
+            index = faceList[1];
+        }
         if (context.header['face']) {
             face = context.headerStr('face');
         }
 
-        let index = 0;
         if (context.header['index']) {
             index = context.headerInt('index');
         }
@@ -776,8 +783,14 @@ export class Scenario_Converter {
         }
     }
     convertCommand_mob(mobId: number, context: Context): void {
-        var name = context.headerStr('name')
+        var name = context.headerStr('name');
         this._defaultMobNameMap[mobId] = name;
+        
+        var face = context.headerStr('face')
+        var index = context.headerInt('index')
+        if (face && index >= 0) {
+            this._defaultMobFaceMap[mobId] = [face, index];
+        }
     }
     convertCommand_message_h(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});

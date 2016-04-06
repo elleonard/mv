@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-06 20:22:32
+ * Ver 2016-04-06 23:07:09
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -817,8 +817,8 @@ var Saba;
                 var name = context.headerStr('name');
                 this._defaultMobNameMap[mobId] = name;
                 var face = context.headerStr('face');
-                var index = context.headerInt('index');
-                if (face && index >= 0) {
+                var index = context.headerInt('index', 0);
+                if (face) {
                     this._defaultMobFaceMap[mobId] = [face, index];
                 }
             };
@@ -2238,6 +2238,8 @@ var Saba;
         SimpleScenario.validates['save_open'] = {};
         SimpleScenario.validates['gameover'] = {};
         SimpleScenario.validates['title_return'] = {};
+        SimpleScenario.validates['fadein'] = {};
+        SimpleScenario.validates['fadeout'] = {};
         SimpleScenario.validates['message_h'] = {
             'index': SimpleScenario.isNumeric(0, 7),
             'back': SimpleScenario.isNumeric(0, 2),

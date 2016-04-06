@@ -12,6 +12,10 @@
  * @param disableTachieFaceIdList
  * @desc 通常の顔グラを表示するアクターのリストです。空白区切り(2 3 4……など)
  * @default 
+ *
+ * @param actorFaceSize
+ * @desc 立ち絵の顔グラを表示する時のデフォルトサイズです。幅、高さの順です
+ * @default 144, 144
  * 
  * @param actor1offset
  * @desc アクター１のキャラの顔グラのx座標，y座標の補正値です
@@ -52,6 +56,15 @@
  * @param actor10offset
  * @desc アクター１０のキャラの顔グラのx座標，y座標の補正値です
  * @default 0, 0
+ *
+ * 
+ * @param showTachieActorFace
+ * @desc 立ち絵を表示中も顔グラを表示する場合 true にします
+ * @default false
+ *
+ * @param tachieActorFacePos
+ * @desc 立ち絵の顔グラを表示する時の座標です。x、yの順です
+ * @default 0, 0
  * 
  * @help
  * Ver
@@ -59,13 +72,16 @@
  *
  */
 module Saba {
-module Tachie {
+export module Tachie {
 
 export const faceOffsetX = {};
 export const faceOffsetY = {};
 
 const parameters = PluginManager.parameters('Saba_TachieFace');
 const disableTachieFaceIdList = Saba.toIntArray(parameters['disableTachieFaceIdList'].split(' '));
+export const showTachieActorFace = parameters['showTachieActorFace'] === 'true';
+export const actorFaceSize = Saba.toIntArray(parameters['actorFaceSize'].split(','));
+export const tachieActorFacePos = Saba.toIntArray(parameters['tachieActorFacePos'].split(','));
 
 for (let i = 1; i <= 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
@@ -90,7 +106,7 @@ Scene_MenuBase.prototype.create = function() {
 }
 
 const _Window_Base_drawActorFace = Window_Base.prototype.drawActorFace;
-Window_Base.prototype.drawActorFace = function(actor, x, y, width, height, offsetX = 0, offsetY = 0) {
+Window_Base.prototype.drawActorFace = function(actor, x, y, width?, height?, offsetX = 0, offsetY = 0, faceId = 1) {
     if (disableTachieFaceIdList.indexOf(actor.actorId()) >= 0) {
         _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
         return;
@@ -101,15 +117,18 @@ Window_Base.prototype.drawActorFace = function(actor, x, y, width, height, offse
         return true;
     }
     const actorId = actor.actorId();
-    width = width || Window_Base._faceWidth;
-    height = height || Window_Base._faceHeight;
-    var pw = Window_Base._faceWidth;
-    var ph = Window_Base._faceHeight;
-    var dx = Math.floor(x + Math.max(width - pw, 0) / 2);
-    var dy = Math.floor(y + Math.max(height - ph, 0) / 2);
+    width = width || actorFaceSize[0];
+    height = height || actorFaceSize[1];
     var rect = new Rectangle(faceOffsetX[actorId] + offsetX, faceOffsetY[actorId] + offsetY, width, height);
-    return this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0);
+    var dx = x + tachieActorFacePos[0];
+    var dy = y + tachieActorFacePos[1];
+    console.log(width, height)
+    return this.drawTachie(actorId, this.contents, dx, dy, rect, faceId, faceScale / 100.0);
 };
 
 
 }}
+
+interface Window_Base {
+    drawActorFace(actor: Game_Actor, x: number, y: number, width?: number, height?: number, offsetX?: number, offsetY?: number, faceId?: number): void;
+}

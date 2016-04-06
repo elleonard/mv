@@ -223,6 +223,8 @@ validates['menu_open'] = {};
 validates['save_open'] = {};
 validates['gameover'] = {};
 validates['title_return'] = {};
+validates['fadein'] = {};
+validates['fadeout'] = {};
 
 
 validates['message_h'] = {

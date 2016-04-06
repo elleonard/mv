@@ -127,6 +127,14 @@
  * @desc メッセージウィンドウの文字と枠の空きです。上、右、下、左の順です
  * @default 0, 0, 0, 0
  *
+ * @param newLineXWithFace
+ * @desc 顔グラを表示している時の、テキストの x 座標です
+ * @default 168
+ *
+ * @param messageFacePos
+ * @desc 顔グラの表示位置です。x y の順です
+ * @default 0, 0
+ *
  * @requiredAssets img/system/Tachie_Window1
  * @requiredAssets img/system/Tachie_Window2
  * @requiredAssets img/system/Tachie_Window3
@@ -214,6 +222,7 @@ const rightPosX = parseInt(parameters['rightPosX']);
 const posY = parseInt(parameters['posY']);
 const nameLeft = parseInt(parameters['nameLeft']);
 const fontSize = parseInt(parameters['fontSize']);
+const newLineXWithFace = parseInt(parameters['newLineXWithFace']);
 const windowMarginParam = parameters['windowMargin'].split(',');
 const windowMargin = [0, 0, 0, 0];
 for (let i = 0; i < windowMarginParam.length; i++) {
@@ -242,6 +251,10 @@ const toneChangeDuration = parseInt(parameters['toneChangeDuration']);
 export const windowColors: {[actorId: number]: number} = {};
 export const offsetX = {};
 export const offsetY = {};
+
+const messageFacePosStr = parameters['messageFacePos'].split(',');
+const messageFaceX = parseInt(messageFacePosStr[0]);
+const messageFaceY = parseInt(messageFacePosStr[1]);
 
 for (let i = 1; i <= 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
@@ -1668,14 +1681,25 @@ export class Window_TachieMessage extends Window_Message {
     }
     newLineX() {
         if (this._galMode) {
-            var x = super.newLineX();
+            var x =  this.isShowFace() ? newLineXWithFace : 0;
             return x + windowPadding[3];
         } else {
             return super.newLineX();
         }
     }
+    isShowFace(): boolean {
+        if ($gameMessage.faceName() !== '') {
+            return true;
+        }
+        return showTachieActorFace && $gameTemp.tachieActorId > 0;
+    }
     drawMessageFace(): void {
-        this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
+        if (showTachieActorFace && $gameTemp.tachieActorId > 0) {
+            var actor = $gameActors.actor($gameTemp.tachieActorId);
+            this.drawActorFace(actor, messageFaceX, messageFaceY, null, null, 0, 0, actor.faceId);
+        } else {
+            this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), messageFaceX, messageFaceY);
+        }
     }
     updateBackground(): void {
         this.refreshWindow();

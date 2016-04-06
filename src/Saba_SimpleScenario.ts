@@ -792,8 +792,8 @@ export class Scenario_Converter {
         this._defaultMobNameMap[mobId] = name;
         
         var face = context.headerStr('face')
-        var index = context.headerInt('index')
-        if (face && index >= 0) {
+        var index = context.headerInt('index', 0)
+        if (face) {
             this._defaultMobFaceMap[mobId] = [face, index];
         }
     }

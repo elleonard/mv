@@ -34,6 +34,10 @@ var Saba;
  * @desc 通常の顔グラを表示するアクターのリストです。空白区切り(2 3 4……など)
  * @default
  *
+ * @param actorFaceSize
+ * @desc 立ち絵の顔グラを表示する時のデフォルトサイズです。幅、高さの順です
+ * @default 144, 144
+ *
  * @param actor1offset
  * @desc アクター１のキャラの顔グラのx座標，y座標の補正値です
  * @default 0, 0
@@ -74,8 +78,17 @@ var Saba;
  * @desc アクター１０のキャラの顔グラのx座標，y座標の補正値です
  * @default 0, 0
  *
+ *
+ * @param showTachieActorFace
+ * @desc 立ち絵を表示中も顔グラを表示する場合 true にします
+ * @default false
+ *
+ * @param tachieActorFacePos
+ * @desc 立ち絵の顔グラを表示する時の座標です。x、yの順です
+ * @default 0, 0
+ *
  * @help
- * Ver 2016-04-06 20:15:27
+ * Ver 2016-04-06 22:49:35
  *
  *
  */
@@ -87,6 +100,9 @@ var Saba;
         Tachie.faceOffsetY = {};
         var parameters = PluginManager.parameters('Saba_TachieFace');
         var disableTachieFaceIdList = Saba.toIntArray(parameters['disableTachieFaceIdList'].split(' '));
+        Tachie.showTachieActorFace = parameters['showTachieActorFace'] === 'true';
+        Tachie.actorFaceSize = Saba.toIntArray(parameters['actorFaceSize'].split(','));
+        Tachie.tachieActorFacePos = Saba.toIntArray(parameters['tachieActorFacePos'].split(','));
         for (var i = 1; i <= 10; i++) {
             var offset1 = String(parameters['actor' + i + 'offset']).split(',');
             Tachie.faceOffsetX[i] = parseInt(offset1[0] || '0');
@@ -108,9 +124,10 @@ var Saba;
             }
         };
         var _Window_Base_drawActorFace = Window_Base.prototype.drawActorFace;
-        Window_Base.prototype.drawActorFace = function (actor, x, y, width, height, offsetX, offsetY) {
+        Window_Base.prototype.drawActorFace = function (actor, x, y, width, height, offsetX, offsetY, faceId) {
             if (offsetX === void 0) { offsetX = 0; }
             if (offsetY === void 0) { offsetY = 0; }
+            if (faceId === void 0) { faceId = 1; }
             if (disableTachieFaceIdList.indexOf(actor.actorId()) >= 0) {
                 _Window_Base_drawActorFace.call(this, actor, x, y, width, height);
                 return;
@@ -121,14 +138,13 @@ var Saba;
                 return true;
             }
             var actorId = actor.actorId();
-            width = width || Window_Base._faceWidth;
-            height = height || Window_Base._faceHeight;
-            var pw = Window_Base._faceWidth;
-            var ph = Window_Base._faceHeight;
-            var dx = Math.floor(x + Math.max(width - pw, 0) / 2);
-            var dy = Math.floor(y + Math.max(height - ph, 0) / 2);
+            width = width || Tachie.actorFaceSize[0];
+            height = height || Tachie.actorFaceSize[1];
             var rect = new Rectangle(Tachie.faceOffsetX[actorId] + offsetX, Tachie.faceOffsetY[actorId] + offsetY, width, height);
-            return this.drawTachie(actorId, this.contents, dx, dy, rect, 1, faceScale / 100.0);
+            var dx = x + Tachie.tachieActorFacePos[0];
+            var dy = y + Tachie.tachieActorFacePos[1];
+            console.log(width, height);
+            return this.drawTachie(actorId, this.contents, dx, dy, rect, faceId, faceScale / 100.0);
         };
-    })(Tachie || (Tachie = {}));
+    })(Tachie = Saba.Tachie || (Saba.Tachie = {}));
 })(Saba || (Saba = {}));

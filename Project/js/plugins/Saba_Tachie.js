@@ -153,6 +153,14 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @desc メッセージウィンドウの文字と枠の空きです。上、右、下、左の順です
  * @default 0, 0, 0, 0
  *
+ * @param newLineXWithFace
+ * @desc 顔グラを表示している時の、テキストの x 座標です
+ * @default 168
+ *
+ * @param messageFacePos
+ * @desc 顔グラの表示位置です。x y の順です
+ * @default 0, 0
+ *
  * @requiredAssets img/system/Tachie_Window1
  * @requiredAssets img/system/Tachie_Window2
  * @requiredAssets img/system/Tachie_Window3
@@ -169,7 +177,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-06 19:35:19
+ * Ver 2016-04-06 23:00:17
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -241,6 +249,7 @@ var Saba;
         var posY = parseInt(parameters['posY']);
         var nameLeft = parseInt(parameters['nameLeft']);
         var fontSize = parseInt(parameters['fontSize']);
+        var newLineXWithFace = parseInt(parameters['newLineXWithFace']);
         var windowMarginParam = parameters['windowMargin'].split(',');
         var windowMargin = [0, 0, 0, 0];
         for (var i = 0; i < windowMarginParam.length; i++) {
@@ -269,6 +278,9 @@ var Saba;
         Tachie.windowColors = {};
         Tachie.offsetX = {};
         Tachie.offsetY = {};
+        var messageFacePosStr = parameters['messageFacePos'].split(',');
+        var messageFaceX = parseInt(messageFacePosStr[0]);
+        var messageFaceY = parseInt(messageFacePosStr[1]);
         for (var i = 1; i <= 10; i++) {
             var offset1 = String(parameters['actor' + i + 'offset']).split(',');
             Tachie.offsetX[i] = parseInt(offset1[0] || '0');
@@ -1749,15 +1761,27 @@ var Saba;
             };
             Window_TachieMessage.prototype.newLineX = function () {
                 if (this._galMode) {
-                    var x = _super.prototype.newLineX.call(this);
+                    var x = this.isShowFace() ? newLineXWithFace : 0;
                     return x + windowPadding[3];
                 }
                 else {
                     return _super.prototype.newLineX.call(this);
                 }
             };
+            Window_TachieMessage.prototype.isShowFace = function () {
+                if ($gameMessage.faceName() !== '') {
+                    return true;
+                }
+                return Tachie.showTachieActorFace && $gameTemp.tachieActorId > 0;
+            };
             Window_TachieMessage.prototype.drawMessageFace = function () {
-                this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), 0, windowPadding[0]);
+                if (Tachie.showTachieActorFace && $gameTemp.tachieActorId > 0) {
+                    var actor = $gameActors.actor($gameTemp.tachieActorId);
+                    this.drawActorFace(actor, messageFaceX, messageFaceY, null, null, 0, 0, actor.faceId);
+                }
+                else {
+                    this.drawFace($gameMessage.faceName(), $gameMessage.faceIndex(), messageFaceX, messageFaceY);
+                }
             };
             Window_TachieMessage.prototype.updateBackground = function () {
                 this.refreshWindow();

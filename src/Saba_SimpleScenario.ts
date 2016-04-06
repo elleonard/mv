@@ -262,12 +262,12 @@
  *　　battle_end
  *　　shop
  *　　input_name
- *　　menu_open
- *　　save_open
- *　　gameover
+ *○　menu_open
+ *○　save_open
+ *○　gameover
  *　　battle_bgm
  *　　battle_end_me
- *　　title_return
+ *○　title_return
 //**************************************************************************
 //　システム設定系
 //**************************************************************************
@@ -1564,18 +1564,27 @@ export class Scenario_Converter {
         var flag = context.headerBool('flag', true) ? 0 : 1;
         context.push({'code': 211, 'indent': this.indent, 'parameters': [flag]});
     }
+    /**
+     * ○ アニメーションの表示
+     */
     convertCommand_anime(context: Context): void {
         const target = context.headerInt('target');
         const anime = context.headerInt('anime');
         const wait = context.headerBool('wait', false);
         context.push({'code': 212, 'indent': this.indent, 'parameters': [target, anime, wait]});
     }
+    /**
+     * ○ フキダシアイコンの表示
+     */
     convertCommand_balloon(context: Context): void {
         const target = context.headerInt('target');
         const balloon = context.headerInt('balloon');
         const wait = context.headerBool('wait', false);
         context.push({'code': 213, 'indent': this.indent, 'parameters': [target, balloon, wait]});
     }
+    /**
+     * ○ イベントの一時消去
+     */
     convertCommand_erace(context: Context): void {
         context.push({'code': 214, 'indent': this.indent, 'parameters': []});
     }
@@ -1669,6 +1678,9 @@ export class Scenario_Converter {
         const wait = context.headerBool('wait', true);
         context.push({'code': 236, 'indent': this.indent, 'parameters': [weather, strength, time, wait]});
     }
+    /**
+     * ○ ＢＧＭの演奏
+     */
     convertCommand_bgm(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
@@ -1678,16 +1690,28 @@ export class Scenario_Converter {
 
         context.push({'code': 241, 'indent': this.indent, 'parameters': [bgm]});
     }
+    /**
+     * ○ ＢＧＭのフェードアウト
+     */
     convertCommand_fadeout_bgm(context: Context): void {
         const time = context.headerInt('time', 10);
         context.push({'code': 242, 'indent': this.indent, 'parameters': [time]});
     }
+    /**
+     * ○ ＢＧＭの保存
+     */
     convertCommand_save_bgm(context: Context): void {
         context.push({'code': 243, 'indent': this.indent, 'parameters': []});
     }
+    /**
+     * ○ ＢＧＭの再開
+     */
     convertCommand_resume_bgm(context: Context): void {
         context.push({'code': 244, 'indent': this.indent, 'parameters': []});
     }
+    /**
+     * ○ ＢＧＳの演奏
+     */
     convertCommand_bgs(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
@@ -1697,10 +1721,16 @@ export class Scenario_Converter {
 
         context.push({'code': 245, 'indent': this.indent, 'parameters': [bgs]});
     }
+    /**
+     * ○ ＢＧＳのフェードアウト
+     */
     convertCommand_fadeout_bgs(context: Context): void {
         const time = context.headerInt('time', 10);
         context.push({'code': 246, 'indent': this.indent, 'parameters': [time]});
     }
+    /**
+     * ○ ＭＥの演奏
+     */
     convertCommand_me(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
@@ -1710,6 +1740,9 @@ export class Scenario_Converter {
 
         context.push({'code': 249, 'indent': this.indent, 'parameters': [me]});
     }
+    /**
+     * ○ ＳＥの演奏
+     */
     convertCommand_se(context: Context): void {
         var name = context.headerStr('file');
         var volume = context.headerInt('volume', 100);
@@ -1719,12 +1752,49 @@ export class Scenario_Converter {
 
         context.push({'code': 250, 'indent': this.indent, 'parameters': [se]});
     }
+    /**
+     * ○ ＳＥの停止
+     */
     convertCommand_stop_se(context: Context): void {
         context.push({'code': 251, 'indent': this.indent, 'parameters': []});
     }
+    /**
+     * ○ メニュー画面を開く
+     */
+    convertCommnad_menu_open(context: Context): void {
+        context.push({'code': 351, 'indent': this.indent, 'parameters': []});
+    }
+    /**
+     * ○ セーブ画面を開く
+     */
+    convertCommnad_save_open(context: Context): void {
+        context.push({'code': 352, 'indent': this.indent, 'parameters': []});
+    }
+    /**
+     * ○ ゲームオーバー
+     */
+    convertCommnad_gameover(context: Context): void {
+        context.push({'code': 353, 'indent': this.indent, 'parameters': []});
+    }
+    /**
+     * ○ タイトル画面に戻す
+     */
+    convertCommnad_title_return(context: Context): void {
+        context.push({'code': 354, 'indent': this.indent, 'parameters': []});
+    }
+    /**
+     * ○ ムービーの再生
+     */
     convertCommand_movie(context: Context): void {
         var file = context.headerStr('file');
         context.push({'code': 261, 'indent': this.indent, 'parameters': [file]});
+    }
+    /**
+     * ○ タイルセットの変更
+     */
+    convertCommand_tileset(context: Context): void {
+        var id = context.headerStr('id');
+        context.push({'code': 282, 'indent': this.indent, 'parameters': [id]});
     }
     convertCommand_all_recovery(context: Context): void {
         var params = context.headerVar('actor');

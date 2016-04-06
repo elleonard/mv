@@ -219,6 +219,10 @@ validates['end'] = {};
 validates['end_else'] = {};
 validates['vehicle'] = {};
 validates['choice_end'] = {};
+validates['menu_open'] = {};
+validates['save_open'] = {};
+validates['gameover'] = {};
+validates['title_return'] = {};
 
 
 validates['message_h'] = {

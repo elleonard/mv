@@ -177,7 +177,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-09 21:43:52
+ * Ver 2016-04-09 22:29:34
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1522,7 +1522,7 @@ var Saba;
                         return;
                     }
                     this._windowAcrotId = $gameTemp.tachieWindowColorId;
-                    var color_1 = Tachie.windowColors[this._windowAcrotId];
+                    var color_1 = this._windowAcrotId;
                     if (color_1 > 0) {
                         this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color_1);
                     }
@@ -1637,7 +1637,7 @@ var Saba;
                 if (this._windowSkinId !== $gameTemp.tachieWindowColorId) {
                     if ($gameTemp.tachieWindowColorId > 0) {
                         this._windowSkinId = $gameTemp.tachieWindowColorId;
-                        var color = Tachie.windowColors[this._windowSkinId];
+                        var color = this._windowSkinId;
                         if (color > 0) {
                             this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
                         }

@@ -1458,7 +1458,7 @@ class Sprite_WindowBalloon extends Sprite_Base {
                 return;
             }
             this._windowAcrotId = $gameTemp.tachieWindowColorId;
-            const color = windowColors[this._windowAcrotId];
+            const color = this._windowAcrotId;
             if (color > 0) {
                 this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color);
             } else {
@@ -1567,7 +1567,7 @@ export class Window_TachieMessage extends Window_Message {
         if (this._windowSkinId !== $gameTemp.tachieWindowColorId) {
             if ($gameTemp.tachieWindowColorId > 0) {
                 this._windowSkinId = $gameTemp.tachieWindowColorId;
-                var color = windowColors[this._windowSkinId];
+                var color = this._windowSkinId;
                 if (color > 0) {
                     this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
                 } else {

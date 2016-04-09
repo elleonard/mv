@@ -88,7 +88,7 @@ var Saba;
  * @default 0, 0
  *
  * @help
- * Ver 2016-04-06 22:49:35
+ * Ver 2016-04-09 22:04:27
  *
  *
  */
@@ -143,7 +143,6 @@ var Saba;
             var rect = new Rectangle(Tachie.faceOffsetX[actorId] + offsetX, Tachie.faceOffsetY[actorId] + offsetY, width, height);
             var dx = x + Tachie.tachieActorFacePos[0];
             var dy = y + Tachie.tachieActorFacePos[1];
-            console.log(width, height);
             return this.drawTachie(actorId, this.contents, dx, dy, rect, faceId, faceScale / 100.0);
         };
     })(Tachie = Saba.Tachie || (Saba.Tachie = {}));

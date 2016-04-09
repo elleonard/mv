@@ -122,7 +122,6 @@ Window_Base.prototype.drawActorFace = function(actor, x, y, width?, height?, off
     var rect = new Rectangle(faceOffsetX[actorId] + offsetX, faceOffsetY[actorId] + offsetY, width, height);
     var dx = x + tachieActorFacePos[0];
     var dy = y + tachieActorFacePos[1];
-    console.log(width, height)
     return this.drawTachie(actorId, this.contents, dx, dy, rect, faceId, faceScale / 100.0);
 };
 

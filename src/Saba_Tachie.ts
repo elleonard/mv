@@ -342,10 +342,11 @@ class _Game_Interpreter extends Game_Interpreter {
             ImageManager.loadPicture(args[1]);
             break;
         case 'clearWindowColor':
+            $gameTemp.tachieWindowColorId = 0;
             $gameTemp.tachieActorId = 0;
             break;
         case 'windowColor':
-            $gameTemp.tachieActorId = parseInt(args[1]);
+            $gameTemp.tachieWindowColorId = parseInt(args[1]);
             break;
         case 'inactiveAll':     // 後方互換用
         case 'deactivateAll':
@@ -489,6 +490,7 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'showLeft':
         {
             $gameTemp.tachieActorId = actorId;
+            $gameTemp.tachieWindowColorId = windowColors[$gameTemp.tachieActorId];
             $gameTemp.tachieActorPos = LEFT_POS;
             var lastTone = [0, 0, 0, 0];
             if (opacity < 255) {
@@ -522,6 +524,7 @@ class _Game_Interpreter extends Game_Interpreter {
         {
             $gameTemp.tachieActorId = actorId;
             $gameTemp.tachieActorPos = RIGHT_POS;
+            $gameTemp.tachieWindowColorId = windowColors[$gameTemp.tachieActorId];
             var lastTone = [0, 0, 0, 0];
             const picId = DEFAULT_PICTURE_ID2;
             if (opacity < 255) {
@@ -1359,7 +1362,7 @@ class _Sprite_Picture extends Sprite_Picture {
         if (this.lastDrawnActorId !== actorId) {
             this.bitmap.clear();
         }
-        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, true);
+        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
     }
 }
 
@@ -1381,6 +1384,10 @@ class Window_MessageName extends Window_Base {
     }
     update(): void {
         super.update();
+        if ($gameTemp.sabaWaitForMovieMode > 0) {
+            this.visible = false;
+            return;
+        }
         if ($gameMessage.positionType() !== 2) {
             this.visible = false;
         }
@@ -1442,15 +1449,15 @@ class Sprite_WindowBalloon extends Sprite_Base {
             this.visible = false;
             return;
         }
-        if (this._windowAcrotId === $gameTemp.tachieActorId) {
+        if (this._windowAcrotId === $gameTemp.tachieWindowColorId) {
             return;
         }
-        if ($gameTemp.tachieActorId > 0) {
+        if ($gameTemp.tachieWindowColorId > 0) {
             if (! this._messageWindow.isOpen()) {
                 this.visible = false;
                 return;
             }
-            this._windowAcrotId = $gameTemp.tachieActorId;
+            this._windowAcrotId = $gameTemp.tachieWindowColorId;
             const color = windowColors[this._windowAcrotId];
             if (color > 0) {
                 this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color);
@@ -1553,9 +1560,13 @@ export class Window_TachieMessage extends Window_Message {
             this.updateMessageSkip();
             return;
         }
-        if (this._windowSkinId !== $gameTemp.tachieActorId) {
-            if ($gameTemp.tachieActorId > 0) {
-                this._windowSkinId = $gameTemp.tachieActorId;
+        if ($gameTemp.sabaWaitForMovieMode > 0) {
+            this.close();
+            return;
+        }
+        if (this._windowSkinId !== $gameTemp.tachieWindowColorId) {
+            if ($gameTemp.tachieWindowColorId > 0) {
+                this._windowSkinId = $gameTemp.tachieWindowColorId;
                 var color = windowColors[this._windowSkinId];
                 if (color > 0) {
                     this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
@@ -1563,7 +1574,7 @@ export class Window_TachieMessage extends Window_Message {
                     this.windowskin = ImageManager.loadSystem('Window');
                 }
             } else {
-                this.clearWindowSkil();
+                this.clearWindowSkin();
             }
         }
         if (this.isClosing() && this.openness < 240) {
@@ -1578,10 +1589,10 @@ export class Window_TachieMessage extends Window_Message {
         this.updateMessageSkip();
         this.updateWindowVisibility();
     }
-    clearWindowSkil(): void {
+    clearWindowSkin(): void {
         this._windowSkinId = 0;
         this.windowskin = ImageManager.loadSystem('Window');
-        $gameTemp.tachieActorId = 0;
+        $gameTemp.tachieWindowColorId = 0;
     }
     updateMessageSkip(): void {
         if (Input.isPressed(MESSAGE_SKIP_KEY)) {
@@ -1680,12 +1691,8 @@ export class Window_TachieMessage extends Window_Message {
         }
     }
     newLineX() {
-        if (this._galMode) {
-            var x =  this.isShowFace() ? newLineXWithFace : 0;
-            return x + windowPadding[3];
-        } else {
-            return super.newLineX();
-        }
+        var x =  this.isShowFace() ? newLineXWithFace : 0;
+        return x + windowPadding[3];
     }
     isShowFace(): boolean {
         if ($gameMessage.faceName() !== '') {
@@ -1708,7 +1715,7 @@ export class Window_TachieMessage extends Window_Message {
     refreshWindow(): void {
         if (this._galMode) {
             if ($gameMessage.background() !== 0 || $gameMessage.positionType() !== 2) {
-                this.clearWindowSkil();
+                this.clearWindowSkin();
                 this._galMode = false;
                 this.move(0, 0, this.windowWidth(), this.windowHeight());
                 this.createContents();
@@ -1781,6 +1788,7 @@ interface Game_Temp {
     tachieActorPos: number;
     tachieAvairable: boolean;   // これが true の時はメッセージウィンドウを閉じません
     hideBalloon: boolean;   // これが true の時は吹き出しを表示しません
+    tachieWindowColorId: number;
 }
 interface Game_Item {
     isOuter(): boolean;
@@ -1865,9 +1873,9 @@ interface ImageManagerStatic {
     loadTachie(file: string, hue?: number): Bitmap;
 }
 interface Window_Base {
-    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, clearByDraw?: boolean): void;
+    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
 }
 interface Sprite {
     lastDrawnActorId: number;   // 最後に描画に成功したアクターID
-    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, clearByDraw?: boolean): void;
+    drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
 }

@@ -768,6 +768,7 @@ export class Scenario_Converter {
         }
     }
     convertCommand_normal_messages(context: Context) {
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         this.convertCommand_messages(context);
     }

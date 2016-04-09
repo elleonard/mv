@@ -177,7 +177,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-06 23:00:17
+ * Ver 2016-04-09 21:43:52
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -364,10 +364,11 @@ var Saba;
                         ImageManager.loadPicture(args[1]);
                         break;
                     case 'clearWindowColor':
+                        $gameTemp.tachieWindowColorId = 0;
                         $gameTemp.tachieActorId = 0;
                         break;
                     case 'windowColor':
-                        $gameTemp.tachieActorId = parseInt(args[1]);
+                        $gameTemp.tachieWindowColorId = parseInt(args[1]);
                         break;
                     case 'inactiveAll': // 後方互換用
                     case 'deactivateAll':
@@ -514,6 +515,7 @@ var Saba;
                     case 'showLeft':
                         {
                             $gameTemp.tachieActorId = actorId;
+                            $gameTemp.tachieWindowColorId = Tachie.windowColors[$gameTemp.tachieActorId];
                             $gameTemp.tachieActorPos = Tachie.LEFT_POS;
                             var lastTone = [0, 0, 0, 0];
                             if (opacity < 255) {
@@ -544,6 +546,7 @@ var Saba;
                         {
                             $gameTemp.tachieActorId = actorId;
                             $gameTemp.tachieActorPos = Tachie.RIGHT_POS;
+                            $gameTemp.tachieWindowColorId = Tachie.windowColors[$gameTemp.tachieActorId];
                             var lastTone = [0, 0, 0, 0];
                             var picId = Tachie.DEFAULT_PICTURE_ID2;
                             if (opacity < 255) {
@@ -1426,7 +1429,7 @@ var Saba;
                 if (this.lastDrawnActorId !== actorId) {
                     this.bitmap.clear();
                 }
-                this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, true);
+                this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
             };
             return _Sprite_Picture;
         }(Sprite_Picture));
@@ -1446,6 +1449,10 @@ var Saba;
             };
             Window_MessageName.prototype.update = function () {
                 _super.prototype.update.call(this);
+                if ($gameTemp.sabaWaitForMovieMode > 0) {
+                    this.visible = false;
+                    return;
+                }
                 if ($gameMessage.positionType() !== 2) {
                     this.visible = false;
                 }
@@ -1506,15 +1513,15 @@ var Saba;
                     this.visible = false;
                     return;
                 }
-                if (this._windowAcrotId === $gameTemp.tachieActorId) {
+                if (this._windowAcrotId === $gameTemp.tachieWindowColorId) {
                     return;
                 }
-                if ($gameTemp.tachieActorId > 0) {
+                if ($gameTemp.tachieWindowColorId > 0) {
                     if (!this._messageWindow.isOpen()) {
                         this.visible = false;
                         return;
                     }
-                    this._windowAcrotId = $gameTemp.tachieActorId;
+                    this._windowAcrotId = $gameTemp.tachieWindowColorId;
                     var color_1 = Tachie.windowColors[this._windowAcrotId];
                     if (color_1 > 0) {
                         this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color_1);
@@ -1623,9 +1630,13 @@ var Saba;
                     this.updateMessageSkip();
                     return;
                 }
-                if (this._windowSkinId !== $gameTemp.tachieActorId) {
-                    if ($gameTemp.tachieActorId > 0) {
-                        this._windowSkinId = $gameTemp.tachieActorId;
+                if ($gameTemp.sabaWaitForMovieMode > 0) {
+                    this.close();
+                    return;
+                }
+                if (this._windowSkinId !== $gameTemp.tachieWindowColorId) {
+                    if ($gameTemp.tachieWindowColorId > 0) {
+                        this._windowSkinId = $gameTemp.tachieWindowColorId;
                         var color = Tachie.windowColors[this._windowSkinId];
                         if (color > 0) {
                             this.windowskin = ImageManager.loadSystem('Tachie_Window' + color);
@@ -1635,7 +1646,7 @@ var Saba;
                         }
                     }
                     else {
-                        this.clearWindowSkil();
+                        this.clearWindowSkin();
                     }
                 }
                 if (this.isClosing() && this.openness < 240) {
@@ -1651,10 +1662,10 @@ var Saba;
                 this.updateMessageSkip();
                 this.updateWindowVisibility();
             };
-            Window_TachieMessage.prototype.clearWindowSkil = function () {
+            Window_TachieMessage.prototype.clearWindowSkin = function () {
                 this._windowSkinId = 0;
                 this.windowskin = ImageManager.loadSystem('Window');
-                $gameTemp.tachieActorId = 0;
+                $gameTemp.tachieWindowColorId = 0;
             };
             Window_TachieMessage.prototype.updateMessageSkip = function () {
                 if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY)) {
@@ -1760,13 +1771,8 @@ var Saba;
                 }
             };
             Window_TachieMessage.prototype.newLineX = function () {
-                if (this._galMode) {
-                    var x = this.isShowFace() ? newLineXWithFace : 0;
-                    return x + windowPadding[3];
-                }
-                else {
-                    return _super.prototype.newLineX.call(this);
-                }
+                var x = this.isShowFace() ? newLineXWithFace : 0;
+                return x + windowPadding[3];
             };
             Window_TachieMessage.prototype.isShowFace = function () {
                 if ($gameMessage.faceName() !== '') {
@@ -1790,7 +1796,7 @@ var Saba;
             Window_TachieMessage.prototype.refreshWindow = function () {
                 if (this._galMode) {
                     if ($gameMessage.background() !== 0 || $gameMessage.positionType() !== 2) {
-                        this.clearWindowSkil();
+                        this.clearWindowSkin();
                         this._galMode = false;
                         this.move(0, 0, this.windowWidth(), this.windowHeight());
                         this.createContents();

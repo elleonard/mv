@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-06 23:07:09
+ * Ver 2016-04-09 20:10:55
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -793,6 +793,7 @@ var Saba;
                 }
             };
             Scenario_Converter.prototype.convertCommand_normal_messages = function (context) {
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
                 this.convertCommand_messages(context);
             };

@@ -217,14 +217,14 @@ module Saba {
 export module Tachie {
 
 const parameters = PluginManager.parameters('Saba_Tachie');
-const leftPosX = parseInt(parameters['leftPosX']);
-const rightPosX = parseInt(parameters['rightPosX']);
-const posY = parseInt(parameters['posY']);
-const nameLeft = parseInt(parameters['nameLeft']);
-const fontSize = parseInt(parameters['fontSize']);
-const newLineXWithFace = parseInt(parameters['newLineXWithFace']);
+export var leftPosX = parseInt(parameters['leftPosX']);
+export var rightPosX = parseInt(parameters['rightPosX']);
+export var posY = parseInt(parameters['posY']);
+export var nameLeft = parseInt(parameters['nameLeft']);
+export var fontSize = parseInt(parameters['fontSize']);
+export var newLineXWithFace = parseInt(parameters['newLineXWithFace']);
 const windowMarginParam = parameters['windowMargin'].split(',');
-const windowMargin = [0, 0, 0, 0];
+export const windowMargin = [0, 0, 0, 0];
 for (let i = 0; i < windowMarginParam.length; i++) {
     windowMargin[i] = parseInt(windowMarginParam[i]);
     if (isNaN(windowMargin[i])) {
@@ -232,7 +232,7 @@ for (let i = 0; i < windowMarginParam.length; i++) {
     }
 }
 const windowPaddingParam = parameters['windowPadding'].split(',');
-const windowPadding = [0, 0, 0, 0];
+export var windowPadding = [0, 0, 0, 0];
 for (let i = 0; i < windowPaddingParam.length; i++) {
     windowPadding[i] = parseInt(windowPaddingParam[i]);
     if (isNaN(windowPadding[i])) {
@@ -240,21 +240,21 @@ for (let i = 0; i < windowPaddingParam.length; i++) {
     }
 }
 const inactiveActorToneStr = parameters['inactiveActorTone'].split(',');
-const inactiveActorTone = [0, 0, 0, 0];
+export var inactiveActorTone = [0, 0, 0, 0];
 for (let i = 0; i < inactiveActorToneStr.length; i++) {
     inactiveActorTone[i] = parseInt(inactiveActorToneStr[i]);
     if (isNaN(inactiveActorTone[i])) {
         inactiveActorTone[i] = 0;
     }
 }
-const toneChangeDuration = parseInt(parameters['toneChangeDuration']);
-export const windowColors: {[actorId: number]: number} = {};
-export const offsetX = {};
-export const offsetY = {};
+export var toneChangeDuration = parseInt(parameters['toneChangeDuration']);
+export var windowColors: {[actorId: number]: number} = {};
+export var offsetX = {};
+export var offsetY = {};
 
-const messageFacePosStr = parameters['messageFacePos'].split(',');
-const messageFaceX = parseInt(messageFacePosStr[0]);
-const messageFaceY = parseInt(messageFacePosStr[1]);
+export var messageFacePosStr = parameters['messageFacePos'].split(',');
+export var messageFaceX = parseInt(messageFacePosStr[0]);
+export var messageFaceY = parseInt(messageFacePosStr[1]);
 
 for (let i = 1; i <= 10; i++) {
     var offset1 = String(parameters['actor' + i + 'offset']).split(',');
@@ -279,7 +279,7 @@ for (let i = 0; i < colors.length; i++) {
     }
 }
 
-const balloonEnabled = parameters['balloonEnabled'] === 'true';
+export var balloonEnabled = parameters['balloonEnabled'] === 'true';
 const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
 const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
 const enableHairLayer = parameters['enableHairLayer'] === 'true';
@@ -795,6 +795,7 @@ class _Game_Actor extends Game_Actor {
     setCacheChanged(): void {
         this._cacheChanged = true;
         this.setDirty();
+        $gamePlayer.refresh();
     }
     clearCacheChanged(): void {
         this._cacheChanged = false;
@@ -1369,13 +1370,15 @@ class _Sprite_Picture extends Sprite_Picture {
 
 
 class Window_MessageName extends Window_Base {
+    windowHeight: number;
     constructor(windowHeight) {
         var width = 180;
         var height = super.fittingHeight(1) + 14;
         var x = nameLeft;
         var y = Graphics.boxHeight - windowHeight - windowMargin[0] - windowMargin[2] - height;
+        this.windowHeight = windowHeight;
         super(x, y, width, height);
-
+        
         this.padding = 8;
         this.openness = 0;
     }
@@ -1390,7 +1393,10 @@ class Window_MessageName extends Window_Base {
         }
         if ($gameMessage.positionType() !== 2) {
             this.visible = false;
+            return;
         }
+        this.x = nameLeft;
+        this.y = Graphics.boxHeight - this.windowHeight - windowMargin[0] - windowMargin[2] - this.height;
     }
     draw(name): void {
         if (! name) {
@@ -1664,7 +1670,7 @@ export class Window_TachieMessage extends Window_Message {
         } else {
             super.updatePlacement();
         }
-        this.x = (Graphics.boxWidth - this.windowWidth()) / 2;
+        this.x = windowMargin[3];
     }
     terminateMessage(): void {
         $gameMessage.clear();
@@ -1717,20 +1723,20 @@ export class Window_TachieMessage extends Window_Message {
             if ($gameMessage.background() !== 0 || $gameMessage.positionType() !== 2) {
                 this.clearWindowSkin();
                 this._galMode = false;
-                this.move(0, 0, this.windowWidth(), this.windowHeight());
-                this.createContents();
-                this.updatePlacement();
-                this._refreshContents();
+                this.refreshWindowRect();
             }
         } else {
             if ($gameMessage.background() === 0 && $gameMessage.positionType() === 2) {
                 this._galMode = true;
-                this.move(0, 0, this.windowWidth(), this.windowHeight());
-                this.createContents();
-                this.updatePlacement();
-                this._refreshContents();
+                this.refreshWindowRect();
             }
         }
+    }
+    refreshWindowRect(): void {
+        this.move(0, 0, this.windowWidth(), this.windowHeight());
+        this.createContents();
+        this.updatePlacement();
+        this._refreshContents();
     }
 }
 

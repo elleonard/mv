@@ -1788,7 +1788,12 @@ export class Scenario_Converter {
      */
     convertCommand_movie(context: Context): void {
         var file = context.headerStr('file');
-        context.push({'code': 261, 'indent': this.indent, 'parameters': [file]});
+        var playbackRate = parseFloat(context.headerStr('playback_rate'));
+        if (isNaN(playbackRate)) {
+            playbackRate = 1;
+        }
+        
+        context.push({'code': 261, 'indent': this.indent, 'parameters': [file, playbackRate]});
     }
     /**
      * ○ タイルセットの変更
@@ -1957,7 +1962,34 @@ class Header {
     }
 }
 
+var _Game_Temp_initialize = Game_Temp.prototype.initialize;
+Game_Temp.prototype.initialize = function() {
+    _Game_Temp_initialize.call(this);
+    this.videoPlaybackRate = 1.0;
+};
+
+var _Game_Interpreter_command261 = Game_Interpreter.prototype.command261;
+Game_Interpreter.prototype.command261 = function() {
+    if (!$gameMessage.isBusy()) {
+        var playbackRate = parseFloat(this._params[1]);
+        if (! isNaN(playbackRate)) {
+            $gameTemp.videoPlaybackRate = playbackRate;
+        }
+    }
+    return _Game_Interpreter_command261.call(this);
+};
+
+var _Graphics_onVideoLoad = Graphics._onVideoLoad;
+Graphics._onVideoLoad = function() {
+    this._video.playbackRate = $gameTemp.videoPlaybackRate;
+    _Graphics_onVideoLoad.call(this);
+};
+
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
 Saba.applyMyMethods(_Scene_Map, Scene_Map);
 
 }}
+
+interface Game_Temp {
+    videoPlaybackRate: number;
+}

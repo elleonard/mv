@@ -14,6 +14,10 @@
  * @desc 右側に立つ場合のx座標です
  * @default 400
  *
+ * @param centerPosX
+ * @desc 中央に立つ場合のx座標です
+ * @default 200
+ * 
  * @param posY
  * @desc 全員のy座標です
  * @default 0
@@ -191,10 +195,12 @@
  * 
  *
  * プラグインコマンド
- * Tachie showLeft  actorId x y opacity # 立ち絵を左側に表示する
- * Tachie showRight actorId x y opacity # 立ち絵を右側に表示する
+ * Tachie showLeft  actorId x y opacity  # 立ち絵を左側に表示する
+ * Tachie showRight actorId x y opacity  # 立ち絵を右側に表示する
+ * Tachie showCenter actorId x y opacity # 立ち絵を中央に表示する
  * Tachie hideLeft                      # 左側の立ち絵を非表示にする
  * Tachie hideRight                     # 右側の立ち絵を非表示にする
+ * Tachie hideCenter                    # 中央の立ち絵を非表示にする
  * Tachie face      actorId faceId      # アクターの表情を変更する
  * Tachie pose      actorId poseId      # アクターのポーズを変更する
  * Tachie hoppe     actorId hoppeId     # アクターのほっぺを変更する
@@ -219,6 +225,7 @@ export module Tachie {
 const parameters = PluginManager.parameters('Saba_Tachie');
 export var leftPosX = parseInt(parameters['leftPosX']);
 export var rightPosX = parseInt(parameters['rightPosX']);
+export var centerPosX = parseInt(parameters['centerPosX']);
 export var posY = parseInt(parameters['posY']);
 export var nameLeft = parseInt(parameters['nameLeft']);
 export var fontSize = parseInt(parameters['fontSize']);
@@ -287,12 +294,15 @@ const enableOuterBackLayer = parameters['enableOuterBackLayer'] === 'true';
 const enableOuterMainLayer = parameters['enableOuterMainLayer'] === 'true';
 const enableOuterFrontLayer = parameters['enableOuterFrontLayer'] === 'true';
 const useTextureAtlas = parameters['useTextureAtlas'] === 'true';
-export const DEFAULT_PICTURE_ID1: number = 11;
-export const DEFAULT_PICTURE_ID2: number = 12;
+export const DEFAULT_PICTURE_ID1: number = 11;  // 左
+export const DEFAULT_PICTURE_ID2: number = 12;  // 右
+export const DEFAULT_PICTURE_ID3: number = 13;  // センター
+export const PICTURES = [DEFAULT_PICTURE_ID1, DEFAULT_PICTURE_ID2, DEFAULT_PICTURE_ID3];
 const ACTOR_PREFIX: string = '___actor';
 
 export const LEFT_POS = 1;
 export const RIGHT_POS = 2;
+export const CENTER_POS = 3;
 
 export const MESSAGE_SKIP_KEY: string = parameters['skipKey'];
 export const WINDOW_HIDE_KEY: string = parameters['windowHideKey'];
@@ -350,68 +360,33 @@ class _Game_Interpreter extends Game_Interpreter {
             break;
         case 'inactiveAll':     // 後方互換用
         case 'deactivateAll':
-        {
-            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
-            if (picture1 && picture1.name() != '') {
-                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false]};
-                this._list.splice(this._index + 1, 0, c);
-            }
-            if (picture2 && picture2.name() != '') {
-                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false]};
-                this._list.splice(this._index + 1, 0, c);
+            for (let pictureId of PICTURES) {
+                const picture = $gameScreen.picture[pictureId];
+                if (picture && picture.name() != '') {
+                    let c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [pictureId, inactiveActorTone, toneChangeDuration, false]};
+                    this._list.splice(this._index + 1, 0, c);
+                }
             }
             break;
-        }
         case 'hideLeft':
-        {
-            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            let commands: Array<RPG.EventCommand> = [];
-            if (picture1 && picture1.opacity() > 0) {
-                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1,
-                                            0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, true]};
-                commands.push(c);
-            }
-            const c: RPG.EventCommand = {'code': 235, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1]};
-            commands.push(c);
-            for (const c of commands) {
-                this._list.splice(this._index + 1, 0, c);
-            }
+            this.hidePicture(DEFAULT_PICTURE_ID1);
             break;
-        }
         case 'hideRight':
-        {
-            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
-            let commands: Array<RPG.EventCommand> = [];
-            if (picture2 && picture2.opacity() > 0) {
-                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1,
-                                            0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 30, true]};
-                commands.push(c);
-            }
-            const c: RPG.EventCommand = {'code': 235, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2]};
-            commands.push(c);
-            for (const c of commands) {
-                this._list.splice(this._index + 1, 0, c);
-            }
+            this.hidePicture(DEFAULT_PICTURE_ID2);
             break;
-        }
+        case 'hideCenter':
+            this.hidePicture(DEFAULT_PICTURE_ID3);
+            break;
         case 'hide':
             {
-            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
             let commands: Array<RPG.EventCommand> = [];
-            if (picture1 && picture1.opacity() > 0) {
-                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1,
-                                            0, 0, 0, picture1.x(), picture1.y(), 100, 100, 0, 0, 30, false]};
-                commands.push(c);
-            }
-            if (picture2 && picture2.opacity() > 0) {
-                const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2,
-                                            0, 0, 0, picture2.x(), picture2.y(), 100, 100, 0, 0, 20, false]};
-                commands.push(c);
-            }
-            if (commands.length > 0) {
-                commands[0]['parameters'][11] = true;
+            for (let pictureId of PICTURES) {
+                const picture = $gameScreen.picture(pictureId);
+                if (picture && picture.opacity() > 0) {
+                    const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [pictureId,
+                                                0, 0, 0, picture.x(), picture.y(), 100, 100, 0, 0, 30, false]};
+                    commands.push(c);
+                }
             }
             for (const c of commands) {
                 this._list.splice(this._index + 1, 0, c);
@@ -421,19 +396,16 @@ class _Game_Interpreter extends Game_Interpreter {
             }
             break;
         case 'clear':
-            {
-            const picture1 = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            const picture2 = $gameScreen.picture(DEFAULT_PICTURE_ID2);
-            if (picture1) {
-                picture1.erase();
-            }
-            if (picture2) {
-                picture2.erase();
-            }
+            for (let pictureId of PICTURES) {
+                const picture = $gameScreen.picture(pictureId);
+                if (picture) {
+                    picture.erase();
+                }
             }
             break;
         case 'showLeft':
         case 'showRight':
+        case 'showCenter':
             $gameTemp.hideBalloon = false;
             ImageManager.isReady();
             if (! args[1]) {
@@ -484,76 +456,94 @@ class _Game_Interpreter extends Game_Interpreter {
             console.error(args[0]);
         }
     }
+    hidePicture(pictureId: number): void {
+        const picture = $gameScreen.picture(pictureId);
+        let commands: Array<RPG.EventCommand> = [];
+        if (picture && picture.opacity() > 0) {
+            const c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [pictureId,
+                                        0, 0, 0, picture.x(), picture.y(), 100, 100, 0, 0, 30, true]};
+            commands.push(c);
+        }
+        const c: RPG.EventCommand = {'code': 235, 'indent': this._indent, 'parameters': [pictureId]};
+        commands.push(c);
+        for (const c of commands) {
+            this._list.splice(this._index + 1, 0, c);
+        }
+    }
     tachiePictureCommnad(command: string, actorId: number, x: number, y: number, opacity: number): void {
-        const yy = y + posY;
         switch (command) {
         case 'showLeft':
-        {
-            $gameTemp.tachieActorId = actorId;
-            $gameTemp.tachieWindowColorId = windowColors[$gameTemp.tachieActorId];
-            $gameTemp.tachieActorPos = LEFT_POS;
-            var lastTone = [0, 0, 0, 0];
-            if (opacity < 255) {
-                const picture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-                if (picture && picture.tachieActorId === actorId) {
-                    opacity = 255;
-                    lastTone = picture.tone();
-                }
-            }
-            
-            const xx = x + leftPosX;
-            $gameScreen.showPicture(DEFAULT_PICTURE_ID1, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
-            const picture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            picture.tint(lastTone, 0);
-            
-            var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, [0, 0, 0, 0], toneChangeDuration, false]};
-            this._list.splice(this._index + 1, 0, c);
-            
-            if (opacity < 255) {
-                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true]};
-                this._list.splice(this._index + 1, 0, c);
-            }
-            const rightPicture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
-            if (rightPicture && rightPicture.name() != '') {
-                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, inactiveActorTone, toneChangeDuration, false]};
-                this._list.splice(this._index + 1, 0, c);
-            }
+            this.showTachiePicture(actorId, LEFT_POS, DEFAULT_PICTURE_ID1, x, y, opacity);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID2);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID3);
             break;
-        }
         case 'showRight':
-        {
-            $gameTemp.tachieActorId = actorId;
-            $gameTemp.tachieActorPos = RIGHT_POS;
-            $gameTemp.tachieWindowColorId = windowColors[$gameTemp.tachieActorId];
-            var lastTone = [0, 0, 0, 0];
-            const picId = DEFAULT_PICTURE_ID2;
-            if (opacity < 255) {
-                const picture = $gameScreen.picture(picId);
-                if (picture && picture.tachieActorId === actorId) {
-                    opacity = 255;
-                    lastTone = picture.tone();
-                }
-            }
-            
-            const xx = x + rightPosX;
-            $gameScreen.showPicture(picId, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
-            const picture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
-            picture.tint(lastTone, 0);
-            
-            var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false]};
-            this._list.splice(this._index + 1, 0, c);
-            
-            if (opacity < 255) {
-                var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [picId, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true]};
-                this._list.splice(this._index + 1, 0, c);
-            }
-            const leftPicture = $gameScreen.picture(DEFAULT_PICTURE_ID1);
-            if (leftPicture && leftPicture.name() != '') {
-                var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID1, inactiveActorTone, toneChangeDuration, false]};
-                this._list.splice(this._index + 1, 0, c);
-            }
+            this.showTachiePicture(actorId, RIGHT_POS, DEFAULT_PICTURE_ID2, x, y, opacity);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID1);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID3);
+            break;
+        case 'showCenter':
+            this.showTachiePicture(actorId, CENTER_POS, DEFAULT_PICTURE_ID3, x, y, opacity);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID1);
+            this.deactivateTachiePicture(DEFAULT_PICTURE_ID2);
             break;
         }
+    }
+    /**
+     * 立ち絵を表示します
+     * @param {number} actorId   [description]
+     * @param {number} posId     [description]
+     * @param {number} pictureId [description]
+     * @param {number} x         [description]
+     * @param {number} y         [description]
+     * @param {number} opacity   [description]
+     */
+    showTachiePicture(actorId: number, posId: number, pictureId: number, x: number, y: number, opacity: number): void {
+        $gameTemp.tachieActorId = actorId;
+        $gameTemp.tachieActorPos = posId;
+        $gameTemp.tachieWindowColorId = windowColors[$gameTemp.tachieActorId];
+        var lastTone = [0, 0, 0, 0];
+        if (opacity < 255) {
+            const picture = $gameScreen.picture(pictureId);
+            if (picture && picture.tachieActorId === actorId) {
+                opacity = 255;
+                lastTone = picture.tone();
+            }
+        }
+        const xx = x + this.getPosX(posId);
+        const yy = y + posY;
+        $gameScreen.showPicture(pictureId, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
+        const picture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+        picture.tint(lastTone, 0);
+        
+        var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false]};
+        this._list.splice(this._index + 1, 0, c);
+        
+        if (opacity < 255) {
+            var c: RPG.EventCommand = {'code': 232, 'indent': this._indent, 'parameters': [pictureId, 0, 0, 0, xx, yy, 100, 100, 255, 0, 15, true]};
+            this._list.splice(this._index + 1, 0, c);
+        }
+    }
+    /**
+     * 指定の pictureId のピクチャが表示されている場合、暗くします
+     */
+    deactivateTachiePicture(pictureId: number): void {
+        const leftPicture = $gameScreen.picture(pictureId);
+        if (leftPicture && leftPicture.name() != '') {
+            var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [pictureId, inactiveActorTone, toneChangeDuration, false]};
+            this._list.splice(this._index + 1, 0, c);
+        }
+    }
+    /**
+     * 指定の positionId に対応する x 座標を返します。
+     */
+    getPosX(posId: number): number {
+        switch (posId) {
+            case LEFT_POS: return leftPosX;
+            case RIGHT_POS: return rightPosX;
+            case CENTER_POS: return centerPosX;
+            default:
+                console.error('posId が不正です:' + posId);
         }
     }
     tachieActorCommnad(actor: Game_Actor, command: string, arg2: string, args): void {
@@ -1483,6 +1473,9 @@ class Sprite_WindowBalloon extends Sprite_Base {
         } else if ($gameTemp.tachieActorPos === RIGHT_POS) {
             this.scale.x = -1;
             this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 + 140;
+        } else if ($gameTemp.tachieActorPos === CENTER_POS) {
+            this.scale.x = 1;
+            this.x = (Graphics.boxWidth - windowMargin[1] - windowMargin[3]) / 2 + 40;
         }
     }
 }
@@ -1795,6 +1788,7 @@ interface Game_Temp {
     tachieAvairable: boolean;   // これが true の時はメッセージウィンドウを閉じません
     hideBalloon: boolean;   // これが true の時は吹き出しを表示しません
     tachieWindowColorId: number;
+    sabaWaitForMovieMode: number;
 }
 interface Game_Item {
     isOuter(): boolean;

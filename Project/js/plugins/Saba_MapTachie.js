@@ -48,9 +48,12 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default true
  *
  * @help
- * Ver 2016-04-15 22:34:08
+ * Ver 2016-04-15 22:49:13
  *
  * Saba_Tachie と併用してください
+ *
+ * @license
+ * Saba_MapTachie licensed under the MIT License.
  */
 var Saba;
 (function (Saba) {

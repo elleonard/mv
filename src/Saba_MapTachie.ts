@@ -46,6 +46,9 @@
  * Ver
  *
  * Saba_Tachie と併用してください
+ *
+ * @license
+ * Saba_MapTachie licensed under the MIT License.
  */
 module Saba {
 export module MapTachie {

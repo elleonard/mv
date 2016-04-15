@@ -314,6 +314,9 @@
 //　その他
 //**************************************************************************
  *○　end
+ *
+ * @license
+ * Saba_SimpleScenario licensed under the MIT License.
  */
 module Saba {
 export module SimpleScenario {

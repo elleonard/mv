@@ -112,16 +112,27 @@
  *
  * @param autoModeKey
  * @desc オートモードのON/OFFに使うボタンです。tab, shift, control, pageup, pagedown などが使えます。
- * @default pagedown
+ * @default 
  *
  * @param autoModeDelayPerChar
  * @desc オートモードで、1文字ごとに増える待機時間です(ミリ秒)
- * @default 250
+ * @default 120
  *
  * @param autoModeDelayCommon
  * @desc オートモードで、1ページで必ず待つ時間です(ミリ秒)。全体の待機時間は autoModeDelayPerChar * 文字数 + autoModeDelayCommon です
- * @default 5000
- * @default 5000
+ * @default 2500
+ *
+ * @param autoModeMarkFrameNum
+ * @desc オートモードであることを示すマークのアニメ枚数です
+ * @default 18
+ * 
+ * @param autoModeMarkX
+ * @desc オートモードであることを示すマークのx座標です
+ * @default 770
+ *
+ * @param autoModeMarkY
+ * @desc オートモードであることを示すマークのy座標です
+ * @default 115
  *
  * @param inactiveActorTone
  * @desc 喋っていない方のキャラの Tone です
@@ -130,7 +141,6 @@
  * @param toneChangeDuration
  * @desc 喋っていない方のキャラの Tone を変える時の時間です
  * @default 25
- * 
  * 
  * @param nameLeft
  * @desc 名前の表示ウィンドウの左の領域です
@@ -168,6 +178,8 @@
  * @requiredAssets img/system/Tachie_Balloon4
  * @requiredAssets img/system/Tachie_Balloon5
  * @requiredAssets img/system/Tachie_Balloon6
+ * @requiredAssets img/system/Tachie_Balloon6
+ * @requiredAssets img/system/Tachie_Auto
  * @requiredAssets img/tachie/actor01_01
  * @requiredAssets img/tachie/*
  * 
@@ -209,7 +221,7 @@
  * 必要ない場合でも、画像をよみに行ってエラーになる場合があります。
  * その場合、透明な画像を入れておいてください。
  *
- * 
+ *
  *
  * プラグインコマンド
  * Tachie showLeft  actorId x y opacity  # 立ち絵を左側に表示する
@@ -305,8 +317,11 @@ for (let i = 0; i < colors.length; i++) {
 }
 
 export var MESSAGE_NUM_LINES = parseIntValue(parameters['messageNumLines'], 3);
-export var AUTO_MODE_DELAY_COMMON = parseIntValue(parameters['autoModeDelayCommon'], 3000);
-export var AUTO_MODE_DELAY_PER_CHAR = parseIntValue(parameters['autoModeDelayPerChar'], 200);
+export var AUTO_MODE_DELAY_COMMON = parseIntValue(parameters['autoModeDelayCommon'], 2500);
+export var AUTO_MODE_DELAY_PER_CHAR = parseIntValue(parameters['autoModeDelayPerChar'], 120);
+export var AUTO_MODE_MARK_TOTAL_FRAME = parseInt(parameters['autoModeMarkFrameNum']);
+export var AUTO_MODE_MARK_X = parseInt(parameters['autoModeMarkX']);
+export var AUTO_MODE_MARK_Y = parseInt(parameters['autoModeMarkY']);
 export var balloonEnabled = parameters['balloonEnabled'] === 'true';
 const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
 const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
@@ -1423,6 +1438,39 @@ class Window_MessageName extends Window_Base {
     }
 }
 
+class Sprite_MessageMode extends Sprite_Base {
+    protected _messageWindow: Window_TachieMessage;
+    _frameIndex: number;
+    _wait: number;
+    constructor(messageWindow: Window_TachieMessage) {
+        super();
+        this._messageWindow = messageWindow;
+        this._frameIndex = 1;
+        this._wait = 0;
+    }
+    update(): void {
+        super.update();
+        if (! $gameTemp.isAutoMode || ! this._messageWindow.isGalMode()) {
+            this.visible = false;
+            return;
+        }
+        this.visible = true;
+        if (this._wait != 0) {
+            this._wait--;
+            return;
+        }
+        var img = ImageManager.loadSystem('Tachie_Auto_' + this._frameIndex);
+        this.bitmap = img;
+        
+        this._frameIndex++;
+        if (this._frameIndex > AUTO_MODE_MARK_TOTAL_FRAME) {
+            this._frameIndex = 1;
+        }
+        this._wait = 4;
+    }
+}
+
+
 class Sprite_WindowBalloon extends Sprite_Base {
     protected _windowAcrotId: number;
     protected _messageWindow: Window_TachieMessage;
@@ -1506,6 +1554,7 @@ class Sprite_WindowBalloon extends Sprite_Base {
 export class Window_TachieMessage extends Window_Message {
     protected _messageNameWindow: Window_MessageName;
     protected _balloonSprite: Sprite_WindowBalloon;
+    protected _modeSprite: Sprite_MessageMode;
     protected _windowSkinId: number;
     protected _triggered: boolean;
     protected _windowHide: boolean;
@@ -1576,6 +1625,12 @@ export class Window_TachieMessage extends Window_Message {
         this._balloonSprite = new Sprite_WindowBalloon(this);
         this._balloonSprite.y = -39;
         this.addChild(this._balloonSprite);
+        
+        this._modeSprite = new Sprite_MessageMode(this);
+        this._modeSprite.x = AUTO_MODE_MARK_X;
+        this._modeSprite.y = AUTO_MODE_MARK_Y;
+        this.addChild(this._modeSprite);
+        
     }
     update(): void {
         super.update();
@@ -1692,10 +1747,14 @@ export class Window_TachieMessage extends Window_Message {
         this._autoModeNeedWait = $gameMessage.calcAutoModeFrames();
     }
     _updateAutoMode(): void {
-        this._autoModeCurrentWait++;
+        if (! this.visible) {
+            return;
+        }
+        if ($gameTemp.isAutoMode) {
+            this._autoModeCurrentWait++;
+        }
         if (Input.isTriggered(AUTO_MODE_KEY)) {
             $gameTemp.isAutoMode = ! $gameTemp.isAutoMode;
-            console.log($gameTemp.isAutoMode);
         }
     }
     updatePlacement(): void {
@@ -1772,6 +1831,9 @@ export class Window_TachieMessage extends Window_Message {
         this.updatePlacement();
         this._refreshContents();
     }
+    isGalMode(): boolean {
+        return this._galMode;
+    }
 }
 
 Game_Message.prototype.calcAutoModeFrames = function() {
@@ -1782,7 +1844,7 @@ Game_Message.prototype.calcAutoModeFrames = function() {
     for (let line of this._texts) {
         textCount += line.length;
     }
-    return Math.floor((textCount * AUTO_MODE_DELAY_PER_CHAR + AUTO_MODE_DELAY_COMMON) / 60);
+    return Math.floor((textCount * AUTO_MODE_DELAY_PER_CHAR + AUTO_MODE_DELAY_COMMON) / (1000 / 60));
 };
 
 var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
@@ -1807,6 +1869,11 @@ Scene_Boot.prototype.loadSystemImages = function() {
         const color = windowColors[i];
         if (color > 0) {
             ImageManager.loadSystem('Tachie_Window' + color);
+        }
+    }
+    if (AUTO_MODE_KEY && AUTO_MODE_KEY.length > 0) {
+        for (var i = 0; i < AUTO_MODE_MARK_TOTAL_FRAME; i++) {
+            ImageManager.loadSystem('Tachie_Auto_' + (i+ 1));
         }
     }
 };

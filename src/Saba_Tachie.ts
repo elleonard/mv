@@ -62,6 +62,10 @@
  * @desc アクター10のキャラのx座標，y座標の補正値です
  * @default 0, 0
  *
+ * @param messageNumLines
+ * @desc テキストの行数です
+ * @default 3
+ * 
  * @param balloonEnabled
  * @desc ウィンドウに吹き出しをつける場合、trueにします。
  * @default true
@@ -286,6 +290,7 @@ for (let i = 0; i < colors.length; i++) {
     }
 }
 
+export var messageNumLines = parseIntValue(parameters['messageNumLines'], 3);
 export var balloonEnabled = parameters['balloonEnabled'] === 'true';
 const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
 const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
@@ -1501,7 +1506,7 @@ export class Window_TachieMessage extends Window_Message {
     };
     numVisibleRows(): number {
         if (this._galMode) {
-            return 3;
+            return messageNumLines;
         } else {
             return super.numVisibleRows();
         }

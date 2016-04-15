@@ -18,5 +18,14 @@ export var toIntArray = (list: Array<string>): Array<number> => {
     return ret;
 };
 
+export var parseIntValue = (value: string, defaultValue: number): number => {
+    const intNum = parseInt(value);
+    if (isNaN(intNum)) {
+        return defaultValue;
+    } else {
+        return intNum;
+    }
+};
+
 
 }

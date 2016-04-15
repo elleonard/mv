@@ -1757,7 +1757,7 @@ const Scene_Boot_loadSystemImages = Scene_Boot.prototype.loadSystemImages;
 Scene_Boot.prototype.loadSystemImages = function() {
     Scene_Boot_loadSystemImages.call(this);
     for (const i in windowColors) {
-        const colot = windowColors[i];
+        const color = windowColors[i];
         ImageManager.loadSystem('Tachie_Window' + color);
     }
 };

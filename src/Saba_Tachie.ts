@@ -112,15 +112,16 @@
  *
  * @param autoModeKey
  * @desc オートモードのON/OFFに使うボタンです。tab, shift, control, pageup, pagedown などが使えます。
- * @default pageUp
+ * @default pagedown
  *
  * @param autoModeDelayPerChar
  * @desc オートモードで、1文字ごとに増える待機時間です(ミリ秒)
- * @default 100
+ * @default 250
  *
  * @param autoModeDelayCommon
  * @desc オートモードで、1ページで必ず待つ時間です(ミリ秒)。全体の待機時間は autoModeDelayPerChar * 文字数 + autoModeDelayCommon です
- * @default 1000
+ * @default 5000
+ * @default 5000
  *
  * @param inactiveActorTone
  * @desc 喋っていない方のキャラの Tone です
@@ -233,7 +234,8 @@
  * Tachie hideBalloon                   # 一時的に吹き出しを非表示にする
  * Tachie deactivateAll                   # すべてのキャラを暗くします
  *
- *
+ * @license
+ * Saba_Tachie licensed under the MIT License.
  */
 module Saba {
 export module Tachie {
@@ -294,7 +296,7 @@ for (let i = 1; i <= 10; i++) {
 for (let i = 0; i < 99; i++) {
     windowColors[i + 1] = 0;
 }
-var colors = String(parameters['windowColor']).split(',');
+var colors = parameters['windowColor'].split(',');
 for (let i = 0; i < colors.length; i++) {
     var color = parseInt(colors[i]);
     if (! isNaN(color)) {
@@ -303,8 +305,8 @@ for (let i = 0; i < colors.length; i++) {
 }
 
 export var MESSAGE_NUM_LINES = parseIntValue(parameters['messageNumLines'], 3);
-export var AUTO_MODE_DELAY_COMMON = parseIntValue(parameters['autoModeDelayCommon'], 1000);
-export var AUTO_MODE_DELAY_PER_CHAR = parseIntValue(parameters['autoModeDelayPerChar'], 100);
+export var AUTO_MODE_DELAY_COMMON = parseIntValue(parameters['autoModeDelayCommon'], 3000);
+export var AUTO_MODE_DELAY_PER_CHAR = parseIntValue(parameters['autoModeDelayPerChar'], 200);
 export var balloonEnabled = parameters['balloonEnabled'] === 'true';
 const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
 const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
@@ -533,10 +535,10 @@ class _Game_Interpreter extends Game_Interpreter {
         const xx = x + this.getPosX(posId);
         const yy = y + posY;
         $gameScreen.showPicture(pictureId, ACTOR_PREFIX + actorId, 0, xx, yy, 100, 100, opacity, 0);
-        const picture = $gameScreen.picture(DEFAULT_PICTURE_ID2);
+        const picture = $gameScreen.picture(pictureId);
         picture.tint(lastTone, 0);
         
-        var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [DEFAULT_PICTURE_ID2, [0, 0, 0, 0], toneChangeDuration, false]};
+        var c: RPG.EventCommand = {'code': 234, 'indent': this._indent, 'parameters': [pictureId, [0, 0, 0, 0], toneChangeDuration, false]};
         this._list.splice(this._index + 1, 0, c);
         
         if (opacity < 255) {
@@ -1660,7 +1662,7 @@ export class Window_TachieMessage extends Window_Message {
         }
     }
     isTriggered(): boolean {
-        if (this._autoModeCurrentWait == this._autoModeNeedWait) {
+        if ($gameTemp.isAutoMode && this._autoModeCurrentWait == this._autoModeNeedWait) {
             // オートモードで一定時間経過した
             return true;
         }
@@ -1691,14 +1693,18 @@ export class Window_TachieMessage extends Window_Message {
     }
     _updateAutoMode(): void {
         this._autoModeCurrentWait++;
+        if (Input.isTriggered(AUTO_MODE_KEY)) {
+            $gameTemp.isAutoMode = ! $gameTemp.isAutoMode;
+            console.log($gameTemp.isAutoMode);
+        }
     }
     updatePlacement(): void {
         if (this._galMode) {
+            this.x = windowMargin[3];
             this.y = this._positionType * (Graphics.boxHeight - this.height) / 2 - windowMargin[2];
         } else {
             super.updatePlacement();
         }
-        this.x = windowMargin[3];
     }
     terminateMessage(): void {
         $gameMessage.clear();
@@ -1776,7 +1782,7 @@ Game_Message.prototype.calcAutoModeFrames = function() {
     for (let line of this._texts) {
         textCount += line.length;
     }
-    return textCount * AUTO_MODE_DELAY_PER_CHAR + AUTO_MODE_DELAY_COMMON;
+    return Math.floor((textCount * AUTO_MODE_DELAY_PER_CHAR + AUTO_MODE_DELAY_COMMON) / 60);
 };
 
 var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
@@ -1799,7 +1805,9 @@ Scene_Boot.prototype.loadSystemImages = function() {
     Scene_Boot_loadSystemImages.call(this);
     for (const i in windowColors) {
         const color = windowColors[i];
-        ImageManager.loadSystem('Tachie_Window' + color);
+        if (color > 0) {
+            ImageManager.loadSystem('Tachie_Window' + color);
+        }
     }
 };
 

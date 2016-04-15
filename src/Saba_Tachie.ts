@@ -103,12 +103,24 @@
  * @default false
  *
  * @param skipKey
- * @desc メッセージスキップに使うボタンです
+ * @desc メッセージスキップに使うボタンです。tab, shift, control, pageup, pagedown などが使えます。
  * @default control
  *
  * @param windowHideKey
- * @desc ウィンドウ消去に使うボタンです
+ * @desc ウィンドウ消去に使うボタンです。tab, shift, control, pageup, pagedown などが使えます。
  * @default shift
+ *
+ * @param autoModeKey
+ * @desc オートモードのON/OFFに使うボタンです。tab, shift, control, pageup, pagedown などが使えます。
+ * @default pageUp
+ *
+ * @param autoModeDelayPerChar
+ * @desc オートモードで、1文字ごとに増える待機時間です(ミリ秒)
+ * @default 100
+ *
+ * @param autoModeDelayCommon
+ * @desc オートモードで、1ページで必ず待つ時間です(ミリ秒)。全体の待機時間は autoModeDelayPerChar * 文字数 + autoModeDelayCommon です
+ * @default 1000
  *
  * @param inactiveActorTone
  * @desc 喋っていない方のキャラの Tone です
@@ -290,7 +302,9 @@ for (let i = 0; i < colors.length; i++) {
     }
 }
 
-export var messageNumLines = parseIntValue(parameters['messageNumLines'], 3);
+export var MESSAGE_NUM_LINES = parseIntValue(parameters['messageNumLines'], 3);
+export var AUTO_MODE_DELAY_COMMON = parseIntValue(parameters['autoModeDelayCommon'], 1000);
+export var AUTO_MODE_DELAY_PER_CHAR = parseIntValue(parameters['autoModeDelayPerChar'], 100);
 export var balloonEnabled = parameters['balloonEnabled'] === 'true';
 const enableFaceLayer = parameters['enableFaceLayer'] === 'true';
 const enableBodyLayer = parameters['enableBodyLayer'] === 'true';
@@ -311,6 +325,7 @@ export const CENTER_POS = 3;
 
 export const MESSAGE_SKIP_KEY: string = parameters['skipKey'];
 export const WINDOW_HIDE_KEY: string = parameters['windowHideKey'];
+export const AUTO_MODE_KEY: string = parameters['autoModeKey'];
 
 // ステートのメモ欄で、立ち絵のポーズを指定する時のキーです。
 const TACHIE_POSE_META_KEY = 'tachiePoseId';
@@ -1493,6 +1508,8 @@ export class Window_TachieMessage extends Window_Message {
     protected _triggered: boolean;
     protected _windowHide: boolean;
     protected _galMode: boolean;
+    protected _autoModeCurrentWait: number = 0; // オートモード時、現在待機したフレーム数
+    protected _autoModeNeedWait: number = -1;     // オートモードで次のメッセージに進むために必要なフレーム数
     constructor() {
         this._galMode = true;
         super();
@@ -1506,7 +1523,7 @@ export class Window_TachieMessage extends Window_Message {
     };
     numVisibleRows(): number {
         if (this._galMode) {
-            return messageNumLines;
+            return MESSAGE_NUM_LINES;
         } else {
             return super.numVisibleRows();
         }
@@ -1560,6 +1577,7 @@ export class Window_TachieMessage extends Window_Message {
     }
     update(): void {
         super.update();
+        this._updateAutoMode();
         if (! this._galMode) {
             this.updateMessageSkip();
             return;
@@ -1642,6 +1660,10 @@ export class Window_TachieMessage extends Window_Message {
         }
     }
     isTriggered(): boolean {
+        if (this._autoModeCurrentWait == this._autoModeNeedWait) {
+            // オートモードで一定時間経過した
+            return true;
+        }
         const ret = super.isTriggered() || this._triggered;
         this._triggered = false;
         return ret;
@@ -1652,6 +1674,7 @@ export class Window_TachieMessage extends Window_Message {
     }
     startMessage(): void {
         super.startMessage();
+        this._calcAutoModelWait();
         if (! this._galMode) {
             return;
         }
@@ -1661,6 +1684,13 @@ export class Window_TachieMessage extends Window_Message {
         this._textState.y = this.standardPadding() + windowPadding[0];
         this._balloonSprite.showBalloon();
         this._messageNameWindow.draw($gameTemp.tachieName);
+    }
+    _calcAutoModelWait(): void {
+        this._autoModeCurrentWait = 0;
+        this._autoModeNeedWait = $gameMessage.calcAutoModeFrames();
+    }
+    _updateAutoMode(): void {
+        this._autoModeCurrentWait++;
     }
     updatePlacement(): void {
         if (this._galMode) {
@@ -1738,6 +1768,17 @@ export class Window_TachieMessage extends Window_Message {
     }
 }
 
+Game_Message.prototype.calcAutoModeFrames = function() {
+    if (this._choices.length > 0) {
+        return -1;
+    }
+    let textCount = 0;
+    for (let line of this._texts) {
+        textCount += line.length;
+    }
+    return textCount * AUTO_MODE_DELAY_PER_CHAR + AUTO_MODE_DELAY_COMMON;
+};
+
 var _Scene_Map_createMessageWindow = Scene_Map.prototype.createMessageWindow;
 Scene_Map.prototype.createMessageWindow = function() {
     _Scene_Map_createMessageWindow.call(this);
@@ -1778,7 +1819,9 @@ interface Scene_Map {
     openNameMessage(name: string): void;
     closeNameMessage(): void;
 }
-
+interface Game_Message {
+    calcAutoModeFrames(): number;   // オートモードで次の文に進むまでの待ち時間を計算します
+}
 interface Game_Picture {
     tachieActorId: number;
     tachieRefreshFlag: boolean;
@@ -1792,6 +1835,7 @@ interface Game_Temp {
     tachieActorPos: number;
     tachieAvairable: boolean;   // これが true の時はメッセージウィンドウを閉じません
     hideBalloon: boolean;   // これが true の時は吹き出しを表示しません
+    isAutoMode: boolean;
     tachieWindowColorId: number;
     sabaWaitForMovieMode: number;
 }

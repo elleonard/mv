@@ -120,7 +120,6 @@ class TachieSprite extends Sprite_Base {
         this._commandWindow = commandWindow;
     }
     update(): void {
-        this.updateInput();
         this.moveToTargetPosition();
         super.update();
         this.updateTachie();
@@ -164,6 +163,7 @@ class TachieSprite extends Sprite_Base {
             this.hidden = true;
             return;
         }
+        this.updateInput();
         var id = actor.actorId();
         if (id != this.actorId) {
             if (this.x == this.hiddenX) {

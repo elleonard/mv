@@ -48,7 +48,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @default true
  *
  * @help
- * Ver 2016-04-04 21:06:51
+ * Ver 2016-04-15 22:34:08
  *
  * Saba_Tachie と併用してください
  */
@@ -115,7 +115,6 @@ var Saba;
                 this._commandWindow = commandWindow;
             };
             TachieSprite.prototype.update = function () {
-                this.updateInput();
                 this.moveToTargetPosition();
                 _super.prototype.update.call(this);
                 this.updateTachie();
@@ -159,6 +158,7 @@ var Saba;
                     this.hidden = true;
                     return;
                 }
+                this.updateInput();
                 var id = actor.actorId();
                 if (id != this.actorId) {
                     if (this.x == this.hiddenX) {

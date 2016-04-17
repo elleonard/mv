@@ -49,7 +49,7 @@
  * 　　　name: string
  * 　　　　→表示する名前
  * 　　　pos: string
- * 　　　　→立ち位置(right→右, left→左)
+ * 　　　　→立ち位置(right→右, left→左, center→中央)
  * 　　　　　　　　　(default_posよりも優先します)
  *
  * 　m1 m2 m3 ... m99
@@ -108,7 +108,7 @@
  * 　　　actor: number
  * 　　　　→アクターID
  * 　　　pos: string
- * 　　　　→立ち位置(right→右, left→左)
+ * 　　　　→立ち位置(right→右, left→左, center→中央)
  *
  * 　start
  * 　＞default_posなどの設定をクリアします。
@@ -671,9 +671,20 @@ export class Scenario_Converter {
     convertCommand_hide_right(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideRight`]});
     }
+    convertCommand_hide_center(context: Context): void {
+        context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideCenter`]});
+    }
     convertCommand_default_pos(context: Context): void {
         var actorId = parseInt(context.header['actor']);
-        var position = context.header['position'] === 'right' ? 2 : 1;
+        var position = Tachie.LEFT_POS;
+        switch(context.header['position']) {
+        case 'right':
+            position = Tachie.RIGHT_POS;
+            break;
+        case 'center':
+            position = Tachie.CENTER_POS;
+            break;
+        }
         this.defaultPosMap[actorId] = position;
     }
     convertCommand_not_close(context: Context): void {
@@ -685,9 +696,14 @@ export class Scenario_Converter {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie preloadPicture ${file}`]});
     }
     convertCommand_n(actorId: number, context: Context): void {
-        let position = this.defaultPosMap[actorId] || 1;
-        if (context.header['position']) {
-            position = context.header['position'] === 'right' ? 2 : 1;
+        let position = this.defaultPosMap[actorId] || Tachie.LEFT_POS;;
+        switch(context.header['position']) {
+        case 'right':
+            position = Tachie.RIGHT_POS;
+            break;
+        case 'center':
+            position = Tachie.CENTER_POS;
+            break;
         }
 
         if (context.header['face']) {
@@ -715,6 +731,8 @@ export class Scenario_Converter {
         let y = 0;
         if (position === Tachie.LEFT_POS) {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
+        } else if (position === Tachie.CENTER_POS) {
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showCenter ${actorId} ${x} ${y} 100`]});
         } else {
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
         }

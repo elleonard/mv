@@ -119,11 +119,11 @@
  *
  * @param autoModeDelayPerChar
  * @desc オートモードで、1文字ごとに増える待機時間です(ミリ秒)
- * @default 120
+ * @default 110
  *
  * @param autoModeDelayCommon
  * @desc オートモードで、1ページで必ず待つ時間です(ミリ秒)。全体の待機時間は autoModeDelayPerChar * 文字数 + autoModeDelayCommon です
- * @default 2500
+ * @default 2000
  *
  * @param autoModeMarkFrameNum
  * @desc オートモードであることを示すマークのアニメ枚数です
@@ -1220,7 +1220,7 @@ var TachieDrawerMixin = function() {
             this.drawTachieOuterMain(actor, cache);
             this.drawTachieBodyFront(actor, cache);
             this.drawTachieOuterFront(actor, cache);
-            console.log('createCache:' + actor.actorId());
+            //console.log('createCache:' + actor.actorId());
         }
         if (! $gameTemp.tachieTmpBitmap) {
             $gameTemp.tachieTmpBitmap = new Bitmap(Graphics.width, Graphics.height)

@@ -17,6 +17,33 @@ var Saba;
         }
         return ret;
     };
+    Saba.toIntArrayByStr = function (str, minLength) {
+        if (minLength === void 0) { minLength = 0; }
+        var ret = [];
+        for (var i = 0; i < minLength; i++) {
+            ret[i] = 0;
+        }
+        if (!str) {
+            return ret;
+        }
+        var list = str.split(',');
+        for (var i = 0; i < list.length; i++) {
+            ret[i] = parseInt(list[i]);
+            if (isNaN(ret[i])) {
+                ret[i] = 0;
+            }
+        }
+        return ret;
+    };
+    Saba.parseIntValue = function (value, defaultValue) {
+        var intNum = parseInt(value);
+        if (isNaN(intNum)) {
+            return defaultValue;
+        }
+        else {
+            return intNum;
+        }
+    };
 })(Saba || (Saba = {}));
 
 var __extends = (this && this.__extends) || function (d, b) {
@@ -41,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-09 20:10:55
+ * Ver 2016-04-17 18:58:27
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -75,7 +102,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　　　name: string
  * 　　　　→表示する名前
  * 　　　pos: string
- * 　　　　→立ち位置(right→右, left→左)
+ * 　　　　→立ち位置(right→右, left→左, center→中央)
  * 　　　　　　　　　(default_posよりも優先します)
  *
  * 　m1 m2 m3 ... m99
@@ -134,7 +161,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　　　actor: number
  * 　　　　→アクターID
  * 　　　pos: string
- * 　　　　→立ち位置(right→右, left→左)
+ * 　　　　→立ち位置(right→右, left→左, center→中央)
  *
  * 　start
  * 　＞default_posなどの設定をクリアします。
@@ -144,6 +171,15 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　　■パラメータ
  * 　　　file: 読み込んでおくファイル名
  *
+ *
+//**************************************************************************
+//　独自拡張
+//**************************************************************************
+ * fadeout
+ * →time を指定できるようにしました
+ *
+ * fadein
+ * →time を指定できるようにしました
  *
  * イベント実装状況(○→実装済み)
 //**************************************************************************
@@ -340,6 +376,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 //　その他
 //**************************************************************************
  *○　end
+ *
+ * @license
+ * Saba_SimpleScenario licensed under the MIT License.
  */
 var Saba;
 (function (Saba) {
@@ -386,7 +425,7 @@ var Saba;
                         throw new Error('id:' + id + ' のデータが見つかりません');
                     }
                     console.log("\u30B3\u30DE\u30F3\u30C9\u5B9F\u884C:" + args[0]);
-                    console.log(list_1);
+                    //console.log(list);
                     this.setupChild(list_1, this._eventId);
                 }
             };
@@ -698,9 +737,20 @@ var Saba;
             Scenario_Converter.prototype.convertCommand_hide_right = function (context) {
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideRight"] });
             };
+            Scenario_Converter.prototype.convertCommand_hide_center = function (context) {
+                context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideCenter"] });
+            };
             Scenario_Converter.prototype.convertCommand_default_pos = function (context) {
                 var actorId = parseInt(context.header['actor']);
-                var position = context.header['position'] === 'right' ? 2 : 1;
+                var position = Saba.Tachie.LEFT_POS;
+                switch (context.header['position']) {
+                    case 'right':
+                        position = Saba.Tachie.RIGHT_POS;
+                        break;
+                    case 'center':
+                        position = Saba.Tachie.CENTER_POS;
+                        break;
+                }
                 this.defaultPosMap[actorId] = position;
             };
             Scenario_Converter.prototype.convertCommand_not_close = function (context) {
@@ -712,9 +762,15 @@ var Saba;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie preloadPicture " + file)] });
             };
             Scenario_Converter.prototype.convertCommand_n = function (actorId, context) {
-                var position = this.defaultPosMap[actorId] || 1;
-                if (context.header['position']) {
-                    position = context.header['position'] === 'right' ? 2 : 1;
+                var position = this.defaultPosMap[actorId] || Saba.Tachie.LEFT_POS;
+                ;
+                switch (context.header['position']) {
+                    case 'right':
+                        position = Saba.Tachie.RIGHT_POS;
+                        break;
+                    case 'center':
+                        position = Saba.Tachie.CENTER_POS;
+                        break;
                 }
                 if (context.header['face']) {
                     var face = parseInt(context.header['face']);
@@ -737,6 +793,9 @@ var Saba;
                 var y = 0;
                 if (position === Saba.Tachie.LEFT_POS) {
                     context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
+                }
+                else if (position === Saba.Tachie.CENTER_POS) {
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showCenter " + actorId + " " + x + " " + y + " 100")] });
                 }
                 else {
                     context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
@@ -1624,7 +1683,8 @@ var Saba;
                 context.push({ 'code': 217, 'indent': this.indent, 'parameters': [] });
             };
             Scenario_Converter.prototype.convertCommand_fadeout = function (context) {
-                context.push({ 'code': 221, 'indent': this.indent, 'parameters': [] });
+                var time = context.headerInt('time', -1);
+                context.push({ 'code': 221, 'indent': this.indent, 'parameters': [time] });
             };
             Scenario_Converter.prototype.convertCommand_fadein = function (context) {
                 context.push({ 'code': 222, 'indent': this.indent, 'parameters': [] });
@@ -1811,7 +1871,11 @@ var Saba;
              */
             Scenario_Converter.prototype.convertCommand_movie = function (context) {
                 var file = context.headerStr('file');
-                context.push({ 'code': 261, 'indent': this.indent, 'parameters': [file] });
+                var playbackRate = parseFloat(context.headerStr('playback_rate'));
+                if (isNaN(playbackRate)) {
+                    playbackRate = 1;
+                }
+                context.push({ 'code': 261, 'indent': this.indent, 'parameters': [file, playbackRate] });
             };
             /**
              * ○ タイルセットの変更
@@ -1998,6 +2062,55 @@ var Saba;
             };
             return Header;
         }());
+        var _Game_Temp_initialize = Game_Temp.prototype.initialize;
+        Game_Temp.prototype.initialize = function () {
+            _Game_Temp_initialize.call(this);
+            this.videoPlaybackRate = 1.0;
+        };
+        var _Game_Interpreter_command261 = Game_Interpreter.prototype.command261;
+        Game_Interpreter.prototype.command261 = function () {
+            if (!$gameMessage.isBusy()) {
+                var playbackRate = parseFloat(this._params[1]);
+                if (!isNaN(playbackRate)) {
+                    $gameTemp.videoPlaybackRate = playbackRate;
+                }
+            }
+            return _Game_Interpreter_command261.call(this);
+        };
+        // Fadeout Screen
+        var _Game_Interpreter_command221 = Game_Interpreter.prototype.command221;
+        Game_Interpreter.prototype.command221 = function () {
+            if (!$gameMessage.isBusy()) {
+                var fadeSpeed = parseInt(this._params[0]);
+                if (isNaN(fadeSpeed) || fadeSpeed < 0) {
+                    fadeSpeed = this.fadeSpeed();
+                }
+                $gameScreen.startFadeOut(fadeSpeed);
+                this.wait(fadeSpeed);
+                this._index++;
+            }
+            return false;
+        };
+        // Fadein Screen
+        var _Game_Interpreter_command222 = Game_Interpreter.prototype.command222;
+        Game_Interpreter.prototype.command222 = function () {
+            if (!$gameMessage.isBusy()) {
+                var fadeSpeed = parseInt(this._params[0]);
+                console.log(fadeSpeed);
+                if (isNaN(fadeSpeed) || fadeSpeed < 0) {
+                    fadeSpeed = this.fadeSpeed();
+                }
+                $gameScreen.startFadeIn(fadeSpeed);
+                this.wait(fadeSpeed);
+                this._index++;
+            }
+            return false;
+        };
+        var _Graphics_onVideoLoad = Graphics._onVideoLoad;
+        Graphics._onVideoLoad = function () {
+            this._video.playbackRate = $gameTemp.videoPlaybackRate;
+            _Graphics_onVideoLoad.call(this);
+        };
         Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
         Saba.applyMyMethods(_Scene_Map, Scene_Map);
     })(SimpleScenario = Saba.SimpleScenario || (Saba.SimpleScenario = {}));
@@ -2198,7 +2311,7 @@ var Saba;
             'face': SimpleScenario.isNumeric(0),
             'pose': SimpleScenario.isNumeric(0),
             'hoppe': SimpleScenario.isNumeric(0),
-            'position': SimpleScenario.list('right', 'left'),
+            'position': SimpleScenario.list('right', 'left', 'center'),
         };
         SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['a1'] = SimpleScenario.validates['a2'] = SimpleScenario.validates['a3'] = SimpleScenario.validates['a4'] = SimpleScenario.validates['a5'] = SimpleScenario.validates['a6'] = SimpleScenario.validates['a7'] = SimpleScenario.validates['a8'] = SimpleScenario.validates['a9'] = SimpleScenario.validates['n1'];
@@ -2223,13 +2336,14 @@ var Saba;
         SimpleScenario.validates['return'] = {};
         SimpleScenario.validates['hide_left'] = {};
         SimpleScenario.validates['hide_right'] = {};
+        SimpleScenario.validates['hide_center'] = {};
         SimpleScenario.validates['color'] = {};
         SimpleScenario.validates['default_pos'] = {
             'actor': [
                 SimpleScenario.notEmpty(),
                 SimpleScenario.isNumeric(1)
             ],
-            'position': SimpleScenario.list('right', 'left'),
+            'position': SimpleScenario.list('right', 'left', 'center'),
         };
         SimpleScenario.validates['end'] = {};
         SimpleScenario.validates['end_else'] = {};

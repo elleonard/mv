@@ -119,6 +119,15 @@
  * 　　　file: 読み込んでおくファイル名
  *
  *
+//**************************************************************************
+//　独自拡張
+//**************************************************************************
+ * fadeout
+ * →time を指定できるようにしました
+ *
+ * fadein
+ * →time を指定できるようにしました
+ * 
  * イベント実装状況(○→実装済み)
 //**************************************************************************
 //　メッセージ系
@@ -366,7 +375,7 @@ class _Game_Interpreter extends Game_Interpreter {
                 throw new Error('id:' + id + ' のデータが見つかりません');
             }
             console.log(`コマンド実行:${args[0]}`);
-            console.log(list);
+            //console.log(list);
             this.setupChild(list, this._eventId);
         }
     }
@@ -1618,7 +1627,8 @@ export class Scenario_Converter {
         context.push({'code': 217, 'indent': this.indent, 'parameters': []});
     }
     convertCommand_fadeout(context: Context): void {
-        context.push({'code': 221, 'indent': this.indent, 'parameters': []});
+        const time = context.headerInt('time', -1);
+        context.push({'code': 221, 'indent': this.indent, 'parameters': [time]});
     }
     convertCommand_fadein(context: Context): void {
         context.push({'code': 222, 'indent': this.indent, 'parameters': []});
@@ -1999,6 +2009,38 @@ Game_Interpreter.prototype.command261 = function() {
     }
     return _Game_Interpreter_command261.call(this);
 };
+
+// Fadeout Screen
+var _Game_Interpreter_command221 = Game_Interpreter.prototype.command221;
+Game_Interpreter.prototype.command221 = function() {
+    if (!$gameMessage.isBusy()) {
+        var fadeSpeed = parseInt(this._params[0]);
+        if (isNaN(fadeSpeed) || fadeSpeed < 0) {
+            fadeSpeed = this.fadeSpeed();
+        }
+        $gameScreen.startFadeOut(fadeSpeed);
+        this.wait(fadeSpeed);
+        this._index++;
+    }
+    return false;
+};
+
+// Fadein Screen
+var _Game_Interpreter_command222 = Game_Interpreter.prototype.command222;
+Game_Interpreter.prototype.command222 = function() {
+    if (!$gameMessage.isBusy()) {
+        var fadeSpeed = parseInt(this._params[0]);
+        console.log(fadeSpeed)
+        if (isNaN(fadeSpeed) || fadeSpeed < 0) {
+            fadeSpeed = this.fadeSpeed();
+        }
+        $gameScreen.startFadeIn(fadeSpeed);
+        this.wait(fadeSpeed);
+        this._index++;
+    }
+    return false;
+};
+
 
 var _Graphics_onVideoLoad = Graphics._onVideoLoad;
 Graphics._onVideoLoad = function() {

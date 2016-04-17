@@ -17,6 +17,24 @@ var Saba;
         }
         return ret;
     };
+    Saba.toIntArrayByStr = function (str, minLength) {
+        if (minLength === void 0) { minLength = 0; }
+        var ret = [];
+        for (var i = 0; i < minLength; i++) {
+            ret[i] = 0;
+        }
+        if (!str) {
+            return ret;
+        }
+        var list = str.split(',');
+        for (var i = 0; i < list.length; i++) {
+            ret[i] = parseInt(list[i]);
+            if (isNaN(ret[i])) {
+                ret[i] = 0;
+            }
+        }
+        return ret;
+    };
     Saba.parseIntValue = function (value, defaultValue) {
         var intNum = parseInt(value);
         if (isNaN(intNum)) {
@@ -40,6 +58,9 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @author Sabakan
  * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
+ * @param disablesTachieActorIdList
+ * @desc 立ち絵を使わないアクターの ID のリストです。(カンマ区切り。 1, 2, 3...)無駄な読み込みをしないための設定です。
+ * @default 0
  *
  * @param leftPosX
  * @desc 左側に立つ場合のx座標です
@@ -151,11 +172,11 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  * @param autoModeDelayPerChar
  * @desc オートモードで、1文字ごとに増える待機時間です(ミリ秒)
- * @default 120
+ * @default 110
  *
  * @param autoModeDelayCommon
  * @desc オートモードで、1ページで必ず待つ時間です(ミリ秒)。全体の待機時間は autoModeDelayPerChar * 文字数 + autoModeDelayCommon です
- * @default 2500
+ * @default 2000
  *
  * @param autoModeMarkFrameNum
  * @desc オートモードであることを示すマークのアニメ枚数です
@@ -219,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-16 00:46:06
+ * Ver 2016-04-17 18:59:58
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -296,30 +317,10 @@ var Saba;
         Tachie.nameLeft = parseInt(parameters['nameLeft']);
         Tachie.fontSize = parseInt(parameters['fontSize']);
         Tachie.newLineXWithFace = parseInt(parameters['newLineXWithFace']);
-        var windowMarginParam = parameters['windowMargin'].split(',');
-        Tachie.windowMargin = [0, 0, 0, 0];
-        for (var i = 0; i < windowMarginParam.length; i++) {
-            Tachie.windowMargin[i] = parseInt(windowMarginParam[i]);
-            if (isNaN(Tachie.windowMargin[i])) {
-                Tachie.windowMargin[i] = 0;
-            }
-        }
-        var windowPaddingParam = parameters['windowPadding'].split(',');
-        Tachie.windowPadding = [0, 0, 0, 0];
-        for (var i = 0; i < windowPaddingParam.length; i++) {
-            Tachie.windowPadding[i] = parseInt(windowPaddingParam[i]);
-            if (isNaN(Tachie.windowPadding[i])) {
-                Tachie.windowPadding[i] = 0;
-            }
-        }
-        var inactiveActorToneStr = parameters['inactiveActorTone'].split(',');
-        Tachie.inactiveActorTone = [0, 0, 0, 0];
-        for (var i = 0; i < inactiveActorToneStr.length; i++) {
-            Tachie.inactiveActorTone[i] = parseInt(inactiveActorToneStr[i]);
-            if (isNaN(Tachie.inactiveActorTone[i])) {
-                Tachie.inactiveActorTone[i] = 0;
-            }
-        }
+        Tachie.windowMargin = Saba.toIntArrayByStr(parameters['windowMargin'], 4);
+        Tachie.windowPadding = Saba.toIntArrayByStr(parameters['windowPadding'], 4);
+        Tachie.inactiveActorTone = Saba.toIntArrayByStr(parameters['inactiveActorTone'], 4);
+        Tachie.disablesTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
         Tachie.toneChangeDuration = parseInt(parameters['toneChangeDuration']);
         Tachie.windowColors = {};
         Tachie.offsetX = {};
@@ -696,9 +697,6 @@ var Saba;
                 this._list.push(c);
             }
         };
-        ImageManager.loadTachie = function (filename, hue) {
-            return this.loadBitmap('img/tachie/', filename, hue, true);
-        };
         var _Game_Item = (function (_super) {
             __extends(_Game_Item, _super);
             function _Game_Item() {
@@ -998,11 +996,15 @@ var Saba;
                 this.setCacheChanged();
             };
             _Game_Actor.prototype.preloadTachie = function () {
+                if (this.isTachieDisabled()) {
+                    return;
+                }
                 if (useTextureAtlas) {
                     if (PIXI.TextureCache[this.bodyFrontFile() + '.png']) {
                     }
                     else {
-                        new PIXI.SpriteSheetLoader('img/tachie/actor' + this.actorId().padZero(2) + '.json', false).load();
+                        var file = 'img/tachie/actor' + this.actorId().padZero(2) + '.json';
+                        ImageManager.loadSpriteSheet(file);
                     }
                 }
                 else {
@@ -1147,6 +1149,9 @@ var Saba;
                     this.setDirty();
                 }
             };
+            _Game_Actor.prototype.isTachieDisabled = function () {
+                return Tachie.disablesTachieActorIdList.indexOf(this.actorId()) >= 0;
+            };
             return _Game_Actor;
         }(Game_Actor));
         var _Game_Picture = (function (_super) {
@@ -1172,6 +1177,10 @@ var Saba;
         }(Game_Picture));
         var _ImageManager_isReady = ImageManager.isReady;
         ImageManager.isReady = function () {
+            if (this._spriteSheetLoaders && this._spriteSheetLoaders.length > 0) {
+                // スプライトシートを読み込み中
+                return false;
+            }
             for (var key in this._cache) {
                 var bitmap = this._cache[key];
                 if (bitmap.isError()) {
@@ -1189,6 +1198,39 @@ var Saba;
                 }
             }
             return true;
+        };
+        ImageManager.loadTachie = function (filename, hue) {
+            return this.loadBitmap('img/tachie/', filename, hue, true);
+        };
+        ImageManager.loadSpriteSheet = function (file) {
+            var _this = this;
+            var loader = new PIXI.SpriteSheetLoader(file, false);
+            this._spriteSheetLoaders = this._spriteSheetLoaders || [];
+            this._spriteSheetLoaders.push(loader);
+            loader.on('loaded', function () {
+                var index = _this._spriteSheetLoaders.indexOf(loader);
+                _this._spriteSheetLoaders.splice(index, 1);
+            });
+            loader.on('error', function () {
+                var index = _this._spriteSheetLoaders.indexOf(loader);
+                _this._spriteSheetLoaders.splice(index, 1);
+            });
+            loader.load();
+        };
+        var _PIXI_SpriteSheetLoader_load = PIXI.SpriteSheetLoader.prototype.load;
+        PIXI.SpriteSheetLoader.prototype.load = function () {
+            var scope = this;
+            var jsonLoader = new PIXI.JsonLoader(this.url, this.crossorigin);
+            jsonLoader.on('loaded', function (event) {
+                scope.json = event.data.content.json;
+                scope.onLoaded();
+            });
+            jsonLoader.on('error', function (event) {
+                scope.emit('error', {
+                    content: scope
+                });
+            });
+            jsonLoader.load();
         };
         var _Game_Temp = (function (_super) {
             __extends(_Game_Temp, _super);
@@ -1273,7 +1315,6 @@ var Saba;
                     this.drawTachieOuterMain(actor, cache);
                     this.drawTachieBodyFront(actor, cache);
                     this.drawTachieOuterFront(actor, cache);
-                    console.log('createCache:' + actor.actorId());
                 }
                 if (!$gameTemp.tachieTmpBitmap) {
                     $gameTemp.tachieTmpBitmap = new Bitmap(Graphics.width, Graphics.height);
@@ -1445,7 +1486,7 @@ var Saba;
                 if (picture && picture.tachieActorId !== 0) {
                     var actorId = picture.tachieActorId;
                     var actor = $gameActors.actor(actorId);
-                    if (actor.isDirty()) {
+                    if (actor.isDirty() || this._dirty) {
                         this.redrawActorImage();
                     }
                 }
@@ -1472,7 +1513,8 @@ var Saba;
                 if (this.lastDrawnActorId !== actorId) {
                     this.bitmap.clear();
                 }
-                this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+                var success = this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+                this._dirty = !success;
             };
             return _Sprite_Picture;
         }(Sprite_Picture));

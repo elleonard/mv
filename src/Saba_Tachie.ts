@@ -5,7 +5,10 @@
  * @author Sabakan
  * @plugindesc 立ち絵を簡単に表示するプラグインです。別途画像が必要です
  *
- *
+ * @param disablesTachieActorIdList
+ * @desc 立ち絵を使わないアクターの ID のリストです。(カンマ区切り。 1, 2, 3...)無駄な読み込みをしないための設定です。
+ * @default 0
+ * 
  * @param leftPosX
  * @desc 左側に立つ場合のx座標です
  * @default 0
@@ -260,30 +263,10 @@ export var posY = parseInt(parameters['posY']);
 export var nameLeft = parseInt(parameters['nameLeft']);
 export var fontSize = parseInt(parameters['fontSize']);
 export var newLineXWithFace = parseInt(parameters['newLineXWithFace']);
-const windowMarginParam = parameters['windowMargin'].split(',');
-export const windowMargin = [0, 0, 0, 0];
-for (let i = 0; i < windowMarginParam.length; i++) {
-    windowMargin[i] = parseInt(windowMarginParam[i]);
-    if (isNaN(windowMargin[i])) {
-        windowMargin[i] = 0;
-    }
-}
-const windowPaddingParam = parameters['windowPadding'].split(',');
-export var windowPadding = [0, 0, 0, 0];
-for (let i = 0; i < windowPaddingParam.length; i++) {
-    windowPadding[i] = parseInt(windowPaddingParam[i]);
-    if (isNaN(windowPadding[i])) {
-        windowPadding[i] = 0;
-    }
-}
-const inactiveActorToneStr = parameters['inactiveActorTone'].split(',');
-export var inactiveActorTone = [0, 0, 0, 0];
-for (let i = 0; i < inactiveActorToneStr.length; i++) {
-    inactiveActorTone[i] = parseInt(inactiveActorToneStr[i]);
-    if (isNaN(inactiveActorTone[i])) {
-        inactiveActorTone[i] = 0;
-    }
-}
+export var windowMargin = Saba.toIntArrayByStr(parameters['windowMargin'], 4);
+export var windowPadding = Saba.toIntArrayByStr(parameters['windowPadding'], 4);
+export var inactiveActorTone = Saba.toIntArrayByStr(parameters['inactiveActorTone'], 4);
+export var disablesTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
 export var toneChangeDuration = parseInt(parameters['toneChangeDuration']);
 export var windowColors: {[actorId: number]: number} = {};
 export var offsetX = {};
@@ -663,10 +646,6 @@ Game_Interpreter.prototype.setup = function(list, eventId) {
     }
 };
 
-ImageManager.loadTachie = function(filename: string, hue?: number) {
-    return this.loadBitmap('img/tachie/', filename, hue, true);
-};
-
 
 class _Game_Item extends Game_Item {
     isOuter(): boolean {
@@ -933,11 +912,15 @@ class _Game_Actor extends Game_Actor {
         this.setCacheChanged();
     }
     preloadTachie(): void {
+        if (this.isTachieDisabled()) {
+            return;
+        }
         if (useTextureAtlas) {
             if (PIXI.TextureCache[this.bodyFrontFile() + '.png']) {
                 // すでに読み込み済み
             } else {
-                new PIXI.SpriteSheetLoader('img/tachie/actor' + this.actorId().padZero(2) + '.json', false).load();
+                var file = 'img/tachie/actor' + this.actorId().padZero(2) + '.json';
+                ImageManager.loadSpriteSheet(file);
             }
         } else {
             this.doPreloadTachie(this.outerBackFile());
@@ -1079,6 +1062,9 @@ class _Game_Actor extends Game_Actor {
             this.setDirty();
         }
     }
+    isTachieDisabled(): boolean {
+        return disablesTachieActorIdList.indexOf(this.actorId()) >= 0;
+    }
 }
 
 
@@ -1100,6 +1086,10 @@ class _Game_Picture extends Game_Picture {
 
 const _ImageManager_isReady = ImageManager.isReady;
 ImageManager.isReady = function() {
+    if (this._spriteSheetLoaders && this._spriteSheetLoaders.length > 0) {
+        // スプライトシートを読み込み中
+        return false;
+    }
     for (var key in this._cache) {
         var bitmap = this._cache[key];
         if (bitmap.isError()) {
@@ -1116,6 +1106,40 @@ ImageManager.isReady = function() {
         }
     }
     return true;
+};
+ImageManager.loadTachie = function(filename: string, hue?: number) {
+    return this.loadBitmap('img/tachie/', filename, hue, true);
+};
+ImageManager.loadSpriteSheet = function(file: string) {
+    var loader = new PIXI.SpriteSheetLoader(file, false);
+    this._spriteSheetLoaders = this._spriteSheetLoaders || [];
+    this._spriteSheetLoaders.push(loader);
+    
+    loader.on('loaded', () => {
+        var index = this._spriteSheetLoaders.indexOf(loader);
+        this._spriteSheetLoaders.splice(index, 1);
+    })
+    loader.on('error', () => {
+        var index = this._spriteSheetLoaders.indexOf(loader);
+        this._spriteSheetLoaders.splice(index, 1);
+    })
+    loader.load();
+    
+};
+const _PIXI_SpriteSheetLoader_load = PIXI.SpriteSheetLoader.prototype.load;
+PIXI.SpriteSheetLoader.prototype.load = function () {
+    var scope = this;
+    var jsonLoader = new PIXI.JsonLoader(this.url, this.crossorigin);
+    jsonLoader.on('loaded', function (event) {
+        scope.json = event.data.content.json;
+        scope.onLoaded();
+    });
+    jsonLoader.on('error', function (event) {
+        scope.emit('error', {
+            content: scope
+        });
+    });
+    jsonLoader.load();
 };
 
 
@@ -1358,13 +1382,14 @@ TachieDrawerMixin.call(Sprite.prototype);
 TachieDrawerMixin.call(Window_Base.prototype);
  
 class _Sprite_Picture extends Sprite_Picture {
+    _dirty: boolean;
     updateBitmap(): void {
         _Sprite_Picture_updateBitmap.call(this);
         var picture = this.picture();
         if (picture && picture.tachieActorId !== 0) {
             var actorId = picture.tachieActorId;
             var actor = $gameActors.actor(actorId);
-            if (actor.isDirty()) {
+            if (actor.isDirty() || this._dirty) {
                 this.redrawActorImage();
             }
         }
@@ -1390,7 +1415,8 @@ class _Sprite_Picture extends Sprite_Picture {
         if (this.lastDrawnActorId !== actorId) {
             this.bitmap.clear();
         }
-        this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+        var success = this.drawTachie(actorId, this.bitmap, 0, 0, null, 0, 1, true);
+        this._dirty = ! success;
     }
 }
 
@@ -1991,10 +2017,12 @@ interface Game_Actor {
     hairFile(): string;
     hoppeFile(): string;
     faceFile(): string;
+    isTachieDisabled(): boolean;
     preloadFaces(faceIds: Array<string>): void;
 }
 interface ImageManagerStatic {
     loadTachie(file: string, hue?: number): Bitmap;
+    loadSpriteSheet(file: string): void;
 }
 interface Window_Base {
     drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;

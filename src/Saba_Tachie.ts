@@ -266,7 +266,7 @@ export var newLineXWithFace = parseInt(parameters['newLineXWithFace']);
 export var windowMargin = Saba.toIntArrayByStr(parameters['windowMargin'], 4);
 export var windowPadding = Saba.toIntArrayByStr(parameters['windowPadding'], 4);
 export var inactiveActorTone = Saba.toIntArrayByStr(parameters['inactiveActorTone'], 4);
-export var disablesTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
+export var disabledTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
 export var toneChangeDuration = parseInt(parameters['toneChangeDuration']);
 export var windowColors: {[actorId: number]: number} = {};
 export var offsetX = {};
@@ -1063,7 +1063,7 @@ class _Game_Actor extends Game_Actor {
         }
     }
     isTachieDisabled(): boolean {
-        return disablesTachieActorIdList.indexOf(this.actorId()) >= 0;
+        return disabledTachieActorIdList.indexOf(this.actorId()) >= 0;
     }
 }
 

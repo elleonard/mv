@@ -714,6 +714,7 @@ export class Scenario_Converter {
             position = Tachie.CENTER_POS;
             break;
         }
+        
 
         if (context.header['face']) {
             const face = parseInt(context.header['face']);
@@ -736,16 +737,33 @@ export class Scenario_Converter {
         }
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showName ${name}`]});
 
-        let x = 0;
-        let y = 0;
-        if (position === Tachie.LEFT_POS) {
-            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
-        } else if (position === Tachie.CENTER_POS) {
-            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showCenter ${actorId} ${x} ${y} 100`]});
+        let faceActorId = 0;
+        if (Saba.Tachie.disabledTachieActorIdList.indexOf(actorId) >= 0) {
+            faceActorId = actorId;
+            let color = 0;
+            if (context.header['color']) {
+                color = context.headerInt('color');
+            }
+            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideBalloon`]});
+            if (color > 0) {
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie windowColor ` + color]});
+            } else {
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+            }
         } else {
-            context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
+            let x = 0;
+            let y = 0;
+            if (position === Tachie.LEFT_POS) {
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showLeft ${actorId} ${x} ${y} 100`]});
+            } else if (position === Tachie.CENTER_POS) {
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showCenter ${actorId} ${x} ${y} 100`]});
+            } else {
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie showRight ${actorId} ${x} ${y} 100`]});
+            }
         }
-        this.convertCommand_messages(context);
+        
+        
+        this.convertCommand_messages(context, faceActorId);
     }
     convertCommand_color(context: Context): void {
         let color = 0;
@@ -802,8 +820,15 @@ export class Scenario_Converter {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         this.convertCommand_messages(context);
     }
-    convertCommand_messages(context: Context) {
-        context.push({'code': 101, 'indent': this.indent, 'parameters': ['', 0, 0, 2]});
+    convertCommand_messages(context: Context, faceActorId: number = 0) {
+        let faceName = '';
+        let faceIndex = 0;
+        if (faceActorId > 0) {
+            const actor = $gameActors.actor(faceActorId);
+            faceName = actor.faceName();
+            faceIndex  = actor.faceIndex();
+        }
+        context.push({'code': 101, 'indent': this.indent, 'parameters': [faceName, faceIndex, 0, 2]});
         for (const msg of context.data) {
             context.push({'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)]});
         }

@@ -180,7 +180,7 @@ validates['n1'] = {
     'hoppe':    isNumeric(0),
     'position':  list('right', 'left', 'center'),
 };
-validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validates['n6'] = validates['n7'] = validates['n8'] = validates['n9'] = validates['n1'];
+validates['n2'] = validates['n3'] = validates['n4'] = validates['n5'] = validates['n6'] = validates['n7'] = validates['n8'] = validates['n9'] = validates['n10'] = validates['n11'] = validates['n12'] = validates['n13'] = validates['n1'];
 validates['a1'] = validates['a2'] = validates['a3'] = validates['a4'] = validates['a5'] = validates['a6'] = validates['a7'] = validates['a8'] = validates['a9'] = validates['n1'];
 
 validates['m1'] = {

@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-17 18:58:27
+ * Ver 2016-04-21 20:12:05
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -789,18 +789,35 @@ var Saba;
                     name = context.header['name'];
                 }
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showName " + name)] });
-                var x = 0;
-                var y = 0;
-                if (position === Saba.Tachie.LEFT_POS) {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
-                }
-                else if (position === Saba.Tachie.CENTER_POS) {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showCenter " + actorId + " " + x + " " + y + " 100")] });
+                var faceActorId = 0;
+                if (Saba.Tachie.disabledTachieActorIdList.indexOf(actorId) >= 0) {
+                    faceActorId = actorId;
+                    var color = 0;
+                    if (context.header['color']) {
+                        color = context.headerInt('color');
+                    }
+                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideBalloon"] });
+                    if (color > 0) {
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie windowColor " + color] });
+                    }
+                    else {
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie clearWindowColor"] });
+                    }
                 }
                 else {
-                    context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
+                    var x = 0;
+                    var y = 0;
+                    if (position === Saba.Tachie.LEFT_POS) {
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showLeft " + actorId + " " + x + " " + y + " 100")] });
+                    }
+                    else if (position === Saba.Tachie.CENTER_POS) {
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showCenter " + actorId + " " + x + " " + y + " 100")] });
+                    }
+                    else {
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
+                    }
                 }
-                this.convertCommand_messages(context);
+                this.convertCommand_messages(context, faceActorId);
             };
             Scenario_Converter.prototype.convertCommand_color = function (context) {
                 var color = 0;
@@ -856,8 +873,16 @@ var Saba;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
                 this.convertCommand_messages(context);
             };
-            Scenario_Converter.prototype.convertCommand_messages = function (context) {
-                context.push({ 'code': 101, 'indent': this.indent, 'parameters': ['', 0, 0, 2] });
+            Scenario_Converter.prototype.convertCommand_messages = function (context, faceActorId) {
+                if (faceActorId === void 0) { faceActorId = 0; }
+                var faceName = '';
+                var faceIndex = 0;
+                if (faceActorId > 0) {
+                    var actor = $gameActors.actor(faceActorId);
+                    faceName = actor.faceName();
+                    faceIndex = actor.faceIndex();
+                }
+                context.push({ 'code': 101, 'indent': this.indent, 'parameters': [faceName, faceIndex, 0, 2] });
                 for (var _i = 0, _a = context.data; _i < _a.length; _i++) {
                     var msg = _a[_i];
                     context.push({ 'code': 401, 'indent': this.indent, 'parameters': [this.replaceMessage(msg)] });
@@ -2313,7 +2338,7 @@ var Saba;
             'hoppe': SimpleScenario.isNumeric(0),
             'position': SimpleScenario.list('right', 'left', 'center'),
         };
-        SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n1'];
+        SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n10'] = SimpleScenario.validates['n11'] = SimpleScenario.validates['n12'] = SimpleScenario.validates['n13'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['a1'] = SimpleScenario.validates['a2'] = SimpleScenario.validates['a3'] = SimpleScenario.validates['a4'] = SimpleScenario.validates['a5'] = SimpleScenario.validates['a6'] = SimpleScenario.validates['a7'] = SimpleScenario.validates['a8'] = SimpleScenario.validates['a9'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['m1'] = {
             'index': SimpleScenario.isNumeric(0),

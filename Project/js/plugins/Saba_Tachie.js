@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-17 18:59:58
+ * Ver 2016-04-21 20:09:57
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -320,7 +320,7 @@ var Saba;
         Tachie.windowMargin = Saba.toIntArrayByStr(parameters['windowMargin'], 4);
         Tachie.windowPadding = Saba.toIntArrayByStr(parameters['windowPadding'], 4);
         Tachie.inactiveActorTone = Saba.toIntArrayByStr(parameters['inactiveActorTone'], 4);
-        Tachie.disablesTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
+        Tachie.disabledTachieActorIdList = Saba.toIntArrayByStr(parameters['disablesTachieActorIdList']);
         Tachie.toneChangeDuration = parseInt(parameters['toneChangeDuration']);
         Tachie.windowColors = {};
         Tachie.offsetX = {};
@@ -1150,7 +1150,7 @@ var Saba;
                 }
             };
             _Game_Actor.prototype.isTachieDisabled = function () {
-                return Tachie.disablesTachieActorIdList.indexOf(this.actorId()) >= 0;
+                return Tachie.disabledTachieActorIdList.indexOf(this.actorId()) >= 0;
             };
             return _Game_Actor;
         }(Game_Actor));

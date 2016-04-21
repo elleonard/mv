@@ -6,10 +6,11 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-04-07 20:23:34
+ * Ver 2016-04-21 22:49:09
  *
  * New Game を選択した後に F5 を押すと、自動で New Game が実行されます。
  * Continue を選択した後に F5 を押すと、自動で最後にロードされたファイルが実行されます。
+ * Save を選択した後に F5 を押すと、自動でそのファイルが実行されます。
  * プラグインコマンドはありません。
  */
 var Saba;
@@ -51,6 +52,13 @@ var Saba;
         var _Scene_Load_onLoadSuccess = Scene_Load.prototype.onLoadSuccess;
         Scene_Load.prototype.onLoadSuccess = function () {
             _Scene_Load_onLoadSuccess.call(this);
+            if ($gameTemp.isPlaytest()) {
+                sessionStorage.setItem('gameFile', this.savefileId());
+            }
+        };
+        var _Scene_Save_onSaveSuccess = Scene_Save.prototype.onSaveSuccess;
+        Scene_Save.prototype.onSaveSuccess = function () {
+            _Scene_Save_onSaveSuccess.call(this);
             if ($gameTemp.isPlaytest()) {
                 sessionStorage.setItem('gameFile', this.savefileId());
             }

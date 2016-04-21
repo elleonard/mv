@@ -6,7 +6,7 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-04-22 00:05:12
+ * Ver 2016-04-22 00:18:01
  *
  * New Game を選択した後に F5 を押すと、自動で New Game が実行されます。
  * Continue を選択した後に F5 を押すと、自動で最後にロードされたファイルが実行されます。
@@ -89,10 +89,12 @@ var Saba;
         };
         var _SceneManager_push = SceneManager.push;
         SceneManager.push = function (sceneClass) {
-            if (this._scene && this._scene._mode === 'recollection') {
-                sessionStorage.removeItem('sabaGameFile');
-                sessionStorage.setItem('sabaCommonEventId', $gameTemp._commonEventId);
-                sessionStorage.setItem('sabaPlayerMap', $gamePlayer._newMapId);
+            if ($gameTemp.isPlaytest()) {
+                if (this._scene && this._scene._mode === 'recollection') {
+                    sessionStorage.removeItem('sabaGameFile');
+                    sessionStorage.setItem('sabaCommonEventId', $gameTemp._commonEventId);
+                    sessionStorage.setItem('sabaPlayerMap', $gamePlayer._newMapId);
+                }
             }
             _SceneManager_push.call(this, sceneClass);
         };

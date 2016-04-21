@@ -89,10 +89,12 @@ Scene_Save.prototype.onSaveSuccess = function() {
 
 var _SceneManager_push = SceneManager.push;
 SceneManager.push = function(sceneClass) {
-    if (this._scene && this._scene._mode === 'recollection') {
-        sessionStorage.removeItem('sabaGameFile');
-        sessionStorage.setItem('sabaCommonEventId', $gameTemp._commonEventId);
-        sessionStorage.setItem('sabaPlayerMap', $gamePlayer._newMapId);
+    if ($gameTemp.isPlaytest()) {
+        if (this._scene && this._scene._mode === 'recollection') {
+            sessionStorage.removeItem('sabaGameFile');
+            sessionStorage.setItem('sabaCommonEventId', $gameTemp._commonEventId);
+            sessionStorage.setItem('sabaPlayerMap', $gamePlayer._newMapId);
+        }
     }
     
     _SceneManager_push.call(this, sceneClass);

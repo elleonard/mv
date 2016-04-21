@@ -48,12 +48,12 @@ Scene_Boot.prototype.start = function() {
             }
         }
     } else {
-        var sabaCommonEventId = sessionStorage.getItem('sabaCommonEventId');
-        var sabaPlayerMap = sessionStorage.getItem('sabaPlayerMap');
-        console.log(sabaCommonEventId)
+        var sabaCommonEventId = parseInt(sessionStorage.getItem('sabaCommonEventId'));
+        var sabaPlayerMap = parseInt(sessionStorage.getItem('sabaPlayerMap'));
         if (sabaCommonEventId && sabaPlayerMap) {
+            console.log('シーン回想実行。コモンイベントID: ' + sabaCommonEventId)
             DataManager.setupNewGame();
-            $gamePlayer.setTransparent(255);
+            $gamePlayer.setTransparent(true);
             $gameTemp.reserveCommonEvent(sabaCommonEventId);
             $gamePlayer.reserveTransfer(sabaPlayerMap, 0, 0, 0);
             SceneManager.goto(Scene_Map);

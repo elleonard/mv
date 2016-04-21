@@ -127,6 +127,10 @@
  *
  * fadein
  * →time を指定できるようにしました
+ *
+ * movie
+ * →playback_rate を指定できるようにしました
+ * デフォルトは1です。0.5 を指定すると1/2、2 を指定すると2倍の速度で再生されます
  * 
  * イベント実装状況(○→実装済み)
 //**************************************************************************
@@ -2024,13 +2028,41 @@ Game_Temp.prototype.initialize = function() {
     this.videoPlaybackRate = 1.0;
 };
 
+var WAIT_MODE_MOVIE_START = 1;
+var WAIT_MODE_MOVIE_END = 2;
+
+var _Game_Interpreter_updateWaitCount = Game_Interpreter.prototype.updateWaitCount;
+Game_Interpreter.prototype.updateWaitCount = function() {
+    if ($gameTemp.sabaWaitForMovieMode > 0) {
+        if ($gameTemp.sabaWaitForMovieMode == WAIT_MODE_MOVIE_END) {
+            if (Graphics._isVideoVisible()) {
+                return true;
+            }
+            $gameTemp.sabaWaitForMovieMode = 0;
+        }
+        else {
+            if (Graphics._isVideoVisible()) {
+                $gameTemp.sabaWaitForMovieMode = WAIT_MODE_MOVIE_END;
+            }
+            return true;
+        }
+    }
+    return _Game_Interpreter_updateWaitCount.call(this);
+};
+
 var _Game_Interpreter_command261 = Game_Interpreter.prototype.command261;
 Game_Interpreter.prototype.command261 = function() {
     if (!$gameMessage.isBusy()) {
-        var playbackRate = parseFloat(this._params[1]);
+        if (Graphics._isVideoVisible()) {
+            return false;
+        }
+        var playbackRate = this._params[1];
         if (! isNaN(playbackRate)) {
             $gameTemp.videoPlaybackRate = playbackRate;
+        } else {
+            $gameTemp.videoPlaybackRate = 1;
         }
+        $gameTemp.sabaWaitForMovieMode = WAIT_MODE_MOVIE_START;
     }
     return _Game_Interpreter_command261.call(this);
 };
@@ -2055,7 +2087,6 @@ var _Game_Interpreter_command222 = Game_Interpreter.prototype.command222;
 Game_Interpreter.prototype.command222 = function() {
     if (!$gameMessage.isBusy()) {
         var fadeSpeed = parseInt(this._params[0]);
-        console.log(fadeSpeed)
         if (isNaN(fadeSpeed) || fadeSpeed < 0) {
             fadeSpeed = this.fadeSpeed();
         }
@@ -2072,6 +2103,8 @@ Graphics._onVideoLoad = function() {
     this._video.playbackRate = $gameTemp.videoPlaybackRate;
     _Graphics_onVideoLoad.call(this);
 };
+
+
 
 Saba.applyMyMethods(_Game_Interpreter, Game_Interpreter);
 Saba.applyMyMethods(_Scene_Map, Scene_Map);

@@ -25,8 +25,10 @@ module AutoNewGame {
 
 var _Scene_Boot_prototype_start = Scene_Boot.prototype.start;
 Scene_Boot.prototype.start = function() {
+    if (! Utils.isOptionValid('test')) {
+        return;
+    }
     if (Saba.SimpleScenario) {
-        SoundManager.playSave();
         var converter = new SimpleScenario.Scenario_Converter();
         converter.convertAll();
     }
@@ -38,7 +40,6 @@ Scene_Boot.prototype.start = function() {
         } else {
             var savefileId = parseInt(gameFileData);
             if (DataManager.loadGame(savefileId)) {
-                SoundManager.playLoad();
                 this.fadeOutAll();
                 SceneManager.goto(Scene_Map);
             } else {

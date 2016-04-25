@@ -1799,7 +1799,11 @@ export class Window_TachieMessage extends Window_Message {
         this.close();
     }
     textAreaWidth(): number {
-        return this.contentsWidth() + 20;
+        if (this._galMode) {
+            return this.contentsWidth() + 20 - windowPadding[1];
+        } else {
+            return super.textAreaWidth();
+        }
     }
     standardFontSize() {
         if (this._galMode) {
@@ -1816,8 +1820,12 @@ export class Window_TachieMessage extends Window_Message {
         }
     }
     newLineX() {
-        var x =  this.isShowFace() ? newLineXWithFace : 0;
-        return x + windowPadding[3];
+        if (this._galMode) {
+            var x =  this.isShowFace() ? newLineXWithFace : 0;
+            return x + windowPadding[3];
+        } else {
+            return super.newLineX();
+        }
     }
     isShowFace(): boolean {
         if ($gameMessage.faceName() !== '') {

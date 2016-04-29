@@ -1506,7 +1506,6 @@ class Sprite_WindowBalloon extends Sprite_Base {
     }
     update(): void {
         super.update();
-        this.updateBitmap();
         this.updatePosition();
     }
     showBalloon(): void {
@@ -1527,6 +1526,7 @@ class Sprite_WindowBalloon extends Sprite_Base {
             return;
         }
         this.visible = true;
+        this.updateBitmap();
     }
     updateBitmap(): void {
         if (! balloonEnabled) {

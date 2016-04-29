@@ -118,7 +118,37 @@
  * 　　■パラメータ
  * 　　　file: 読み込んでおくファイル名
  *
- *
+ * 　turn_left
+ * 　turn_right
+ * 　turn_up
+ * 　turn_down
+ * 　＞キャラクターが向きを変えます。
+ * 　　@route_h event=-1 skip=true wait=true
+ * 　　@route type=turn_XXX
+ * 　　と同じです。
+ * 　　■パラメータ
+ * 　　　event: number
+ * 　　　　→イベントID。デフォルトは-1
+ * 　　　skil: boolean
+ * 　　　　→デフォルトはtrue
+ * 　　　wait: boolean
+ * 　　　　→デフォルトはtrue
+ * 
+ * 　move_left
+ * 　move_right
+ * 　move_up
+ * 　move_down
+ * 　＞キャラクターが移動します。
+ * 　　@route_h event=-1 skip=true wait=true
+ * 　　@route type=left or right or up or down
+ * 　　と同じです。
+ * 　　■パラメータ
+ * 　　　event: number
+ * 　　　　→イベントID。デフォルトは-1
+ * 　　　skil: boolean
+ * 　　　　→デフォルトはtrue
+ * 　　　wait: boolean
+ * 　　　　→デフォルトはtrue
 //**************************************************************************
 //　独自拡張
 //**************************************************************************
@@ -677,6 +707,86 @@ export class Scenario_Converter {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideBalloon`]});
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie clearWindowColor`]});
+    }
+    convertCommand_move_down(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 1, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_move_left(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 2, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_move_right(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 3, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_move_up(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 4, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_turn_down(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 16, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_turn_left(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 17, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_turn_right(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 18, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_turn_up(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 19, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
     }
     convertCommand_hide_left(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideLeft`]});

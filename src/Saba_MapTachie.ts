@@ -175,7 +175,10 @@ class TachieSprite extends Sprite_Base {
                 this.hidden = true;
             }
         } else {
-            this.hidden = false;
+            if (this.hidden) {
+                this.redraw();
+                this.hidden = false;
+            }
         }
     }
     redraw(): void {

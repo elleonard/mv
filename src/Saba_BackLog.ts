@@ -179,7 +179,6 @@ class Window_BackLog extends Window_Base {
         let height = 0;
         if (log.name) {
             this.drawTextEx(log.name, nameLeft, y);
-            console.log(message.charAt(message.length - 1) )
             if (message.charAt(message.length - 1) === '。') {
                 message = message.substring(0, message.length - 1);
             }

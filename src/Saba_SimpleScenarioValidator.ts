@@ -216,6 +216,16 @@ validates['default_pos'] = {
     'position':  list('right', 'left', 'center'),
 };
 
+validates['turn_left'] = {
+    'event': [
+                isNumeric(-1)
+    ],
+    'skip':     isBool(),
+    'wait':     isBool()
+};
+validates['turn_up'] = validates['turn_down'] = validates['turn_right'] = validates['turn_left'];
+validates['move_up'] = validates['move_down'] = validates['move_right'] = validates['move_left'] = validates['turn_left'];
+
 validates['end'] = {};
 validates['end_else'] = {};
 validates['vehicle'] = {};

@@ -1661,6 +1661,7 @@ export class Window_TachieMessage extends Window_Message {
     update(): void {
         super.update();
         this._updateAutoMode();
+        this.updateWindowVisibility();
         if (! this._galMode) {
             this.updateMessageSkip();
             return;
@@ -1692,7 +1693,6 @@ export class Window_TachieMessage extends Window_Message {
             this.close();
         }
         this.updateMessageSkip();
-        this.updateWindowVisibility();
     }
     clearWindowSkin(): void {
         this._windowSkinId = 0;
@@ -1723,6 +1723,9 @@ export class Window_TachieMessage extends Window_Message {
         } else if (this._windowHide && Input.isTriggered('ok')) {
             this.changeWindowVisibility();
         }
+        if (! $gameTemp.tachieName) {
+            this._messageNameWindow.visible = false;
+        }
     }
     changeWindowVisibility(): void {
         this._windowHide = ! this._windowHide;
@@ -1736,6 +1739,8 @@ export class Window_TachieMessage extends Window_Message {
             this.visible = true;
             if ($gameTemp.tachieName) {
                 this._messageNameWindow.visible = true;
+            } else {
+                this._messageNameWindow.visible = false;
             }
             for (const window of this.subWindows()) {
                 window.visible = true;

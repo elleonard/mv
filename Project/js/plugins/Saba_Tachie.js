@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-21 20:09:57
+ * Ver 2016-04-30 09:13:13
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1596,7 +1596,6 @@ var Saba;
             }
             Sprite_WindowBalloon.prototype.update = function () {
                 _super.prototype.update.call(this);
-                this.updateBitmap();
                 this.updatePosition();
             };
             Sprite_WindowBalloon.prototype.showBalloon = function () {
@@ -1617,6 +1616,7 @@ var Saba;
                     return;
                 }
                 this.visible = true;
+                this.updateBitmap();
             };
             Sprite_WindowBalloon.prototype.updateBitmap = function () {
                 if (!Tachie.balloonEnabled) {
@@ -1755,6 +1755,7 @@ var Saba;
             Window_TachieMessage.prototype.update = function () {
                 _super.prototype.update.call(this);
                 this._updateAutoMode();
+                this.updateWindowVisibility();
                 if (!this._galMode) {
                     this.updateMessageSkip();
                     return;
@@ -1789,7 +1790,6 @@ var Saba;
                     this.close();
                 }
                 this.updateMessageSkip();
-                this.updateWindowVisibility();
             };
             Window_TachieMessage.prototype.clearWindowSkin = function () {
                 this._windowSkinId = 0;
@@ -1797,6 +1797,15 @@ var Saba;
                 $gameTemp.tachieWindowColorId = 0;
             };
             Window_TachieMessage.prototype.updateMessageSkip = function () {
+                if ($gameMessage.isChoice()) {
+                    return;
+                }
+                if ($gameMessage.isNumberInput()) {
+                    return;
+                }
+                if ($gameMessage.isItemChoice()) {
+                    return;
+                }
                 if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY)) {
                     if (this._windowHide) {
                         this.changeWindowVisibility();
@@ -1821,6 +1830,9 @@ var Saba;
                 else if (this._windowHide && Input.isTriggered('ok')) {
                     this.changeWindowVisibility();
                 }
+                if (!$gameTemp.tachieName) {
+                    this._messageNameWindow.visible = false;
+                }
             };
             Window_TachieMessage.prototype.changeWindowVisibility = function () {
                 this._windowHide = !this._windowHide;
@@ -1836,6 +1848,9 @@ var Saba;
                     this.visible = true;
                     if ($gameTemp.tachieName) {
                         this._messageNameWindow.visible = true;
+                    }
+                    else {
+                        this._messageNameWindow.visible = false;
                     }
                     for (var _b = 0, _c = this.subWindows(); _b < _c.length; _b++) {
                         var window_2 = _c[_b];
@@ -1901,7 +1916,12 @@ var Saba;
                 this.close();
             };
             Window_TachieMessage.prototype.textAreaWidth = function () {
-                return this.contentsWidth() + 20;
+                if (this._galMode) {
+                    return this.contentsWidth() + 20 - Tachie.windowPadding[1];
+                }
+                else {
+                    return _super.prototype.textAreaWidth.call(this);
+                }
             };
             Window_TachieMessage.prototype.standardFontSize = function () {
                 if (this._galMode) {
@@ -1920,8 +1940,13 @@ var Saba;
                 }
             };
             Window_TachieMessage.prototype.newLineX = function () {
-                var x = this.isShowFace() ? Tachie.newLineXWithFace : 0;
-                return x + Tachie.windowPadding[3];
+                if (this._galMode) {
+                    var x = this.isShowFace() ? Tachie.newLineXWithFace : 0;
+                    return x + Tachie.windowPadding[3];
+                }
+                else {
+                    return _super.prototype.newLineX.call(this);
+                }
             };
             Window_TachieMessage.prototype.isShowFace = function () {
                 if ($gameMessage.faceName() !== '') {

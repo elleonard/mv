@@ -1700,6 +1700,15 @@ export class Window_TachieMessage extends Window_Message {
         $gameTemp.tachieWindowColorId = 0;
     }
     updateMessageSkip(): void {
+        if ($gameMessage.isChoice()) {
+            return;
+        }
+        if ($gameMessage.isNumberInput()) {
+            return;
+        }
+        if ($gameMessage.isItemChoice()) {
+            return;
+        }
         if (Input.isPressed(MESSAGE_SKIP_KEY)) {
             if (this._windowHide) {
                 this.changeWindowVisibility();

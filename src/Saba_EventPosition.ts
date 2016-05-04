@@ -19,6 +19,7 @@
  * @license
  * Saba_EventPosition licensed under the MIT License.
  */
+module Saba {
 var _Game_Event_screenX = Game_Event.prototype.screenX;
 Game_Event.prototype.screenX = function() {
     var x = _Game_Event_screenX.call(this);
@@ -38,3 +39,4 @@ Game_Event.prototype.screenY = function() {
     }
     return y;
 };
+}

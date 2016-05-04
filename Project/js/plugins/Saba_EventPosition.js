@@ -19,21 +19,24 @@
  * @license
  * Saba_EventPosition licensed under the MIT License.
  */
-var _Game_Event_screenX = Game_Event.prototype.screenX;
-Game_Event.prototype.screenX = function () {
-    var x = _Game_Event_screenX.call(this);
-    var e = this.event();
-    if (e && e.meta['position_x']) {
-        x += parseInt(e.meta['position_x']);
-    }
-    return x;
-};
-var _Game_Event_screenY = Game_Event.prototype.screenY;
-Game_Event.prototype.screenY = function () {
-    var y = _Game_Event_screenY.call(this);
-    var e = this.event();
-    if (e && e.meta['position_y']) {
-        y += parseInt(e.meta['position_y']);
-    }
-    return y;
-};
+var Saba;
+(function (Saba) {
+    var _Game_Event_screenX = Game_Event.prototype.screenX;
+    Game_Event.prototype.screenX = function () {
+        var x = _Game_Event_screenX.call(this);
+        var e = this.event();
+        if (e && e.meta['position_x']) {
+            x += parseInt(e.meta['position_x']);
+        }
+        return x;
+    };
+    var _Game_Event_screenY = Game_Event.prototype.screenY;
+    Game_Event.prototype.screenY = function () {
+        var y = _Game_Event_screenY.call(this);
+        var e = this.event();
+        if (e && e.meta['position_y']) {
+            y += parseInt(e.meta['position_y']);
+        }
+        return y;
+    };
+})(Saba || (Saba = {}));

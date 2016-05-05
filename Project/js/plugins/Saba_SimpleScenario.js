@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-04-29 21:30:49
+ * Ver 2016-05-04 23:46:56
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -122,6 +122,8 @@ var __extends = (this && this.__extends) || function (d, b) {
  * 　cos1 cos2 cos3 ... cos99
  * 　＞キャラクターの衣装を変更します。n の後の数字はアクターIDです。
  * 　　■パラメータ
+ * 　　　face: id
+ * 　　　　→表情ID
  * 　　　outer: string
  * 　　　　→アウターのID(a→裸)
  * 　　　innerBottm: string
@@ -1003,12 +1005,12 @@ var Saba;
                 }
             };
             Scenario_Converter.prototype.convertCommand_cos = function (actorId, context) {
-                var types = ['outer', 'innerTop', 'innerBottom'];
+                var types = ['outer', 'innerTop', 'innerBottom', 'face', 'acceOn', 'acceOff'];
                 for (var _i = 0, types_1 = types; _i < types_1.length; _i++) {
                     var type = types_1[_i];
                     if (context.header[type]) {
-                        var outer = context.header[type];
-                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie " + type + " " + actorId + " " + outer)] });
+                        var id = context.header[type];
+                        context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie " + type + " " + actorId + " " + id)] });
                     }
                 }
             };

@@ -444,6 +444,8 @@ class _Game_Interpreter extends Game_Interpreter {
         case 'outer':
         case 'innerTop':
         case 'innerBottom':
+        case 'acceOn':
+        case 'acceOff':
             {
             if (! args[1]) {
                 console.error(`プラグインコマンド${command}の${args[0]}の引数が足りません。actorId が必要です`);
@@ -563,7 +565,7 @@ class _Game_Interpreter extends Game_Interpreter {
             case RIGHT_POS: return rightPosX;
             case CENTER_POS: return centerPosX;
             default:
-                console.error('posId が不正です:' + posId);
+                console.error(`posId が不正です: ${posId}`);
         }
     }
     tachieActorCommnad(actor: Game_Actor, command: string, arg2: string, args): void {
@@ -617,12 +619,18 @@ class _Game_Interpreter extends Game_Interpreter {
             }
             actor.setInnerBottomItemId(innerBottomId);
             break;
+        case 'acceOn':
+            actor.addAcce(parseInt(arg2));
+            break;
+        case 'acceOff':
+            actor.removeAcce(parseInt(arg2));
+            break;
         }
     }
     validateCosId(command: any, id: string) {
         var re = /[a-z]/;
         if (! re.exec(id)) {
-            throw new Error('コスチュームIDが不正です:' + id + ' command:' + command);
+            throw new Error(`コスチュームIDが不正です:${id} command: ${command}`);
         }
     }
 }
@@ -689,6 +697,7 @@ class _Game_Actor extends Game_Actor {
     
     protected _statePoseId: number;
     protected _stateFaceId: number;
+    protected _acceList: Array<number>;
 
     get baseId(): string {
         return 'actor' + this.actorId().padZero(2) + '_';
@@ -784,6 +793,7 @@ class _Game_Actor extends Game_Actor {
         this._castOffInnerTop = false;
         this._castOffInnerBottom = false;
         this._castOffOuter = false;
+        this._acceList = [];
         this.setCacheChanged();
     }
     isDirty(): boolean {
@@ -1065,6 +1075,57 @@ class _Game_Actor extends Game_Actor {
     isTachieDisabled(): boolean {
         return disabledTachieActorIdList.indexOf(this.actorId()) >= 0;
     }
+    getBackAcceList(): Array<number> {
+        this._acceList = this._acceList || [];
+        var ret = [];
+        for (var acce of this._acceList) {
+            var acceItem = $dataArmors[acce];
+            if (acceItem.meta['backAcce']) {
+                ret.push(parseInt(acceItem.meta['backAcce']));
+            }
+        }
+        return ret;
+    }
+    getMiddleAcceList(): Array<number> {
+        this._acceList = this._acceList || [];
+        var ret = [];
+        for (var acce of this._acceList) {
+            var acceItem = $dataArmors[acce];
+            if (acceItem.meta['middleAcce']) {
+                ret.push(parseInt(acceItem.meta['middleAcce']));
+            }
+        }
+        return ret;
+    }
+    getFrontAcceList(): Array<number> {
+        this._acceList = this._acceList || [];
+        var ret = [];
+        for (var acce of this._acceList) {
+            var acceItem = $dataArmors[acce];
+            if (acceItem.meta['frontAcce']) {
+                ret.push(parseInt(acceItem.meta['frontAcce']));
+            }
+        }
+        return ret;
+    }
+    acceFile(id: number): string {
+        return this.baseId + 'acce_' + id;
+    }
+    addAcce(id: number): void {
+        if (this._acceList.indexOf(id) >= 0) {
+            return;
+        }
+        this._acceList.push(id);
+        this.setCacheChanged();
+    }
+    removeAcce(id: number): void {
+        var index = this._acceList.indexOf(id);
+        if (index < 0) {
+            return;
+        }
+        this._acceList.splice(index, 1);
+        this.setCacheChanged();
+    }
 }
 
 
@@ -1188,6 +1249,9 @@ var TachieDrawerMixin = function() {
             console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
             return false;
         }
+        if (actor.isTachieDisabled()) {
+            return true;
+        }
         if (! ImageManager.isReady()) {
             return false;
         }
@@ -1215,9 +1279,11 @@ var TachieDrawerMixin = function() {
             this.drawTachieHair(actor, cache);
             this.drawTachieOuterBack(actor, cache);
             this.drawTachieBodyBack(actor, cache);
+            this.drawTachieBackAcce(actor, cache);
             this.drawTachieInnerBottom(actor, cache);
             this.drawTachieInnerTop(actor, cache);
             this.drawTachieOuterMain(actor, cache);
+            this.drawTachieMiddleAcce(actor, cache);
             this.drawTachieBodyFront(actor, cache);
             this.drawTachieOuterFront(actor, cache);
             //console.log('createCache:' + actor.actorId());
@@ -1230,6 +1296,7 @@ var TachieDrawerMixin = function() {
         tempBitmap.clear();
         this.drawTachieHoppe(actor, tempBitmap);
         this.drawTachieFace(actor, tempBitmap, faceId);
+        this.drawTachieFrontAcce(actor, tempBitmap);
         this.drawTachieCache(actor, tempBitmap, bitmap, x, y, rect, scale);
         this.lastDrawnActorId = actor.actorId();
         return true;
@@ -1368,6 +1435,21 @@ var TachieDrawerMixin = function() {
     this.drawTachieHoppe = function(actor: Game_Actor, bitmap: Bitmap): void {
         this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
     };
+    this.drawTachieBackAcce = function(actor: Game_Actor, bitmap: Bitmap): void {
+        for (var acceId of actor.getBackAcceList()) {
+            this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+        }
+    };
+    this.drawTachieMiddleAcce = function(actor: Game_Actor, bitmap: Bitmap): void {
+        for (var acceId of actor.getMiddleAcceList()) {
+            this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+        }
+    };
+    this.drawTachieFrontAcce = function(actor: Game_Actor, bitmap: Bitmap): void {
+        for (var acceId of actor.getFrontAcceList()) {
+            this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+        }
+    };
     this.drawTachieFace = function(actor: Game_Actor, bitmap: Bitmap, faceId: number): void {
         if (faceId === 0) {
             faceId = actor.faceId;
@@ -1375,7 +1457,7 @@ var TachieDrawerMixin = function() {
         var file = actor.baseId + faceId.padZero(2);
         this.drawTachieFile(file, bitmap, actor);
     };
-
+    
 };
 
 TachieDrawerMixin.call(Sprite.prototype);
@@ -1498,7 +1580,7 @@ class Sprite_MessageMode extends Sprite_Base {
 
 
 class Sprite_WindowBalloon extends Sprite_Base {
-    protected _windowAcrotId: number;
+    protected _windowColorId: number;
     protected _messageWindow: Window_TachieMessage;
     constructor(messageWindow: Window_TachieMessage) {
         super();
@@ -1510,56 +1592,65 @@ class Sprite_WindowBalloon extends Sprite_Base {
     }
     showBalloon(): void {
         if (! $gameTemp.tachieName) {
-            this.visible = false;
+            this.hide();
             return;
         }
         if ($gameTemp.hideBalloon) {
-            this.visible = false;
+            this.hide();
             return;
         }
         if ($gameMessage.positionType() !== 2) {
-            this.visible = false;
+            this.hide();
             return;
         }
         if ($gameMessage.background() !== 0) {
-            this.visible = false;
+            this.hide();
             return;
         }
-        this.visible = true;
+        this.show();
         this.updateBitmap();
+    }
+    hide(): void {
+        this._hiding = true;
+        this.visible = false;
+    }
+    show(): void {
+        this._hiding = false;
+        this.visible = true;
     }
     updateBitmap(): void {
         if (! balloonEnabled) {
-            this.visible = false;
+            this.hide();
             return;
         }
         if (! $gameTemp.tachieName) {
-            this.visible = false;
+            this.hide();
             return;
         }
         if ($gameTemp.hideBalloon) {
-            this.visible = false;
+            this.hide();
             return;
         }
-        if (this._windowAcrotId === $gameTemp.tachieWindowColorId) {
+        if (this._windowColorId === $gameTemp.tachieWindowColorId) {
             return;
         }
         if ($gameTemp.tachieWindowColorId > 0) {
             if (! this._messageWindow.isOpen()) {
-                this.visible = false;
+                this.hide();
                 return;
             }
-            this._windowAcrotId = $gameTemp.tachieWindowColorId;
-            const color = this._windowAcrotId;
+            this._windowColorId = $gameTemp.tachieWindowColorId;
+            const color = this._windowColorId;
             if (color > 0) {
                 this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color);
             } else {
                 this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
             }
-            this.visible = true;
+            this.show();
         } else {
-            this.visible = false;
-            this._windowAcrotId = 0;
+            this.hide();
+            this._windowColorId = 0;
+            this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
         }
     }
     updatePosition(): void {
@@ -2039,6 +2130,12 @@ interface Game_Actor {
     hairFile(): string;
     hoppeFile(): string;
     faceFile(): string;
+    acceFile(id: number): string;
+    addAcce(id: number): void;
+    removeAcce(id: number): void;
+    getBackAcceList(): Array<number>;
+    getMiddleAcceList(): Array<number>;
+    getFrontAcceList(): Array<number>;
     isTachieDisabled(): boolean;
     preloadFaces(faceIds: Array<string>): void;
 }

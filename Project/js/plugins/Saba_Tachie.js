@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-04-30 09:13:13
+ * Ver 2016-05-05 10:36:32
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -497,6 +497,8 @@ var Saba;
                     case 'outer':
                     case 'innerTop':
                     case 'innerBottom':
+                    case 'acceOn':
+                    case 'acceOff':
                         {
                             if (!args[1]) {
                                 console.error("\u30D7\u30E9\u30B0\u30A4\u30F3\u30B3\u30DE\u30F3\u30C9" + command + "\u306E" + args[0] + "\u306E\u5F15\u6570\u304C\u8DB3\u308A\u307E\u305B\u3093\u3002actorId \u304C\u5FC5\u8981\u3067\u3059");
@@ -615,7 +617,7 @@ var Saba;
                     case Tachie.RIGHT_POS: return Tachie.rightPosX;
                     case Tachie.CENTER_POS: return Tachie.centerPosX;
                     default:
-                        console.error('posId が不正です:' + posId);
+                        console.error("posId \u304C\u4E0D\u6B63\u3067\u3059: " + posId);
                 }
             };
             _Game_Interpreter.prototype.tachieActorCommnad = function (actor, command, arg2, args) {
@@ -669,12 +671,18 @@ var Saba;
                         }
                         actor.setInnerBottomItemId(innerBottomId);
                         break;
+                    case 'acceOn':
+                        actor.addAcce(parseInt(arg2));
+                        break;
+                    case 'acceOff':
+                        actor.removeAcce(parseInt(arg2));
+                        break;
                 }
             };
             _Game_Interpreter.prototype.validateCosId = function (command, id) {
                 var re = /[a-z]/;
                 if (!re.exec(id)) {
-                    throw new Error('コスチュームIDが不正です:' + id + ' command:' + command);
+                    throw new Error("\u30B3\u30B9\u30C1\u30E5\u30FC\u30E0ID\u304C\u4E0D\u6B63\u3067\u3059:" + id + " command: " + command);
                 }
             };
             return _Game_Interpreter;
@@ -868,6 +876,7 @@ var Saba;
                 this._castOffInnerTop = false;
                 this._castOffInnerBottom = false;
                 this._castOffOuter = false;
+                this._acceList = [];
                 this.setCacheChanged();
             };
             _Game_Actor.prototype.isDirty = function () {
@@ -1152,6 +1161,60 @@ var Saba;
             _Game_Actor.prototype.isTachieDisabled = function () {
                 return Tachie.disabledTachieActorIdList.indexOf(this.actorId()) >= 0;
             };
+            _Game_Actor.prototype.getBackAcceList = function () {
+                this._acceList = this._acceList || [];
+                var ret = [];
+                for (var _i = 0, _a = this._acceList; _i < _a.length; _i++) {
+                    var acce = _a[_i];
+                    var acceItem = $dataArmors[acce];
+                    if (acceItem.meta['backAcce']) {
+                        ret.push(parseInt(acceItem.meta['backAcce']));
+                    }
+                }
+                return ret;
+            };
+            _Game_Actor.prototype.getMiddleAcceList = function () {
+                this._acceList = this._acceList || [];
+                var ret = [];
+                for (var _i = 0, _a = this._acceList; _i < _a.length; _i++) {
+                    var acce = _a[_i];
+                    var acceItem = $dataArmors[acce];
+                    if (acceItem.meta['middleAcce']) {
+                        ret.push(parseInt(acceItem.meta['middleAcce']));
+                    }
+                }
+                return ret;
+            };
+            _Game_Actor.prototype.getFrontAcceList = function () {
+                this._acceList = this._acceList || [];
+                var ret = [];
+                for (var _i = 0, _a = this._acceList; _i < _a.length; _i++) {
+                    var acce = _a[_i];
+                    var acceItem = $dataArmors[acce];
+                    if (acceItem.meta['frontAcce']) {
+                        ret.push(parseInt(acceItem.meta['frontAcce']));
+                    }
+                }
+                return ret;
+            };
+            _Game_Actor.prototype.acceFile = function (id) {
+                return this.baseId + 'acce_' + id;
+            };
+            _Game_Actor.prototype.addAcce = function (id) {
+                if (this._acceList.indexOf(id) >= 0) {
+                    return;
+                }
+                this._acceList.push(id);
+                this.setCacheChanged();
+            };
+            _Game_Actor.prototype.removeAcce = function (id) {
+                var index = this._acceList.indexOf(id);
+                if (index < 0) {
+                    return;
+                }
+                this._acceList.splice(index, 1);
+                this.setCacheChanged();
+            };
             return _Game_Actor;
         }(Game_Actor));
         var _Game_Picture = (function (_super) {
@@ -1284,6 +1347,9 @@ var Saba;
                     console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
                     return false;
                 }
+                if (actor.isTachieDisabled()) {
+                    return true;
+                }
                 if (!ImageManager.isReady()) {
                     return false;
                 }
@@ -1310,9 +1376,11 @@ var Saba;
                     this.drawTachieHair(actor, cache);
                     this.drawTachieOuterBack(actor, cache);
                     this.drawTachieBodyBack(actor, cache);
+                    this.drawTachieBackAcce(actor, cache);
                     this.drawTachieInnerBottom(actor, cache);
                     this.drawTachieInnerTop(actor, cache);
                     this.drawTachieOuterMain(actor, cache);
+                    this.drawTachieMiddleAcce(actor, cache);
                     this.drawTachieBodyFront(actor, cache);
                     this.drawTachieOuterFront(actor, cache);
                 }
@@ -1324,6 +1392,7 @@ var Saba;
                 tempBitmap.clear();
                 this.drawTachieHoppe(actor, tempBitmap);
                 this.drawTachieFace(actor, tempBitmap, faceId);
+                this.drawTachieFrontAcce(actor, tempBitmap);
                 this.drawTachieCache(actor, tempBitmap, bitmap, x, y, rect, scale);
                 this.lastDrawnActorId = actor.actorId();
                 return true;
@@ -1465,6 +1534,24 @@ var Saba;
             this.drawTachieHoppe = function (actor, bitmap) {
                 this.drawTachieFile(actor.hoppeFile(), bitmap, actor);
             };
+            this.drawTachieBackAcce = function (actor, bitmap) {
+                for (var _i = 0, _a = actor.getBackAcceList(); _i < _a.length; _i++) {
+                    var acceId = _a[_i];
+                    this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+                }
+            };
+            this.drawTachieMiddleAcce = function (actor, bitmap) {
+                for (var _i = 0, _a = actor.getMiddleAcceList(); _i < _a.length; _i++) {
+                    var acceId = _a[_i];
+                    this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+                }
+            };
+            this.drawTachieFrontAcce = function (actor, bitmap) {
+                for (var _i = 0, _a = actor.getFrontAcceList(); _i < _a.length; _i++) {
+                    var acceId = _a[_i];
+                    this.drawTachieFile(actor.acceFile(acceId), bitmap, actor);
+                }
+            };
             this.drawTachieFace = function (actor, bitmap, faceId) {
                 if (faceId === 0) {
                     faceId = actor.faceId;
@@ -1600,58 +1687,67 @@ var Saba;
             };
             Sprite_WindowBalloon.prototype.showBalloon = function () {
                 if (!$gameTemp.tachieName) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
                 if ($gameTemp.hideBalloon) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
                 if ($gameMessage.positionType() !== 2) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
                 if ($gameMessage.background() !== 0) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
-                this.visible = true;
+                this.show();
                 this.updateBitmap();
+            };
+            Sprite_WindowBalloon.prototype.hide = function () {
+                this._hiding = true;
+                this.visible = false;
+            };
+            Sprite_WindowBalloon.prototype.show = function () {
+                this._hiding = false;
+                this.visible = true;
             };
             Sprite_WindowBalloon.prototype.updateBitmap = function () {
                 if (!Tachie.balloonEnabled) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
                 if (!$gameTemp.tachieName) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
                 if ($gameTemp.hideBalloon) {
-                    this.visible = false;
+                    this.hide();
                     return;
                 }
-                if (this._windowAcrotId === $gameTemp.tachieWindowColorId) {
+                if (this._windowColorId === $gameTemp.tachieWindowColorId) {
                     return;
                 }
                 if ($gameTemp.tachieWindowColorId > 0) {
                     if (!this._messageWindow.isOpen()) {
-                        this.visible = false;
+                        this.hide();
                         return;
                     }
-                    this._windowAcrotId = $gameTemp.tachieWindowColorId;
-                    var color_1 = this._windowAcrotId;
+                    this._windowColorId = $gameTemp.tachieWindowColorId;
+                    var color_1 = this._windowColorId;
                     if (color_1 > 0) {
                         this.bitmap = ImageManager.loadSystem('Tachie_Balloon' + color_1);
                     }
                     else {
                         this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
                     }
-                    this.visible = true;
+                    this.show();
                 }
                 else {
-                    this.visible = false;
-                    this._windowAcrotId = 0;
+                    this.hide();
+                    this._windowColorId = 0;
+                    this.bitmap = ImageManager.loadSystem('Tachie_Balloon');
                 }
             };
             Sprite_WindowBalloon.prototype.updatePosition = function () {

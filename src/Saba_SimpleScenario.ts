@@ -69,6 +69,8 @@
  * 　cos1 cos2 cos3 ... cos99
  * 　＞キャラクターの衣装を変更します。n の後の数字はアクターIDです。
  * 　　■パラメータ
+ * 　　　face: id
+ * 　　　　→表情ID
  * 　　　outer: string
  * 　　　　→アウターのID(a→裸)
  * 　　　innerBottm: string
@@ -948,12 +950,12 @@ export class Scenario_Converter {
         }
     }
     convertCommand_cos(actorId: number, context: Context): void {
-        var types = ['outer', 'innerTop', 'innerBottom'];
+        var types = ['outer', 'innerTop', 'innerBottom', 'face', 'acceOn', 'acceOff'];
 
         for (const type of types) {
             if (context.header[type]) {
-                const outer: string = context.header[type];
-                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie ${type} ${actorId} ${outer}`]});
+                const id: string = context.header[type];
+                context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie ${type} ${actorId} ${id}`]});
             }
         }
     }

@@ -6,7 +6,7 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-04-22 00:23:44
+ * Ver 2016-05-14 11:30:02
  *
  * New Game を選択した後に F5 を押すと、自動で New Game が実行されます。
  * Continue を選択した後に F5 を押すと、自動で最後にロードされたファイルが実行されます。
@@ -37,13 +37,16 @@ var Saba;
             if (gameFileData != null) {
                 if (gameFileData === '0') {
                     DataManager.setupNewGame();
+                    this.reloadMapIfUpdated();
                     SceneManager.goto(Scene_Map);
                 }
                 else {
                     var savefileId = parseInt(gameFileData);
                     if (DataManager.loadGame(savefileId)) {
                         this.fadeOutAll();
+                        this.reloadMapIfUpdated();
                         SceneManager.goto(Scene_Map);
+                        $gameSystem.onAfterLoad();
                     }
                     else {
                         console.error('ファイルロードができませんでした');
@@ -64,6 +67,12 @@ var Saba;
                     return;
                 }
                 _Scene_Boot_prototype_start.call(this);
+            }
+        };
+        Scene_Boot.prototype.reloadMapIfUpdated = function () {
+            if ($gameSystem.versionId() !== $dataSystem.versionId) {
+                $gamePlayer.reserveTransfer($gameMap.mapId(), $gamePlayer.x, $gamePlayer.y);
+                $gamePlayer.requestMapReload();
             }
         };
         var _Scene_Title_commandNewGame = Scene_Title.prototype.commandNewGame;

@@ -36,12 +36,15 @@ Scene_Boot.prototype.start = function() {
     if (gameFileData != null) {
         if (gameFileData === '0') {
             DataManager.setupNewGame();
+            this.reloadMapIfUpdated();
             SceneManager.goto(Scene_Map);
         } else {
             var savefileId = parseInt(gameFileData);
             if (DataManager.loadGame(savefileId)) {
                 this.fadeOutAll();
+                this.reloadMapIfUpdated();
                 SceneManager.goto(Scene_Map);
+                $gameSystem.onAfterLoad();
             } else {
                 console.error('ファイルロードができませんでした');
                 _Scene_Boot_prototype_start.call(this);
@@ -60,6 +63,12 @@ Scene_Boot.prototype.start = function() {
             return;
         }
         _Scene_Boot_prototype_start.call(this);
+    }
+};
+Scene_Boot.prototype.reloadMapIfUpdated = function() {
+    if ($gameSystem.versionId() !== $dataSystem.versionId) {
+        $gamePlayer.reserveTransfer($gameMap.mapId(), $gamePlayer.x, $gamePlayer.y);
+        $gamePlayer.requestMapReload();
     }
 };
 

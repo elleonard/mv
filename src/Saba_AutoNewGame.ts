@@ -36,7 +36,6 @@ Scene_Boot.prototype.start = function() {
     if (gameFileData != null) {
         if (gameFileData === '0') {
             DataManager.setupNewGame();
-            this.reloadMapIfUpdated();
             SceneManager.goto(Scene_Map);
         } else {
             var savefileId = parseInt(gameFileData);

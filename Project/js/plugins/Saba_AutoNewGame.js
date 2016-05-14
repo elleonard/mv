@@ -6,7 +6,7 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-05-14 11:30:02
+ * Ver 2016-05-14 21:24:00
  *
  * New Game を選択した後に F5 を押すと、自動で New Game が実行されます。
  * Continue を選択した後に F5 を押すと、自動で最後にロードされたファイルが実行されます。
@@ -37,7 +37,6 @@ var Saba;
             if (gameFileData != null) {
                 if (gameFileData === '0') {
                     DataManager.setupNewGame();
-                    this.reloadMapIfUpdated();
                     SceneManager.goto(Scene_Map);
                 }
                 else {

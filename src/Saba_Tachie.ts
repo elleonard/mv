@@ -1700,6 +1700,7 @@ export class Window_TachieMessage extends Window_Message {
     protected _triggered: boolean;
     protected _windowHide: boolean;
     protected _galMode: boolean;
+    protected _skipDisabled: boolean;
     protected _autoModeCurrentWait: number = 0; // オートモード時、現在待機したフレーム数
     protected _autoModeNeedWait: number = -1;     // オートモードで次のメッセージに進むために必要なフレーム数
     constructor() {
@@ -1824,7 +1825,7 @@ export class Window_TachieMessage extends Window_Message {
         if ($gameMessage.isItemChoice()) {
             return;
         }
-        if (Input.isPressed(MESSAGE_SKIP_KEY)) {
+        if (Input.isPressed(MESSAGE_SKIP_KEY) && ! this._skipDisabled) {
             if (this._windowHide) {
                 this.changeWindowVisibility();
             }
@@ -1996,6 +1997,16 @@ export class Window_TachieMessage extends Window_Message {
     }
     isGalMode(): boolean {
         return this._galMode;
+    }
+    convertEscapeCharacters(text): string {
+        this._skipDisabled = false;
+        text = super.convertEscapeCharacters(text);
+        if (!!text.match(/\<wait\>/i)) {
+            this._skipDisabled = true;
+        }
+
+        text = text.replace(/\<wait\>/gi, '');
+        return text;
     }
 }
 

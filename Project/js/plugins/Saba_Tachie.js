@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-05-05 10:36:32
+ * Ver 2016-05-27 22:53:43
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -389,9 +389,12 @@ var Saba;
         var DataManager_extractSaveContents = DataManager.extractSaveContents;
         DataManager.extractSaveContents = function (contents) {
             DataManager_extractSaveContents.call(this, contents);
-            for (var _i = 0, _a = $gameParty.members(); _i < _a.length; _i++) {
-                var actor = _a[_i];
-                actor.setCacheChanged();
+            var len = $dataActors.length;
+            for (var i = 0; i < len; i++) {
+                var actor = $gameActors._data[i];
+                if (actor) {
+                    actor.setCacheChanged();
+                }
             }
         };
         var _Game_Interpreter = (function (_super) {
@@ -685,6 +688,27 @@ var Saba;
                     throw new Error("\u30B3\u30B9\u30C1\u30E5\u30FC\u30E0ID\u304C\u4E0D\u6B63\u3067\u3059:" + id + " command: " + command);
                 }
             };
+            _Game_Interpreter.prototype.command232 = function () {
+                var x, y;
+                if (this._params[3] === 0) {
+                    x = this._params[4];
+                    y = this._params[5];
+                }
+                else {
+                    x = $gameVariables.value(this._params[4]);
+                    y = $gameVariables.value(this._params[5]);
+                }
+                var time = this._params[10];
+                if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY) && Tachie.PICTURES.indexOf(this._params[0]) > 0) {
+                    time = 1;
+                }
+                $gameScreen.movePicture(this._params[0], this._params[2], x, y, this._params[6], this._params[7], this._params[8], this._params[9], time);
+                if (this._params[11]) {
+                    this.wait(time);
+                }
+                return true;
+            };
+            ;
             return _Game_Interpreter;
         }(Game_Interpreter));
         var _Scene_Map_create = Scene_Map.prototype.create;
@@ -1902,7 +1926,7 @@ var Saba;
                 if ($gameMessage.isItemChoice()) {
                     return;
                 }
-                if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY)) {
+                if (Input.isPressed(Tachie.MESSAGE_SKIP_KEY) && !this._skipDisabled) {
                     if (this._windowHide) {
                         this.changeWindowVisibility();
                     }
@@ -2086,6 +2110,15 @@ var Saba;
             };
             Window_TachieMessage.prototype.isGalMode = function () {
                 return this._galMode;
+            };
+            Window_TachieMessage.prototype.convertEscapeCharacters = function (text) {
+                this._skipDisabled = false;
+                text = _super.prototype.convertEscapeCharacters.call(this, text);
+                if (!!text.match(/\<wait\>/i)) {
+                    this._skipDisabled = true;
+                }
+                text = text.replace(/\<wait\>/gi, '');
+                return text;
             };
             return Window_TachieMessage;
         }(Window_Message));

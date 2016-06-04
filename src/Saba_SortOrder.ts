@@ -25,13 +25,13 @@ const SORT_ID_WEIGHT = 10000;
 const _Window_ItemList_makeItemList = Window_ItemList.prototype.makeItemList;
 Window_ItemList.prototype.makeItemList = function() {
     _Window_ItemList_makeItemList.call(this);
-    this.data = this._data.sort(sortFunction);
+    this._data.sort(sortFunction);
 };
 
 const _Window_SkillList_makeItemList = Window_SkillList.prototype.makeItemList;
 Window_SkillList.prototype.makeItemList = function() {
     _Window_SkillList_makeItemList.call(this);
-    this.data = this._data.sort(sortFunction);
+    this._data.sort(sortFunction);
 };
 
 function sortFunction(a, b) {
@@ -43,7 +43,7 @@ function sortFunction(a, b) {
     }
     let aId = a.id;
     let aValue = 0;
-    var order =  parseInt(a.meta.order);
+    var order = parseInt(a.meta.order);
     if (isNaN(order)) {
         aValue = aId * SORT_ID_WEIGHT;
     } else {
@@ -53,7 +53,7 @@ function sortFunction(a, b) {
     
     let bId = b.id;
     let bValue = 0;
-    order =  parseInt(b.meta.order);
+    order = parseInt(b.meta.order);
     if (isNaN(order)) {
         bValue = bId * SORT_ID_WEIGHT;
     } else {

@@ -6,7 +6,7 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-06-04 11:34:40
+ * Ver 2016-06-04 11:55:21
  * アイテム、武器防具、スキル（以下ひっくるめてアイテム）のメモ欄に、
  * <order:10>
  * と書くと、並び順がID10のアイテム相当になります。
@@ -25,12 +25,12 @@ var Saba;
         var _Window_ItemList_makeItemList = Window_ItemList.prototype.makeItemList;
         Window_ItemList.prototype.makeItemList = function () {
             _Window_ItemList_makeItemList.call(this);
-            this.data = this._data.sort(sortFunction);
+            this._data.sort(sortFunction);
         };
         var _Window_SkillList_makeItemList = Window_SkillList.prototype.makeItemList;
         Window_SkillList.prototype.makeItemList = function () {
             _Window_SkillList_makeItemList.call(this);
-            this.data = this._data.sort(sortFunction);
+            this._data.sort(sortFunction);
         };
         function sortFunction(a, b) {
             if (!a) {

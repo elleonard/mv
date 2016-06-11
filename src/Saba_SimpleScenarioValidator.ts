@@ -225,6 +225,7 @@ validates['turn_left'] = {
 };
 validates['turn_up'] = validates['turn_down'] = validates['turn_right'] = validates['turn_left'];
 validates['move_up'] = validates['move_down'] = validates['move_right'] = validates['move_left'] = validates['turn_left'];
+validates['step_anime_on'] = validates['step_anime_off'] = validates['turn_left'];
 
 validates['end'] = {};
 validates['end_else'] = {};

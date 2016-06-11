@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-05-04 23:46:56
+ * Ver 2016-06-11 16:27:04
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -843,6 +843,26 @@ var Saba;
                 var wait = context.headerBool('wait', true);
                 var list = [];
                 list.push({ code: 19, indent: null, parameters: parameters });
+                list.push({ 'code': 0 });
+                var routes = { repeat: false, skippable: skip, wait: wait, list: list };
+                context.push({ 'code': 205, 'indent': this.indent, 'parameters': [event, routes] });
+            };
+            Scenario_Converter.prototype.convertCommand_step_anime_on = function (context) {
+                var event = context.headerInt('event', -1);
+                var skip = context.headerBool('skip', true);
+                var wait = context.headerBool('wait', true);
+                var list = [];
+                list.push({ code: 33, indent: null, parameters: parameters });
+                list.push({ 'code': 0 });
+                var routes = { repeat: false, skippable: skip, wait: wait, list: list };
+                context.push({ 'code': 205, 'indent': this.indent, 'parameters': [event, routes] });
+            };
+            Scenario_Converter.prototype.convertCommand_step_anime_off = function (context) {
+                var event = context.headerInt('event', -1);
+                var skip = context.headerBool('skip', true);
+                var wait = context.headerBool('wait', true);
+                var list = [];
+                list.push({ code: 34, indent: null, parameters: parameters });
                 list.push({ 'code': 0 });
                 var routes = { repeat: false, skippable: skip, wait: wait, list: list };
                 context.push({ 'code': 205, 'indent': this.indent, 'parameters': [event, routes] });
@@ -2521,6 +2541,7 @@ var Saba;
         };
         SimpleScenario.validates['turn_up'] = SimpleScenario.validates['turn_down'] = SimpleScenario.validates['turn_right'] = SimpleScenario.validates['turn_left'];
         SimpleScenario.validates['move_up'] = SimpleScenario.validates['move_down'] = SimpleScenario.validates['move_right'] = SimpleScenario.validates['move_left'] = SimpleScenario.validates['turn_left'];
+        SimpleScenario.validates['step_anime_on'] = SimpleScenario.validates['step_anime_off'] = SimpleScenario.validates['turn_left'];
         SimpleScenario.validates['end'] = {};
         SimpleScenario.validates['end_else'] = {};
         SimpleScenario.validates['vehicle'] = {};

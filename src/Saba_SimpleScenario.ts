@@ -790,6 +790,26 @@ export class Scenario_Converter {
         var routes = {repeat: false, skippable: skip, wait: wait, list: list};
         context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
     }
+    convertCommand_step_anime_on(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 33, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
+    convertCommand_step_anime_off(context: Context): void {
+        var event = context.headerInt('event', -1);
+        var skip = context.headerBool('skip', true);
+        var wait = context.headerBool('wait', true);
+        var list = [];
+        list.push({code: 34, indent: null, parameters: parameters});
+        list.push({'code': 0});
+        var routes = {repeat: false, skippable: skip, wait: wait, list: list};
+        context.push({'code': 205, 'indent': this.indent, 'parameters': [event, routes]});
+    }
     convertCommand_hide_left(context: Context): void {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideLeft`]});
     }

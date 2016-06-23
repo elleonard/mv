@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-06-11 16:27:04
+ * Ver 2016-06-23 23:06:22
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -912,6 +912,10 @@ var Saba;
                     var face = parseInt(context.header['face']);
                     context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie face " + actorId + " " + face)] });
                 }
+                var index = null;
+                if (context.header['index']) {
+                    index = context.headerInt('index') - 1;
+                }
                 if (context.header['pose']) {
                     var pose = parseInt(context.header['pose']);
                     context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie pose " + actorId + " " + pose)] });
@@ -953,7 +957,7 @@ var Saba;
                         context.push({ 'code': 356, 'indent': this.indent, 'parameters': [("Tachie showRight " + actorId + " " + x + " " + y + " 100")] });
                     }
                 }
-                this.convertCommand_messages(context, faceActorId);
+                this.convertCommand_messages(context, faceActorId, index);
             };
             Scenario_Converter.prototype.convertCommand_color = function (context) {
                 var color = 0;
@@ -1009,14 +1013,18 @@ var Saba;
                 context.push({ 'code': 356, 'indent': this.indent, 'parameters': ["Tachie hideName"] });
                 this.convertCommand_messages(context);
             };
-            Scenario_Converter.prototype.convertCommand_messages = function (context, faceActorId) {
+            Scenario_Converter.prototype.convertCommand_messages = function (context, faceActorId, argFaceIndex) {
                 if (faceActorId === void 0) { faceActorId = 0; }
+                if (argFaceIndex === void 0) { argFaceIndex = null; }
                 var faceName = '';
                 var faceIndex = 0;
                 if (faceActorId > 0) {
                     var actor = $gameActors.actor(faceActorId);
                     faceName = actor.faceName();
                     faceIndex = actor.faceIndex();
+                    if (argFaceIndex != null) {
+                        faceIndex = argFaceIndex;
+                    }
                 }
                 context.push({ 'code': 101, 'indent': this.indent, 'parameters': [faceName, faceIndex, 0, 2] });
                 for (var _i = 0, _a = context.data; _i < _a.length; _i++) {

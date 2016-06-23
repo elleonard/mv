@@ -856,6 +856,11 @@ export class Scenario_Converter {
             const face = parseInt(context.header['face']);
             context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie face ${actorId} ${face}`]});
         }
+        
+        var index = null;
+        if (context.header['index']) {
+            index = context.headerInt('index') - 1;
+        }
 
         if (context.header['pose']) {
             const pose = parseInt(context.header['pose']);
@@ -899,7 +904,7 @@ export class Scenario_Converter {
         }
         
         
-        this.convertCommand_messages(context, faceActorId);
+        this.convertCommand_messages(context, faceActorId, index);
     }
     convertCommand_color(context: Context): void {
         let color = 0;
@@ -956,13 +961,16 @@ export class Scenario_Converter {
         context.push({'code': 356, 'indent': this.indent, 'parameters': [`Tachie hideName`]});
         this.convertCommand_messages(context);
     }
-    convertCommand_messages(context: Context, faceActorId: number = 0) {
+    convertCommand_messages(context: Context, faceActorId: number = 0, argFaceIndex: number = null) {
         let faceName = '';
         let faceIndex = 0;
         if (faceActorId > 0) {
             const actor = $gameActors.actor(faceActorId);
             faceName = actor.faceName();
             faceIndex  = actor.faceIndex();
+            if (argFaceIndex != null) {
+                faceIndex = argFaceIndex;
+            }
         }
         context.push({'code': 101, 'indent': this.indent, 'parameters': [faceName, faceIndex, 0, 2]});
         for (const msg of context.data) {

@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-05-27 22:53:43
+ * Ver 2016-07-04 19:52:33
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1324,8 +1324,12 @@ var Saba;
             function _Game_Temp() {
                 _super.apply(this, arguments);
             }
-            _Game_Temp.prototype.getActorBitmapBodyCache = function (actorId) {
+            _Game_Temp.prototype.getActorBitmapBodyCache = function (actor) {
                 this.actorBitmapBodyCache = this.actorBitmapBodyCache || {};
+                var actorId = actor.actorId();
+                if (actor.temp) {
+                    actorId = -1;
+                }
                 if (!this.actorBitmapBodyCache[actorId]) {
                     this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width, Graphics.height);
                 }
@@ -1371,6 +1375,14 @@ var Saba;
                     console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
                     return false;
                 }
+                return this.drawTachieActor(actor, bitmap, x, y, rect, faceId, scale, clearByDraw);
+            };
+            this.drawTachieActor = function (actor, bitmap, x, y, rect, faceId, scale, clearByDraw) {
+                if (x === void 0) { x = 0; }
+                if (y === void 0) { y = 0; }
+                if (faceId === void 0) { faceId = 0; }
+                if (scale === void 0) { scale = 1; }
+                if (clearByDraw === void 0) { clearByDraw = false; }
                 if (actor.isTachieDisabled()) {
                     return true;
                 }
@@ -1392,7 +1404,7 @@ var Saba;
                 }
                 //rect.x += point.x;
                 //rect.y += point.y;
-                var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
+                var cache = $gameTemp.getActorBitmapBodyCache(actor);
                 actor.clearDirty();
                 if (actor.isCacheChanged()) {
                     cache.clear();
@@ -1670,6 +1682,7 @@ var Saba;
             };
             return Window_MessageName;
         }(Window_Base));
+        Tachie.Window_MessageName = Window_MessageName;
         var Sprite_MessageMode = (function (_super) {
             __extends(Sprite_MessageMode, _super);
             function Sprite_MessageMode(messageWindow) {
@@ -2120,6 +2133,11 @@ var Saba;
                 text = text.replace(/\<wait\>/gi, '');
                 return text;
             };
+            Window_TachieMessage.prototype.newPage = function (textState) {
+                _super.prototype.newPage.call(this, textState);
+                textState.y = this.standardPadding() + Tachie.windowPadding[0];
+            };
+            ;
             return Window_TachieMessage;
         }(Window_Message));
         Tachie.Window_TachieMessage = Window_TachieMessage;

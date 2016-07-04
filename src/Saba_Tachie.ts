@@ -1233,8 +1233,12 @@ class _Game_Temp extends Game_Temp {
     protected actorBitmapCache: {[actorId: number]: Bitmap};
     protected actorBitmapBodyCache: {[actorId: number]: Bitmap};
 
-    getActorBitmapBodyCache(actorId: number): Bitmap {
+    getActorBitmapBodyCache(actor: Game_Actor): Bitmap {
         this.actorBitmapBodyCache = this.actorBitmapBodyCache || {};
+        var actorId = actor.actorId()
+        if (actor.temp) {
+            actorId = -1;
+        }
         if (! this.actorBitmapBodyCache[actorId]) {
             this.actorBitmapBodyCache[actorId] = new Bitmap(Graphics.width, Graphics.height);
         }
@@ -1273,6 +1277,9 @@ var TachieDrawerMixin = function() {
             console.error('アクターが存在しないため、描画をしませんでした。actorId:' + actorId);
             return false;
         }
+        return this.drawTachieActor(actor, bitmap, x, y, rect, faceId, scale, clearByDraw);
+    };
+    this.drawTachieActor = function(actor: Game_Actor, bitmap: Bitmap, x = 0, y = 0, rect: Rectangle, faceId = 0, scale = 1, clearByDraw = false): boolean {
         if (actor.isTachieDisabled()) {
             return true;
         }
@@ -1295,7 +1302,7 @@ var TachieDrawerMixin = function() {
         
         //rect.x += point.x;
         //rect.y += point.y;
-        var cache = $gameTemp.getActorBitmapBodyCache(actor.actorId());
+        var cache = $gameTemp.getActorBitmapBodyCache(actor);
         actor.clearDirty();
         if (actor.isCacheChanged()) {
             cache.clear();
@@ -1528,7 +1535,7 @@ class _Sprite_Picture extends Sprite_Picture {
 
 
 
-class Window_MessageName extends Window_Base {
+export class Window_MessageName extends Window_Base {
     windowHeight: number;
     constructor(windowHeight) {
         var width = 180;
@@ -2008,6 +2015,10 @@ export class Window_TachieMessage extends Window_Message {
         text = text.replace(/\<wait\>/gi, '');
         return text;
     }
+    newPage(textState) {
+        super.newPage(textState);
+        textState.y = this.standardPadding() + windowPadding[0];
+    };
 }
 
 Game_Message.prototype.calcAutoModeFrames = function() {
@@ -2077,7 +2088,7 @@ interface Game_Picture {
 }
 interface Game_Temp {
     getPictureBitmapCache(actorId: number): Bitmap;
-    getActorBitmapBodyCache(actorId: number): Bitmap;
+    getActorBitmapBodyCache(actor: Game_Actor): Bitmap;
     tachieTmpBitmap: Bitmap;
     tachieName: string;
     tachieActorId: number;
@@ -2126,6 +2137,7 @@ interface Game_Actor {
     tachieOffsetX: number;
     /** [read-only]  */
     tachieOffsetY: number;
+    temp: boolean;
 
 
     isDirty(): boolean;
@@ -2179,9 +2191,11 @@ interface ImageManagerStatic {
     loadSpriteSheet(file: string): void;
 }
 interface Window_Base {
+    drawTachieActor(actor: Game_Actor, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
     drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
 }
 interface Sprite {
     lastDrawnActorId: number;   // 最後に描画に成功したアクターID
+    drawTachieActor(actor: Game_Actor, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
     drawTachie(actorId: number, bitmap: Bitmap, x?: number, y?: number, rect?: Rectangle, faceId?: number, scale?: number, clearByDraw?: boolean): void;
 }

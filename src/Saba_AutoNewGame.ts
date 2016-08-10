@@ -26,6 +26,7 @@ module AutoNewGame {
 var _Scene_Boot_prototype_start = Scene_Boot.prototype.start;
 Scene_Boot.prototype.start = function() {
     if (! Utils.isOptionValid('test')) {
+        _Scene_Boot_prototype_start.call(this);
         return;
     }
     if (Saba.SimpleScenario) {

@@ -6,7 +6,7 @@
  * @author Sabakan
  *
  * @help
- * Ver 2016-05-14 21:24:00
+ * Ver 2016-08-10 22:39:46
  *
  * New Game を選択した後に F5 を押すと、自動で New Game が実行されます。
  * Continue を選択した後に F5 を押すと、自動で最後にロードされたファイルが実行されます。
@@ -27,6 +27,7 @@ var Saba;
         var _Scene_Boot_prototype_start = Scene_Boot.prototype.start;
         Scene_Boot.prototype.start = function () {
             if (!Utils.isOptionValid('test')) {
+                _Scene_Boot_prototype_start.call(this);
                 return;
             }
             if (Saba.SimpleScenario) {

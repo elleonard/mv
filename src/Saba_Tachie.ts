@@ -950,7 +950,7 @@ class _Game_Actor extends Game_Actor {
             return;
         }
         if (useTextureAtlas) {
-            if (PIXI.TextureCache[this.bodyFrontFile() + '.png']) {
+            if (PIXI.utils.TextureCache[this.bodyFrontFile() + '.png']) {
                 // すでに読み込み済み
             } else {
                 var file = 'img/tachie/actor' + this.actorId().padZero(2) + '.json';
@@ -1169,18 +1169,23 @@ class _Game_Picture extends Game_Picture {
     }
 }
 
+ImageManager.loadTachie = function(filename: string, hue?: number) {
+    return this.loadBitmap('img/tachie/', filename, hue, true);
+};
+ImageManager.loadSpriteSheet = function(file: string) {
+    var loader = new PIXI.loaders.Loader();
+    loader.add({name:'', url:file});
+    loader.load(); // ロード開始!
+};
+
 const _ImageManager_isReady = ImageManager.isReady;
 ImageManager.isReady = function() {
-    if (this._spriteSheetLoaders && this._spriteSheetLoaders.length > 0) {
-        // スプライトシートを読み込み中
-        return false;
-    }
-    for (var key in this._cache) {
-        var bitmap = this._cache[key];
+    for (var key in this.cache._inner) {
+        var bitmap = this.cache._inner[key].item;
         if (bitmap.isError()) {
             if (bitmap.url.indexOf('tachie') >= 0) {
                 console.error('Failed to load: ' + bitmap.url);
-                this._cache[key] = new Bitmap();
+                this.cache._inner[key].item = new Bitmap();
                 continue;
             } else {
                 throw new Error('Failed to load: ' + bitmap.url);
@@ -1192,41 +1197,6 @@ ImageManager.isReady = function() {
     }
     return true;
 };
-ImageManager.loadTachie = function(filename: string, hue?: number) {
-    return this.loadBitmap('img/tachie/', filename, hue, true);
-};
-ImageManager.loadSpriteSheet = function(file: string) {
-    var loader = new PIXI.SpriteSheetLoader(file, false);
-    this._spriteSheetLoaders = this._spriteSheetLoaders || [];
-    this._spriteSheetLoaders.push(loader);
-    
-    loader.on('loaded', () => {
-        var index = this._spriteSheetLoaders.indexOf(loader);
-        this._spriteSheetLoaders.splice(index, 1);
-    })
-    loader.on('error', () => {
-        var index = this._spriteSheetLoaders.indexOf(loader);
-        this._spriteSheetLoaders.splice(index, 1);
-    })
-    loader.load();
-    
-};
-const _PIXI_SpriteSheetLoader_load = PIXI.SpriteSheetLoader.prototype.load;
-PIXI.SpriteSheetLoader.prototype.load = function () {
-    var scope = this;
-    var jsonLoader = new PIXI.JsonLoader(this.url, this.crossorigin);
-    jsonLoader.on('loaded', function (event) {
-        scope.json = event.data.content.json;
-        scope.onLoaded();
-    });
-    jsonLoader.on('error', function (event) {
-        scope.emit('error', {
-            content: scope
-        });
-    });
-    jsonLoader.load();
-};
-
 
 
 class _Game_Temp extends Game_Temp {
@@ -1384,7 +1354,7 @@ var TachieDrawerMixin = function() {
         }
     };
     this.drawTachieTextureAtlas = function(file: string, bitmap: Bitmap, actor: Game_Actor, x: number, y: number, rect: Rectangle, scale: number): void {
-        var texture = PIXI.TextureCache[file + '.png'];
+        var texture = PIXI.utils.TextureCache[file + '.png'];
         if (! texture) {
             return;
         }
@@ -1393,7 +1363,7 @@ var TachieDrawerMixin = function() {
         var sx = frame.x;
         var sy = frame.y;
         var trim = texture.trim;
-        var crop = texture.crop;
+        var crop = texture.trim;
         var ww = crop.width / scale;
         var w = crop.width;
         var hh = crop.height / scale;
@@ -1538,7 +1508,7 @@ class _Sprite_Picture extends Sprite_Picture {
 export class Window_MessageName extends Window_Base {
     windowHeight: number;
     constructor(windowHeight) {
-        var width = 180;
+        var width = 220;
         var height = super.fittingHeight(1) + 14;
         var x = nameLeft;
         var y = Graphics.boxHeight - windowHeight - windowMargin[0] - windowMargin[2] - height;

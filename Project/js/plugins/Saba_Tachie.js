@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-07-04 19:52:33
+ * Ver 2016-08-10 21:18:13
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1033,7 +1033,7 @@ var Saba;
                     return;
                 }
                 if (useTextureAtlas) {
-                    if (PIXI.TextureCache[this.bodyFrontFile() + '.png']) {
+                    if (PIXI.utils.TextureCache[this.bodyFrontFile() + '.png']) {
                     }
                     else {
                         var file = 'img/tachie/actor' + this.actorId().padZero(2) + '.json';
@@ -1262,18 +1262,22 @@ var Saba;
             };
             return _Game_Picture;
         }(Game_Picture));
+        ImageManager.loadTachie = function (filename, hue) {
+            return this.loadBitmap('img/tachie/', filename, hue, true);
+        };
+        ImageManager.loadSpriteSheet = function (file) {
+            var loader = new PIXI.loaders.Loader();
+            loader.add({ name: '', url: file });
+            loader.load(); // ロード開始!
+        };
         var _ImageManager_isReady = ImageManager.isReady;
         ImageManager.isReady = function () {
-            if (this._spriteSheetLoaders && this._spriteSheetLoaders.length > 0) {
-                // スプライトシートを読み込み中
-                return false;
-            }
-            for (var key in this._cache) {
-                var bitmap = this._cache[key];
+            for (var key in this.cache._inner) {
+                var bitmap = this.cache._inner[key].item;
                 if (bitmap.isError()) {
                     if (bitmap.url.indexOf('tachie') >= 0) {
                         console.error('Failed to load: ' + bitmap.url);
-                        this._cache[key] = new Bitmap();
+                        this.cache._inner[key].item = new Bitmap();
                         continue;
                     }
                     else {
@@ -1285,39 +1289,6 @@ var Saba;
                 }
             }
             return true;
-        };
-        ImageManager.loadTachie = function (filename, hue) {
-            return this.loadBitmap('img/tachie/', filename, hue, true);
-        };
-        ImageManager.loadSpriteSheet = function (file) {
-            var _this = this;
-            var loader = new PIXI.SpriteSheetLoader(file, false);
-            this._spriteSheetLoaders = this._spriteSheetLoaders || [];
-            this._spriteSheetLoaders.push(loader);
-            loader.on('loaded', function () {
-                var index = _this._spriteSheetLoaders.indexOf(loader);
-                _this._spriteSheetLoaders.splice(index, 1);
-            });
-            loader.on('error', function () {
-                var index = _this._spriteSheetLoaders.indexOf(loader);
-                _this._spriteSheetLoaders.splice(index, 1);
-            });
-            loader.load();
-        };
-        var _PIXI_SpriteSheetLoader_load = PIXI.SpriteSheetLoader.prototype.load;
-        PIXI.SpriteSheetLoader.prototype.load = function () {
-            var scope = this;
-            var jsonLoader = new PIXI.JsonLoader(this.url, this.crossorigin);
-            jsonLoader.on('loaded', function (event) {
-                scope.json = event.data.content.json;
-                scope.onLoaded();
-            });
-            jsonLoader.on('error', function (event) {
-                scope.emit('error', {
-                    content: scope
-                });
-            });
-            jsonLoader.load();
         };
         var _Game_Temp = (function (_super) {
             __extends(_Game_Temp, _super);
@@ -1489,7 +1460,7 @@ var Saba;
                 }
             };
             this.drawTachieTextureAtlas = function (file, bitmap, actor, x, y, rect, scale) {
-                var texture = PIXI.TextureCache[file + '.png'];
+                var texture = PIXI.utils.TextureCache[file + '.png'];
                 if (!texture) {
                     return;
                 }
@@ -1498,7 +1469,7 @@ var Saba;
                 var sx = frame.x;
                 var sy = frame.y;
                 var trim = texture.trim;
-                var crop = texture.crop;
+                var crop = texture.trim;
                 var ww = crop.width / scale;
                 var w = crop.width;
                 var hh = crop.height / scale;
@@ -1644,7 +1615,7 @@ var Saba;
         var Window_MessageName = (function (_super) {
             __extends(Window_MessageName, _super);
             function Window_MessageName(windowHeight) {
-                var width = 180;
+                var width = 220;
                 var height = _super.prototype.fittingHeight.call(this, 1) + 14;
                 var x = Tachie.nameLeft;
                 var y = Graphics.boxHeight - windowHeight - Tachie.windowMargin[0] - Tachie.windowMargin[2] - height;

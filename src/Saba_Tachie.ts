@@ -1178,6 +1178,25 @@ ImageManager.loadSpriteSheet = function(file: string) {
     loader.load(); // ロード開始!
 };
 
+const _ImageManager_isReady = ImageManager.isReady;
+ImageManager.isReady = function() {
+    for (var key in this.cache._inner) {
+        var bitmap = this.cache._inner[key].item;
+        if (bitmap.isError()) {
+            if (bitmap.url.indexOf('tachie') >= 0) {
+                console.error('Failed to load: ' + bitmap.url);
+                this.cache._inner[key].item = new Bitmap();
+                continue;
+            } else {
+                throw new Error('Failed to load: ' + bitmap.url);
+            }
+        }
+        if (!bitmap.isReady()) {
+            return false;
+        }
+    }
+    return true;
+};
 
 
 class _Game_Temp extends Game_Temp {

@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-06-23 23:06:22
+ * Ver 2016-07-09 20:29:04
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -2508,7 +2508,7 @@ var Saba;
             'hoppe': SimpleScenario.isNumeric(0),
             'position': SimpleScenario.list('right', 'left', 'center'),
         };
-        SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n10'] = SimpleScenario.validates['n11'] = SimpleScenario.validates['n12'] = SimpleScenario.validates['n13'] = SimpleScenario.validates['n1'];
+        SimpleScenario.validates['n2'] = SimpleScenario.validates['n3'] = SimpleScenario.validates['n4'] = SimpleScenario.validates['n5'] = SimpleScenario.validates['n6'] = SimpleScenario.validates['n7'] = SimpleScenario.validates['n8'] = SimpleScenario.validates['n9'] = SimpleScenario.validates['n10'] = SimpleScenario.validates['n11'] = SimpleScenario.validates['n12'] = SimpleScenario.validates['n13'] = SimpleScenario.validates['n14'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['a1'] = SimpleScenario.validates['a2'] = SimpleScenario.validates['a3'] = SimpleScenario.validates['a4'] = SimpleScenario.validates['a5'] = SimpleScenario.validates['a6'] = SimpleScenario.validates['a7'] = SimpleScenario.validates['a8'] = SimpleScenario.validates['a9'] = SimpleScenario.validates['n1'];
         SimpleScenario.validates['m1'] = {
             'index': SimpleScenario.isNumeric(0),
@@ -2525,6 +2525,8 @@ var Saba;
         SimpleScenario.validates['not_close'] = {
             'flag': SimpleScenario.list('on', 'off')
         };
+        SimpleScenario.validates['return'] = {};
+        SimpleScenario.validates['event_break'] = {};
         SimpleScenario.validates['start'] = {};
         SimpleScenario.validates['hide'] = {};
         SimpleScenario.validates['else'] = {};
@@ -3000,7 +3002,7 @@ var Saba;
             'pitch': SimpleScenario.isNumeric(50, 150),
             'pan': SimpleScenario.isNumeric(-100, 100),
         };
-        SimpleScenario.validates['fadeout_bg:'] = {
+        SimpleScenario.validates['fadeout_bgm'] = {
             'time': SimpleScenario.isNumeric(1, 60)
         };
         SimpleScenario.validates['bgs'] = {
@@ -3008,7 +3010,7 @@ var Saba;
             'pitch': SimpleScenario.isNumeric(50, 150),
             'pan': SimpleScenario.isNumeric(-100, 100),
         };
-        SimpleScenario.validates['fadeout_bg:'] = {
+        SimpleScenario.validates['fadeout_bgs'] = {
             'time': SimpleScenario.isNumeric(1, 60)
         };
         SimpleScenario.validates['me'] = {

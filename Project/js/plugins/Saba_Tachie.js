@@ -240,7 +240,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  * @requiredAssets img/tachie/*
  *
  * @help
- * Ver 2016-08-10 21:18:13
+ * Ver 2016-08-19 20:18:21
  *
  * 左側に立つキャラは、pictureId 11 のピクチャで表示しているので、
  * イベントコマンドで pictureId 11 を対象とすることで操作できます。
@@ -1225,7 +1225,7 @@ var Saba;
                 return this.baseId + 'acce_' + id;
             };
             _Game_Actor.prototype.addAcce = function (id) {
-                if (this._acceList.indexOf(id) >= 0) {
+                if (this.hasAcce(id)) {
                     return;
                 }
                 this._acceList.push(id);
@@ -1238,6 +1238,9 @@ var Saba;
                 }
                 this._acceList.splice(index, 1);
                 this.setCacheChanged();
+            };
+            _Game_Actor.prototype.hasAcce = function (id) {
+                return this._acceList.indexOf(id) >= 0;
             };
             return _Game_Actor;
         }(Game_Actor));
@@ -1289,6 +1292,27 @@ var Saba;
                 }
             }
             return true;
+        };
+        Decrypter.decryptImg = function (url, bitmap) {
+            url = this.extToEncryptExt(url);
+            var requestFile = new XMLHttpRequest();
+            requestFile.open("GET", url);
+            requestFile.responseType = "arraybuffer";
+            requestFile.send();
+            requestFile.onload = function () {
+                if (this.status < Decrypter._xhrOk) {
+                    var arrayBuffer = Decrypter.decryptArrayBuffer(requestFile.response);
+                    bitmap._image.src = Decrypter.createBlobUrl(arrayBuffer);
+                    bitmap._image.onload = Bitmap.prototype._onLoad.bind(bitmap);
+                    bitmap._image.onerror = Bitmap.prototype._onError.bind(bitmap);
+                }
+            };
+            requestFile.onerror = function () {
+                if (url.indexOf('tachie') >= 0) {
+                    bitmap._image = new Image();
+                    Bitmap.prototype._onLoad.call(bitmap);
+                }
+            };
         };
         var _Game_Temp = (function (_super) {
             __extends(_Game_Temp, _super);

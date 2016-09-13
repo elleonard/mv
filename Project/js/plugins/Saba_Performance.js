@@ -8,7 +8,7 @@
  * @help
  * ・MV1.3 WebGL モード限定です
  * ・blur の表現が変わります（隙間が気になります……）
- * ・loadImage で読み込んだ Bitmap に対して描画しようとするとエラーになります。
+ * ・loadBitmap で読み込んだ Bitmap に対して描画しようとするとエラーになります。
  */
 var Saba;
 (function (Saba) {

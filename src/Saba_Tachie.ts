@@ -1136,7 +1136,7 @@ class _Game_Actor extends Game_Actor {
         return this.baseId + 'acce_' + id;
     }
     addAcce(id: number): void {
-        if (this._acceList.indexOf(id) >= 0) {
+        if (this.hasAcce(id)) {
             return;
         }
         this._acceList.push(id);
@@ -1149,6 +1149,9 @@ class _Game_Actor extends Game_Actor {
         }
         this._acceList.splice(index, 1);
         this.setCacheChanged();
+    }
+    hasAcce(id: number): boolean {
+        return this._acceList.indexOf(id) >= 0;
     }
 }
 
@@ -1197,7 +1200,30 @@ ImageManager.isReady = function() {
     }
     return true;
 };
+Decrypter.decryptImg = function(url, bitmap) {
+    url = this.extToEncryptExt(url);
 
+    var requestFile = new XMLHttpRequest();
+    requestFile.open("GET", url);
+    requestFile.responseType = "arraybuffer";
+    requestFile.send();
+
+    requestFile.onload = function () {
+        if(this.status < Decrypter._xhrOk) {
+            var arrayBuffer = Decrypter.decryptArrayBuffer(requestFile.response);
+            bitmap._image.src = Decrypter.createBlobUrl(arrayBuffer);
+            bitmap._image.onload = Bitmap.prototype._onLoad.bind(bitmap);
+            bitmap._image.onerror = Bitmap.prototype._onError.bind(bitmap);
+        }
+    };
+    
+    requestFile.onerror = function () {
+        if (url.indexOf('tachie') >= 0) {
+            bitmap._image = new Image();
+            Bitmap.prototype._onLoad.call(bitmap);
+        }
+    };
+};
 
 class _Game_Temp extends Game_Temp {
     protected actorBitmapCache: {[actorId: number]: Bitmap};

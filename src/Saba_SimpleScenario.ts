@@ -527,7 +527,7 @@ export class Scenario_Converter {
         }
     }
     parseReplace(text: string): void {
-        const lines = text.split('\n');
+        const lines = text.split('/\r\n|\r|\n/');
         for (const line of lines) {
             if (line.indexOf('//') === 0) {
                 continue;
@@ -545,7 +545,7 @@ export class Scenario_Converter {
 
         const list = [];
 
-        const lines = text.split('\n');
+        const lines = text.split('/\r\n|\r|\n/');
         const blocks: Array<Block> = [];
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];

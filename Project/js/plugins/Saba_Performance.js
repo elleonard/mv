@@ -188,7 +188,9 @@ if (parseInt(parameters['recycleCanvas'])) {
         }
     };
     Window.prototype.returnCanvas = function() {
-        this.contents.returnCanvas();
+        if (this.contents) {
+            this.contents.returnCanvas();
+        }
     };
     var canvasCacheMap = {};
     function getCanvasCache(width, height) {
@@ -779,6 +781,7 @@ if (parseInt(parameters['usePixiSpriteToDrawIcon']) ||
     Window_Base.prototype.createContents = function() {
         _Window_Base_createContents.call(this);
         this.contents.setClearHandler(this.onClearContents.bind(this));
+        this.contents.clear();
     };
     Window_Base.prototype.onClearContents = function() {
         // PIXI.Sprite を消去

@@ -68,7 +68,7 @@ var __extends = (this && this.__extends) || function (d, b) {
  *
  *
  * @help
- * Ver 2016-07-09 20:29:04
+ * Ver 2016-09-19 00:11:56
  *
  * 睡工房さんのTES　と互換があるようにしています。
  * hime.be/rgss3/tes.html
@@ -577,7 +577,7 @@ var Saba;
                 }
             };
             Scenario_Converter.prototype.parseReplace = function (text) {
-                var lines = text.split('\n');
+                var lines = text.split(/\r\n|\r|\n/);
                 for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
                     var line = lines_1[_i];
                     if (line.indexOf('//') === 0) {
@@ -594,7 +594,7 @@ var Saba;
             Scenario_Converter.prototype.convert = function (file, text) {
                 this.indent = 0;
                 var list = [];
-                var lines = text.split('\n');
+                var lines = text.split(/\r\n|\r|\n/);
                 var blocks = [];
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i];
@@ -906,6 +906,9 @@ var Saba;
                         break;
                     case 'center':
                         position = Saba.Tachie.CENTER_POS;
+                        break;
+                    case 'left':
+                        position = Saba.Tachie.LEFT_POS;
                         break;
                 }
                 if (context.header['face']) {

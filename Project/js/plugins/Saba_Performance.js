@@ -859,15 +859,6 @@ if (parseInt(parameters['skipUnnecessaryRefresh'])) {
         // this.refresh();
         this.hide();
     };
-    Window_MenuStatus.prototype.initialize = function(x, y) {
-        var width = this.windowWidth();
-        var height = this.windowHeight();
-        Window_Selectable.prototype.initialize.call(this, x, y, width, height);
-        this._formationMode = false;
-        this._pendingIndex = -1;
-        this.loadImages();
-        // this.refresh();
-    };
 }
 
 

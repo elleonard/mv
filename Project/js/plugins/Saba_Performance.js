@@ -321,6 +321,20 @@ if (parseInt(parameters['recycleCanvas'])) {
         this._setDirty();
         this._callLoadListeners();
     };
+    var _Bitmap_rotateHue = Bitmap.prototype.rotateHue;
+    Bitmap.prototype.rotateHue = function(offset) {
+        if (offset && this.width > 0 && this.height > 0) {
+            if (! this._context) {
+                // この時だけ仕方なく描画。
+                var cache = getCanvasCache();
+                this._canvas = cache._canvas;
+                this._context = cache._context;
+                this.resize(this._image.width, this._image.height);
+                this._context.drawImage(this._image, 0, 0);
+            }
+        }
+        _Bitmap_rotateHue.call(this, offset);
+    };
     Object.defineProperty(Sprite.prototype, 'bitmap', {
         set: function(value) {
             if (this._bitmap !== value) {

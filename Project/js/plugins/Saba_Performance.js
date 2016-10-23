@@ -410,6 +410,18 @@ if (parseInt(parameters['recycleCanvas'])) {
         }
         return result;
     };
+    var _Bitmap_getAlphaPixel = Bitmap.prototype.getAlphaPixel;
+    Bitmap.prototype.getAlphaPixel = function(x, y) {
+        if (! this._context) {
+            // この時だけ仕方なく描画。
+            var cache = getCanvasCache();
+            this._canvas = cache._canvas;
+            this._context = cache._context;
+            this.resize(this._image.width, this._image.height);
+            this._context.drawImage(this._image, 0, 0);
+        }
+        return _Bitmap_getAlphaPixel.call(this, x, y);
+    };
     ImageManager.loadEmptyBitmap = function() {
         var empty = this.cache.getItem('empty');
         if (!empty) {

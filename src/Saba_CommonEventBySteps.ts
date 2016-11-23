@@ -123,7 +123,7 @@ Game_Interpreter.prototype.addStepTrigger = function(commonEvId: number, numOfSt
         console.error('numOfSteps は 0 以上である必要があります');
         return;
     }
-    Game_System.prototype.commonEventBySteps[commonEvId] = numOfSteps;
+    $gameSystem.commonEventBySteps[commonEvId] = numOfSteps;
 }
 
 var _Game_Player_updateEncounterCount = Game_Player.prototype.updateEncounterCount;

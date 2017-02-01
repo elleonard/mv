@@ -53,10 +53,6 @@
  * @desc
  * @default 1
  *
- * @param donotCreateDummyBitmap
- * @desc
- * @default 1
- *
  * @param skipUnnecessaryRefresh
  * @desc ウィンドウの初期化の無駄な処理を減らします<br>■副作用:　なし
  * @default 1
@@ -97,6 +93,10 @@
  * @desc config でボリュームが 0 に設定したオーディオを読み込まないようにします<br>■副作用:　小。ボリュームを 0 から 1 以上にあげると、最初から再生されます
  * @default 1
  *
+ * @param usePixiByWindow_BattleLogBg
+ * @desc バトルログの背景を PIXI を使って描画しますbr>■副作用:　小
+ * @default 1
+ *
  * @help
  * ・MV1.3 WebGL モード限定です
  * ・canvas 呼び出しで固まってしまう機種に対して効果を発揮します
@@ -105,6 +105,26 @@ var Saba;
 (function (Saba) {
 
 var parameters = PluginManager.parameters('Saba_Performance');
+
+/**
+ * 子供を destroy しつつ削除します
+ */
+PIXI.Container.prototype.destroyAndRemoveChildren = function() {
+    for (var i = this.children.length; i >= 0; i--) {
+        if (this.children[i]) {
+            this.children[i].destroy({children: true, texture: true});
+        }
+    }
+    this.removeChildren();
+};
+
+Saba.toPixiColor = function(color) {
+    var r = parseInt(color.substring(1, 3), 16);
+    var g = parseInt(color.substring(3, 5), 16);
+    var b = parseInt(color.substring(5, 7), 16);
+    var intColor = (r << 16) | (g << 8) | b;
+    return intColor;
+};
 
 
 if (parseInt(parameters['notDrawAtBitmapSnap'])) {
@@ -146,18 +166,35 @@ if (parseInt(parameters['notDrawAtBitmapSnap'])) {
     };
     SceneManager.snapForBackground = function() {
         this._backgroundBitmap = this.snap();
+        this._backgroundBitmap.isBackgroundBitmap = true;
         // this._backgroundBitmap.blur();
     };
     Spriteset_Battle.prototype.createBackground = function() {
-        if (SceneManager.backgroundBitmap()) {
-            this._baseSprite.addChild(SceneManager.backgroundBitmap());
-        }
     };
 }
 
 
 
 if (parseInt(parameters['recycleCanvas'])) {
+    PIXI.extras.TilingSprite.prototype.destroy = function() {
+        PIXI.Sprite.prototype.destroy.call(this);
+    };
+    PIXI.DisplayObject.prototype.returnChildCanvas = function() {
+        if (this.returnCanvas) {
+            this.returnCanvas();
+        }
+    };
+    PIXI.Container.prototype.returnChildCanvas = function() {
+        if (this.returnCanvas) {
+            this.returnCanvas();
+        }
+        for (var i = 0; i < this.children.length; i++) {
+            var child = this.children[i];
+            if (child.returnChildCanvas) {
+                child.returnChildCanvas();
+            }
+        }
+    };
     /**
      * 一度作成した canvas を使い回すことで、初期化のコストを減らす。
      * ゲームの起動、シーン遷移などが速くなる。
@@ -166,7 +203,7 @@ if (parseInt(parameters['recycleCanvas'])) {
         if (this.isSceneChanging() && !this.isCurrentSceneBusy()) {
             if (this._scene) {
                 this._scene.terminate();
-                this._scene.returnCanvas();
+                this._scene.returnChildCanvas();
                 this._previousClass = this._scene.constructor;
                 this._previousScene = this._scene;
             }
@@ -194,31 +231,13 @@ if (parseInt(parameters['recycleCanvas'])) {
             this.onSceneLoading();
         }
     };
-    Scene_Base.prototype.returnCanvas = function() {
-        returnChildCanvas(this._windowLayer);
-        returnChildCanvas(this);
-        if (this._spriteset) {
-            returnChildCanvas(this._spriteset);
-            returnChildCanvas(this._spriteset._battleField);
-        }
-    };
-    function returnChildCanvas(parent) {
-        if (! parent) {
-            return;
-        }
-        for (var i = 0; i < parent.children.length; i++) {
-            var child = parent.children[i];
-            if (child.returnCanvas) {
-                child.returnCanvas();
-            }
-        }
-    }
+
     Window.prototype.returnCanvas = function() {
         if (this.contents && this.contents.returnCanvas) {
             this.contents.returnCanvas();
         }
     };
-    Sprite.prototype.returnCanvas = function(options) {
+    Sprite.prototype.returnCanvas = function() {
         if (this.bitmap && this.bitmap.returnCanvas) {
             this.bitmap.returnCanvas();
         }
@@ -258,6 +277,19 @@ if (parseInt(parameters['recycleCanvas'])) {
         //this._baseTexture.destroy();
         putCanvasCache(this);
     };
+    Bitmap.prototype.destroy = function() {
+        this._context = null;
+        this._canvas = null;
+        if (this._baseTexture) {
+            this._baseTexture.destroy();
+        }
+        this._baseTexture = null;
+        this._image = null;
+        this._url = null;
+        this.textColor = null;
+        this.outlineColor = null;
+        this._loadListeners = null;
+    };
     Bitmap.prototype.initialize = function(width, height) {
         if (width !== undefined) {
             width = Math.max(width || 0, 1);
@@ -267,10 +299,12 @@ if (parseInt(parameters['recycleCanvas'])) {
             this._context = cache._context;
 
             this._baseTexture = new PIXI.BaseTexture(this._canvas);
+            this.clear();
+            this.paintOpacity = 255;
         } else {
             // 幅を指定しない場合は canvas を作成しない
             this._baseTexture = new PIXI.BaseTexture(null);
-            this._canvas = {};  // dummy
+            this._canvas = {dummy: true};  // dummy
             this._canvas.width = Math.max(width || 0, 1);
             this._canvas.height = Math.max(height || 0, 1);
             this._baseTexture.source = this._canvas;
@@ -385,15 +419,6 @@ if (parseInt(parameters['recycleCanvas'])) {
         },
         configurable: true
     });
-    var _Sprite_destroy = Sprite.prototype.destroy;
-    Sprite.prototype.destroy = function (options)
-    {
-        if (this._bitmap && this._bitmap.destroy) {
-            // recycle
-            this._bitmap.destroy();
-        }
-        _Sprite_destroy.call(this, options);
-    };
     Bitmap.prototype.getPixel = function(x, y) {
         if (! this._context) {
             // この時だけ仕方なく描画。
@@ -409,6 +434,18 @@ if (parseInt(parameters['recycleCanvas'])) {
             result += data[i].toString(16).padZero(2);
         }
         return result;
+    };
+    var _Bitmap_getAlphaPixel = Bitmap.prototype.getAlphaPixel;
+    Bitmap.prototype.getAlphaPixel = function(x, y) {
+        if (! this._context) {
+            // この時だけ仕方なく描画。
+            var cache = getCanvasCache();
+            this._canvas = cache._canvas;
+            this._context = cache._context;
+            this.resize(this._image.width, this._image.height);
+            this._context.drawImage(this._image, 0, 0);
+        }
+        return _Bitmap_getAlphaPixel.call(this, x, y);
     };
     ImageManager.loadEmptyBitmap = function() {
         var empty = this.cache.getItem('empty');
@@ -473,21 +510,17 @@ if (parseInt(parameters['usePixiSpriteToDrawWindow_Base'])) {
         var m = this._margin;
         var w = this._width - m * 2;
         var h = this._height - m * 2;
-        // var bitmap = new Bitmap(w, h);
-        // this._windowBackSprite.bitmap = bitmap;
+        var bitmap = new Bitmap(w, h);
+        this._windowBackSprite.bitmap = bitmap;
         this._windowBackSprite.setFrame(0, 0, w, h);
         this._windowBackSprite.move(m, m);
 
         this._windowBackSprite._toneFilter = new ToneFilter();
 
         if (w > 0 && h > 0 && this._windowskin) {
-            var baseTexture = this.getBaseTexture();
-            for (var i = 0, j = this._windowBackSprite.children.length; i < j; ++i)
-            {
-                this._windowBackSprite.children[i].destroy({children: true, texture: true});
-            }
-            this._windowBackSprite.removeChildren();
+            this._windowBackSprite.destroyAndRemoveChildren();
 
+            var baseTexture = this.getBaseTexture();
             var p = 96;
             var texture = new PIXI.Texture(baseTexture);
             texture.frame = new PIXI.Rectangle(0, 0, p, p);
@@ -497,44 +530,15 @@ if (parseInt(parameters['usePixiSpriteToDrawWindow_Base'])) {
             this._windowBackSprite.addChild(backSprite);
             // bitmap.blt(this._windowskin, 0, 0, p, p, 0, 0, w, h);
 
-            var tileTexture = null;
+            var tileTexture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(0, p, p, p));
+            var tilingSprite = new PIXI.extras.TilingSprite(tileTexture, w, h);
+            this._windowBackSprite.addChild(tilingSprite);
 
-            for (var y = 0; y < h; y += p) {
-                for (var x = 0; x < w; x += p) {
-                    var ww = p;
-                    var hh = p;
-                    if (x + ww > w) {
-                        ww = w - x;
-                    }
-                    if (y + hh > h) {
-                        hh = h - y;
-                    }
-                    var tileSprite;
-                    if (p != hh || p != ww) {
-                        var tileTexture2 = new PIXI.Texture(baseTexture);
-                        tileTexture2.frame = new PIXI.Rectangle(0, p, ww, hh);
-                        tileSprite = new PIXI.Sprite(tileTexture2);
-                    } else {
-                        if (! tileTexture) {
-                            tileTexture = new PIXI.Texture(baseTexture);
-                            tileTexture.frame = new PIXI.Rectangle(0, p, p, p);
-                        }
-                        tileSprite = new PIXI.Sprite(tileTexture);
-                    }
-                    tileSprite.width = ww;
-                    tileSprite.height = hh;
-                    tileSprite.position.x = x;
-                    tileSprite.position.y = y;
-                    this._windowBackSprite.addChild(tileSprite);
-                    // bitmap.blt(this._windowskin, 0, p, p, p, x, y, p, p);
-                }
-            }
             var tone = this._colorTone;
             this._windowBackSprite._toneFilter.reset();
             this._windowBackSprite._toneFilter.adjustTone(tone[0], tone[1], tone[2]);
             //bitmap.adjustTone(tone[0], tone[1], tone[2]);
         }
-    
     };
     Window.prototype.getBaseTexture = function() {
         var baseTexture = PIXI.utils.BaseTextureCache[this._windowskin._image.src];
@@ -559,11 +563,7 @@ if (parseInt(parameters['usePixiSpriteToDrawWindow_Base'])) {
             var baseTexture = this.getBaseTexture();
 
             var parent = this._windowFrameSprite;
-            for (var i = 0, j = parent.children.length; i < j; ++i)
-            {
-                parent.children[i].destroy({texture: true});
-            }
-            parent.removeChildren();
+            parent.destroyAndRemoveChildren();
             var p = 96;
             var q = 96;
             this._addPixiSprite(parent, baseTexture, p+m, 0+0, p-m*2, m, m, 0, w-m*2, m);
@@ -614,11 +614,7 @@ if (parseInt(parameters['usePixiSpriteToDrawWindow_Base'])) {
         this._windowCursorSprite.setFrame(0, 0, w2, h2);
         this._windowCursorSprite.move(x2, y2);
         var parent = this._windowCursorSprite;
-        for (var i = 0, j = parent.children.length; i < j; ++i)
-        {
-            parent.children[i].destroy({texture: true});
-        }
-        parent.removeChildren();
+        parent.destroyAndRemoveChildren();
 
         if (w > 0 && h > 0 && this._windowskin) {
             // var skin = this._windowskin;
@@ -851,14 +847,10 @@ if (parseInt(parameters['usePixiSpriteToDrawIcon']) ||
         }
         _Window_Base_destroy.call(this, options);
     };
-    
+
     Window_Base.prototype.onClearContents = function() {
         // PIXI.Sprite を消去
-        for (var i = 0, j = this._windowContentsSprite.children.length; i < j; ++i)
-        {
-            this._windowContentsSprite.children[i].destroy({children: true, texture: true});
-        }
-        this._windowContentsSprite.removeChildren();
+        this._windowContentsSprite.destroyAndRemoveChildren();
     };
 }
 
@@ -883,31 +875,6 @@ if (parseInt(parameters['usePixiGraphicsToDrawMenuBg'])) {
 }
 
 
-if (parseInt(parameters['donotCreateDummyBitmap'])) {
-    /**
-     * _windowBackSprite の bitmap は不要なので作成しない
-     */
-    Window.prototype._createAllParts = function() {
-        this._windowSpriteContainer = new PIXI.Container();
-        this._windowBackSprite = new Sprite();
-        this._windowCursorSprite = new Sprite();
-        this._windowFrameSprite = new Sprite();
-        this._windowContentsSprite = new Sprite();
-        this._downArrowSprite = new Sprite();
-        this._upArrowSprite = new Sprite();
-        this._windowPauseSignSprite = new Sprite();
-        // this._windowBackSprite.bitmap = new Bitmap(1, 1);
-        this._windowBackSprite.alpha = 192 / 255;
-        this.addChild(this._windowSpriteContainer);
-        this._windowSpriteContainer.addChild(this._windowBackSprite);
-        this._windowSpriteContainer.addChild(this._windowFrameSprite);
-        this.addChild(this._windowCursorSprite);
-        this.addChild(this._windowContentsSprite);
-        this.addChild(this._downArrowSprite);
-        this.addChild(this._upArrowSprite);
-        this.addChild(this._windowPauseSignSprite);
-    };
-}
 
 
 
@@ -977,7 +944,7 @@ if (parseInt(parameters['lazyInitializationWeather'])) {
     var _Weather_updateRainSprite = Weather.prototype._updateRainSprite;
     Weather.prototype._updateRainSprite = function(sprite) {
         if (! this._rainBitmap) {
-            this._rainBitmap = new new Bitmap(1, 60);
+            this._rainBitmap = new Bitmap(1, 60);
             this._rainBitmap.fillAll('white');
         }
         _Weather_updateRainSprite.call(this, sprite);
@@ -1319,8 +1286,8 @@ if (parseInt(parameters['notLoadingVolumeZeroAudio'])) {
         configurable: true
     });
 }
-/*
-if (true) {
+
+if (parseInt(parameters['usePixiByWindow_BattleLogBg'])) {
     Window_BattleLog.prototype.createBackBitmap = function() {
     };
 
@@ -1332,13 +1299,9 @@ if (true) {
     Window_BattleLog.prototype.drawBackground = function() {
         var rect = this.backRect();
         var color = this.backColor();
-        
+
         var graphics = new PIXI.Graphics();
-        var r = parseInt(color.substring(1, 3), 16);
-        var g = parseInt(color.substring(3, 5), 16);
-        var b = parseInt(color.substring(5, 7), 16);
-        var intColor = (r << 16) | (g << 8) | b;
-        graphics.beginFill(intColor, this.backPaintOpacity() / 255/0);
+        graphics.beginFill(Saba.toPixiColor(color), this.backPaintOpacity() / 255/0);
         graphics.drawRect(rect.x, rect.y, rect.width, rect.height);
         graphics.endFill();
         this._backSprite.addChild(graphics);
@@ -1353,7 +1316,6 @@ Sprite.prototype._refresh = function() {
     }
     _Sprite_refresh.call(this);
 };
-*/
 
 
 })(Saba || (Saba = {}));

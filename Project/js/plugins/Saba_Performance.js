@@ -53,10 +53,6 @@
  * @desc
  * @default 1
  *
- * @param donotCreateDummyBitmap
- * @desc
- * @default 1
- *
  * @param skipUnnecessaryRefresh
  * @desc ウィンドウの初期化の無駄な処理を減らします<br>■副作用:　なし
  * @default 1
@@ -100,7 +96,7 @@
  * @param usePixiByWindow_BattleLogBg
  * @desc バトルログの背景を PIXI を使って描画しますbr>■副作用:　小
  * @default 1
- * 
+ *
  * @help
  * ・MV1.3 WebGL モード限定です
  * ・canvas 呼び出しで固まってしまう機種に対して効果を発揮します
@@ -180,7 +176,7 @@ if (parseInt(parameters['notDrawAtBitmapSnap'])) {
 
 
 if (parseInt(parameters['recycleCanvas'])) {
-    PIXI.TilingSprite.prototype.destroy = function() {
+    PIXI.extras.TilingSprite.prototype.destroy = function() {
         PIXI.Sprite.prototype.destroy.call(this);
     };
     PIXI.DisplayObject.prototype.returnChildCanvas = function() {
@@ -303,6 +299,8 @@ if (parseInt(parameters['recycleCanvas'])) {
             this._context = cache._context;
 
             this._baseTexture = new PIXI.BaseTexture(this._canvas);
+            this.clear();
+            this.paintOpacity = 255;
         } else {
             // 幅を指定しない場合は canvas を作成しない
             this._baseTexture = new PIXI.BaseTexture(null);
@@ -512,8 +510,8 @@ if (parseInt(parameters['usePixiSpriteToDrawWindow_Base'])) {
         var m = this._margin;
         var w = this._width - m * 2;
         var h = this._height - m * 2;
-        // var bitmap = new Bitmap(w, h);
-        // this._windowBackSprite.bitmap = bitmap;
+        var bitmap = new Bitmap(w, h);
+        this._windowBackSprite.bitmap = bitmap;
         this._windowBackSprite.setFrame(0, 0, w, h);
         this._windowBackSprite.move(m, m);
 
@@ -849,7 +847,7 @@ if (parseInt(parameters['usePixiSpriteToDrawIcon']) ||
         }
         _Window_Base_destroy.call(this, options);
     };
-    
+
     Window_Base.prototype.onClearContents = function() {
         // PIXI.Sprite を消去
         this._windowContentsSprite.destroyAndRemoveChildren();
@@ -877,31 +875,6 @@ if (parseInt(parameters['usePixiGraphicsToDrawMenuBg'])) {
 }
 
 
-if (parseInt(parameters['donotCreateDummyBitmap'])) {
-    /**
-     * _windowBackSprite の bitmap は不要なので作成しない
-     */
-    Window.prototype._createAllParts = function() {
-        this._windowSpriteContainer = new PIXI.Container();
-        this._windowBackSprite = new Sprite();
-        this._windowCursorSprite = new Sprite();
-        this._windowFrameSprite = new Sprite();
-        this._windowContentsSprite = new Sprite();
-        this._downArrowSprite = new Sprite();
-        this._upArrowSprite = new Sprite();
-        this._windowPauseSignSprite = new Sprite();
-        // this._windowBackSprite.bitmap = new Bitmap(1, 1);
-        this._windowBackSprite.alpha = 192 / 255;
-        this.addChild(this._windowSpriteContainer);
-        this._windowSpriteContainer.addChild(this._windowBackSprite);
-        this._windowSpriteContainer.addChild(this._windowFrameSprite);
-        this.addChild(this._windowCursorSprite);
-        this.addChild(this._windowContentsSprite);
-        this.addChild(this._downArrowSprite);
-        this.addChild(this._upArrowSprite);
-        this.addChild(this._windowPauseSignSprite);
-    };
-}
 
 
 
@@ -971,7 +944,7 @@ if (parseInt(parameters['lazyInitializationWeather'])) {
     var _Weather_updateRainSprite = Weather.prototype._updateRainSprite;
     Weather.prototype._updateRainSprite = function(sprite) {
         if (! this._rainBitmap) {
-            this._rainBitmap = new new Bitmap(1, 60);
+            this._rainBitmap = new Bitmap(1, 60);
             this._rainBitmap.fillAll('white');
         }
         _Weather_updateRainSprite.call(this, sprite);
@@ -1326,7 +1299,7 @@ if (parseInt(parameters['usePixiByWindow_BattleLogBg'])) {
     Window_BattleLog.prototype.drawBackground = function() {
         var rect = this.backRect();
         var color = this.backColor();
-        
+
         var graphics = new PIXI.Graphics();
         graphics.beginFill(Saba.toPixiColor(color), this.backPaintOpacity() / 255/0);
         graphics.drawRect(rect.x, rect.y, rect.width, rect.height);

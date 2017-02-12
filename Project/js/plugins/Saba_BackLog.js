@@ -119,7 +119,7 @@ var Saba;
         var Game_TalkLog = (function () {
             function Game_TalkLog(name, message) {
                 this.name = name;
-                this.message = message;
+                this.message = Window_Base.prototype.convertEscapeCharacters(message);
             }
             return Game_TalkLog;
         }());

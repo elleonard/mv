@@ -176,6 +176,25 @@ if (parseInt(parameters['notDrawAtBitmapSnap'])) {
 
 
 if (parseInt(parameters['recycleCanvas'])) {
+    Window_Base.prototype.refreshDimmerBitmap = function () {
+        if (this._dimmerSprite) {
+            var bitmap = this._dimmerSprite.bitmap;
+            var w = this.width;
+            var h = this.height;
+            var m = this.padding;
+            var c1 = this.dimColor1();
+            var c2 = this.dimColor2();
+            if (bitmap.width != w || bitmap.height != h) {
+                this._dimmerSprite.bitmap = new Bitmap(w, h);
+                bitmap = this._dimmerSprite.bitmap;
+            }
+            bitmap.gradientFillRect(0, 0, w, m, c2, c1, true);
+            bitmap.fillRect(0, m, w, h - m * 2, c1);
+            bitmap.gradientFillRect(0, h - m, w, m, c1, c2, true);
+            this._dimmerSprite.setFrame(0, 0, w, h);
+        }
+    };
+    
     PIXI.extras.TilingSprite.prototype.destroy = function() {
         PIXI.Sprite.prototype.destroy.call(this);
     };
